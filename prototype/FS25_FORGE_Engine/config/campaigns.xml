@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<campaigns schemaVersion="1">
+    <campaign id="forge.tutorial" path="config/campaigns/forge_tutorial/campaign.xml" enabled="true"/>
+</campaigns>

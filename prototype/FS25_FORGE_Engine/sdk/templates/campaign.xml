@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<campaign id="yourAuthor.yourCampaign" schemaVersion="1">
+    <title>Your Campaign</title>
+    <description>Describe the campaign.</description>
+    <progressScope>PLAYER</progressScope>
+    <startMission>yourAuthor.firstMission</startMission>
+</campaign>

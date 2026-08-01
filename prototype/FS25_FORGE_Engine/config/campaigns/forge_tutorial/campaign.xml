@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<campaign id="forge.tutorial"
+          title="FORGE Getting Started"
+          description="Development campaign used to test data-driven projects."
+          progressScope="PLAYER"
+          startProject="tutorial.welcome">
+    <projects>
+        <project id="tutorial.welcome"
+                 title="Welcome to FORGE"
+                 client="FORGE Development"
+                 description="Confirm that the project engine and phone integration are operating."
+                 initialStatus="IN PROGRESS">
+            <stages>
+                <stage id="orientation"
+                       title="Phone Orientation"
+                       description="Review the current project and learn where objectives are shown.">
+                    <objectives>
+                        <objective id="openProjects"
+                                   type="manual"
+                                   text="Open the Projects app"
+                                   required="true"/>
+                        <objective id="reviewStage"
+                                   type="manual"
+                                   text="Review the current project stage"
+                                   required="true"/>
+                        <objective id="saveCareer"
+                                   type="manual"
+                                   text="Save the career to persist FORGE data"
+                                   required="true"/>
+                    </objectives>
+                </stage>
+                <stage id="nextSteps"
+                       title="Ready for Content"
+                       description="The engine is ready for communications and gameplay objectives.">
+                    <objectives>
+                        <objective id="awaitNextBuild"
+                                   type="manual"
+                                   text="Await the next FORGE development build"
+                                   required="true"/>
+                    </objectives>
+                </stage>
+            </stages>
+        </project>
+    </projects>
+</campaign>

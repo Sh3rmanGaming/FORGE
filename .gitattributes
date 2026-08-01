@@ -1,0 +1,20 @@
+# Normalize text files to LF in the repository
+* text=auto eol=lf
+
+# Lua
+*.lua text
+
+# Markdown
+*.md text
+
+# XML
+*.xml text
+
+# Git
+*.gitignore text
+*.gitattributes text
+
+# Images
+*.png binary
+*.dds binary
+*.jpg binary

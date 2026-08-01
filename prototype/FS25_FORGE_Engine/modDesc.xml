@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<modDesc descVersion="111">
+    <author>Sheridan Beer</author>
+    <version>0.4.1.0</version>
+
+    <title>
+        <en>FORGE Engine</en>
+    </title>
+
+    <description>
+        <en><![CDATA[
+FORGE — Farming Operations & Regional Growth Engine.
+
+Development foundation providing:
+- Multiplayer-first mission lifecycle
+- Savegame-embedded persistence
+- Module registry
+- Internal event bus
+- Shared state store
+- Data-driven campaign scaffolding
+
+This development build adds the first XML-driven campaign and live Projects app integration.
+        ]]></en>
+    </description>
+
+    <iconFilename>icon_forge.dds</iconFilename>
+    <multiplayer supported="true"/>
+
+    <extraSourceFiles>
+        <sourceFile filename="scripts/core/ForgeLogger.lua"/>
+        <sourceFile filename="scripts/core/ForgeEventBus.lua"/>
+        <sourceFile filename="scripts/core/ForgeModuleRegistry.lua"/>
+        <sourceFile filename="scripts/core/ForgeStateStore.lua"/>
+        <sourceFile filename="scripts/core/ForgeSaveManager.lua"/>
+        <sourceFile filename="scripts/core/ForgeCampaignManager.lua"/>
+        <sourceFile filename="scripts/ui/ForgePhoneOS.lua"/>
+        <sourceFile filename="scripts/core/ForgeEngine.lua"/>
+    </extraSourceFiles>
+</modDesc>
