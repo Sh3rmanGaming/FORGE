@@ -1,0 +1,14 @@
+{
+    "Lua.workspace.ignoreDir": [
+        "prototype/FS25_FORGE_Engine/scripts/forge"
+    ],
+
+    "files.exclude": {
+        "**/__pycache__": true
+    },
+
+    "files.eol": "\n",
+
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+}

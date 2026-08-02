@@ -29,10 +29,11 @@
 - ✅ M1.002 – Logger Definitions
 - ✅ M1.003 – Logging Service
 - ✅ M1.004 – Synchronisation Tool
+- ✅ M1.005 – Event Bus
 
 ### In Progress
 
-- 🟡 M1.005 – Event Bus (Scaffolded)
+- 🟡 M1.010 – Engine Bootstrap
 
 ### Planned
 

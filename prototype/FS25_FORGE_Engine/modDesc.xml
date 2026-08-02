@@ -26,14 +26,24 @@ This development build adds the first XML-driven campaign and live Projects app 
     <iconFilename>icon_forge.dds</iconFilename>
     <multiplayer supported="true"/>
 
-    <extraSourceFiles>
-        <sourceFile filename="scripts/core/ForgeLogger.lua"/>
-        <sourceFile filename="scripts/core/ForgeEventBus.lua"/>
-        <sourceFile filename="scripts/core/ForgeModuleRegistry.lua"/>
-        <sourceFile filename="scripts/core/ForgeStateStore.lua"/>
-        <sourceFile filename="scripts/core/ForgeSaveManager.lua"/>
-        <sourceFile filename="scripts/core/ForgeCampaignManager.lua"/>
-        <sourceFile filename="scripts/ui/ForgePhoneOS.lua"/>
-        <sourceFile filename="scripts/core/ForgeEngine.lua"/>
+        <extraSourceFiles>
+        <!-- FORGE root namespace -->
+        <sourceFile filename="scripts/forge/FORGE.lua"/>
+
+        <!-- Authoritative definitions -->
+        <sourceFile filename="scripts/forge/definitions/Definitions.lua"/>
+        <sourceFile filename="scripts/forge/definitions/LogLevel.lua"/>
+        <sourceFile filename="scripts/forge/definitions/LogSource.lua"/>
+
+        <!-- Core services -->
+        <sourceFile filename="scripts/forge/services/Logger.lua"/>
+        <sourceFile filename="scripts/forge/services/EventBus.lua"/>
+
+        <!-- Manual test harnesses -->
+        <sourceFile filename="scripts/forge/tests/LoggerTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/EventBusTest.lua"/>
+
+        <!-- Engine lifecycle registration must load last -->
+        <sourceFile filename="scripts/forge/Engine.lua"/>
     </extraSourceFiles>
 </modDesc>

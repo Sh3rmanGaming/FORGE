@@ -1,16 +1,19 @@
 ---=============================================================================
---- FORGE Engine
+--- FORGE Root Namespace
 ---
 --- Farming Operations & Regional Growth Engine
 ---
---- The root object for the entire FORGE framework.
---- Every subsystem communicates through this object.
+--- Establishes the root namespace and shared metadata for the FORGE framework.
 ---
---- Author: SH3RMAN
+--- Responsibilities:
+---     • Create the global FORGE namespace.
+---     • Provide shared framework identity and version metadata.
+---     • Provide the root namespace beneath which FORGE systems are organised.
+---
+--- This file must not contain gameplay logic or initialise mission state.
 ---=============================================================================
 
-FORGE = {}
+FORGE = FORGE or {}
 
 FORGE.Version = "0.5.0-dev"
-
 FORGE.Name = "Farming Operations & Regional Growth Engine"

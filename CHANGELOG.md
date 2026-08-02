@@ -14,7 +14,7 @@ The format is based on chronological milestone releases rather than semantic sof
 - Logging definitions.
 - Structured logging service.
 - Engine synchronisation tool.
-- Event Bus scaffold.
+- Complete Event Bus implementation.
 - Engine bootstrap scaffold.
 - Initial logger test harness.
 

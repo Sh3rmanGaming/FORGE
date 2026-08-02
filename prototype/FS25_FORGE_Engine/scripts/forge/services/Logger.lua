@@ -22,9 +22,35 @@ FORGE.Logger.Settings = {
 }
 
 --- Writes a formatted log message to the active output.
--- @param formattedMessage string
+-- @param formattedMessage any
+-- @return boolean success
 function FORGE.Logger:write(formattedMessage)
-    print(tostring(formattedMessage or ""))
+    local messageText = self:safeToString(
+        formattedMessage or "",
+        "[FORGE][Logger][ERROR] Unable to convert log output to text"
+    )
+
+    return pcall(
+        print,
+        messageText
+    )
+end
+
+--- Converts any value to text without allowing conversion errors to escape.
+-- @param value any
+-- @param fallback string
+-- @return string text
+function FORGE.Logger:safeToString(value, fallback)
+    local success, text = pcall(
+        tostring,
+        value
+    )
+
+    if success then
+        return text
+    end
+
+    return fallback or "<unprintable>"
 end
 
 --- Returns the current real-world time formatted for log output.
@@ -51,9 +77,29 @@ end
 -- @param ... any Optional format arguments.
 -- @return string formattedMessage
 function FORGE.Logger:format(level, source, message, ...)
-    local levelLabel = tostring(level.label or "INFO")
-    local sourceText = tostring(source or FORGE.Definitions.LogSource.UNKNOWN)
-    local messageText = tostring(message or "")
+    local LogLevel = FORGE.Definitions.LogLevel
+    local LogSource = FORGE.Definitions.LogSource
+
+    local safeLevel = level
+
+    if type(safeLevel) ~= "table" then
+        safeLevel = LogLevel.INFO
+    end
+
+    local levelLabel = self:safeToString(
+        safeLevel.label or LogLevel.INFO.label,
+        LogLevel.INFO.label
+    )
+
+    local sourceText = self:safeToString(
+        source or LogSource.UNKNOWN,
+        LogSource.UNKNOWN
+    )
+
+    local messageText = self:safeToString(
+        message or "",
+        "<unprintable message>"
+    )
 
     if select("#", ...) > 0 then
         local success, formattedMessage = pcall(
@@ -100,12 +146,21 @@ function FORGE.Logger:normaliseSource(source)
         return LogSource.UNKNOWN, true
     end
 
-    local sourceText = tostring(source)
+    local sourceText = self:safeToString(
+        source,
+        LogSource.UNKNOWN
+    )
+
     local sourceLower = string.lower(sourceText)
 
     for _, definedSource in pairs(LogSource) do
-        if string.lower(tostring(definedSource)) == sourceLower then
-            return definedSource, definedSource ~= sourceText
+        local definedSourceText = self:safeToString(
+            definedSource,
+            LogSource.UNKNOWN
+        )
+
+        if string.lower(definedSourceText) == sourceLower then
+            return definedSource, definedSourceText ~= sourceText
         end
     end
 
@@ -190,7 +245,7 @@ function FORGE.Logger:log(level, source, message, ...)
     if sourceWasNormalised then
         self:writeInternalWarning(
             "Normalised log source '%s' to '%s'; use an authoritative LogSource definition",
-            tostring(source),
+            self:safeToString(source, "<unprintable>"),
             normalisedSource
         )
     end
@@ -304,7 +359,7 @@ function FORGE.Logger:setMinimumLevel(level)
     if not isValid then
         self:writeInternalWarning(
             "Rejected invalid minimum log level '%s'",
-            tostring(level)
+            self:safeToString(level, "<unprintable>")
         )
 
         return false
