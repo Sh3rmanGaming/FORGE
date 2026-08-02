@@ -39,6 +39,10 @@ function FORGE.Engine:loadMap(mapName)
         if FORGE.Tests.runEventBusTests ~= nil then
             FORGE.Tests.runEventBusTests()
         end
+
+         if FORGE.Tests.runStateStoreTests ~= nil then
+        FORGE.Tests.runStateStoreTests()
+        end
     end
 end
 

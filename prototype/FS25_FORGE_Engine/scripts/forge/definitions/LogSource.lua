@@ -15,7 +15,8 @@ FORGE.Definitions.LogSource = {
     UNKNOWN = "Unknown",
     ENGINE = "Engine",
     LOGGER = "Logger",
+    EVENT_BUS = "EventBus",
+    STATE_STORE = "StateStore",
     TEST = "Test",
-    EVENT_BUS = "EventBus"
 
 }

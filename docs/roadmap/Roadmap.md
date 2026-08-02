@@ -30,6 +30,7 @@
 - ✅ M1.003 – Logging Service
 - ✅ M1.004 – Synchronisation Tool
 - ✅ M1.005 – Event Bus
+- ✅ M1.006 – State Store
 
 ### In Progress
 
@@ -37,7 +38,6 @@
 
 ### Planned
 
-- ⏳ M1.006 – State Store
 - ⏳ M1.007 – Save Manager
 - ⏳ M1.008 – Campaign Manager
 - ⏳ M1.009 – Phone OS Foundation

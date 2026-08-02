@@ -17,6 +17,8 @@ The format is based on chronological milestone releases rather than semantic sof
 - Complete Event Bus implementation.
 - Engine bootstrap scaffold.
 - Initial logger test harness.
+- State Store with explicit namespace registration, validated value access, removal, namespace clearing, and full runtime cleanup.
+- Manual State Store runtime verification harness.
 
 ---
 

@@ -38,10 +38,12 @@ This development build adds the first XML-driven campaign and live Projects app 
         <!-- Core services -->
         <sourceFile filename="scripts/forge/services/Logger.lua"/>
         <sourceFile filename="scripts/forge/services/EventBus.lua"/>
+        <sourceFile filename="scripts/forge/services/StateStore.lua"/>
 
         <!-- Manual test harnesses -->
         <sourceFile filename="scripts/forge/tests/LoggerTest.lua"/>
         <sourceFile filename="scripts/forge/tests/EventBusTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/StateStoreTest.lua"/>
 
         <!-- Engine lifecycle registration must load last -->
         <sourceFile filename="scripts/forge/Engine.lua"/>
