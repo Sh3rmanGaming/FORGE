@@ -4,7 +4,7 @@
 
 This document defines the coding standards used throughout the FORGE project.
 
-The objective is not to enforce personal preferences, but to ensure that all code is consistent, readable and maintainable.
+The objective is not to enforce personal preferences, but to establish a consistent style that keeps the codebase readable, maintainable, and approachable for all contributors.
 
 Where no specific rule exists, contributors should follow the principles defined in the Engineering Charter.
 
@@ -79,4 +79,30 @@ Shared values belong in dedicated definition tables.
 
 Public systems should be documented.
 
+All source files should include the standard FORGE file header.
+
 Major architectural decisions should be recorded as ADRs.
+
+---
+
+## Formatting
+
+The FORGE project follows consistent formatting to maximise readability.
+
+- Use 4 spaces for indentation.
+- Wrap long lines where practical to improve readability.
+- Group related code with a single blank line.
+- Avoid excessive vertical whitespace.
+- Keep functions reasonably small and focused.
+  
+---
+
+## Functions
+
+Functions should:
+
+- Perform one clearly defined task.
+- Validate inputs where practical.
+- Return early when invalid conditions are detected.
+- Avoid unnecessary nesting.
+- Remain small enough to understand without scrolling extensively.

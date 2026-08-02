@@ -116,7 +116,7 @@ def validate() -> bool:
     if missing_paths:
         print("ERROR: Repository validation failed.")
         print()
-        print("Missing required directories:")
+        print("Missing required paths:")
 
         for path in missing_paths:
             print(f"  - {path}")

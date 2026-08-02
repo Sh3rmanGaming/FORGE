@@ -14,4 +14,6 @@
 
 FORGE.EventBus = {}
 
-FORGE.EventBus.listeners = {}
+FORGE.EventBus = {
+    listeners = {}
+}

@@ -57,11 +57,37 @@ The project is currently focused on building the core engine and framework that 
 
 ---
 
+# Current milestone:
+
+**M1 — Engine Foundation**
+
+The project is currently focused on building the core engine and framework that future gameplay systems will rely upon.
+
+# Repository Structure
+
+```text
+engine/         Authoritative FORGE engine source
+tests/          Engine test harnesses
+tools/          Developer tooling
+docs/           Architecture and engineering documentation
+prototype/      Synchronised FS25 reference implementation
+campaigns/      Campaign content
+sdk/            Creator SDK
+themes/         Phone OS themes
+assets/         Shared project assets
+```
+
+The `engine/` directory is the single source of truth.
+
+Changes are synchronised into the prototype using the FORGE Synchronisation Tool.
+
+---
+
 # Who is FORGE for?
 
 ## Players
 
-Install FORGE and enjoy a richer, more connected gameplay experience.
+Install FORGE to experience a richer, more connected Farming Simulator world.
 
 No programming knowledge required.
 
@@ -92,13 +118,17 @@ The project welcomes contributors who share our passion for maintainable, well-d
 
 # Documentation
 
-If you're interested in learning more:
+The project documentation is organised under `docs/`.
 
-- **Project Vision** — Why FORGE exists.
-- **Engineering Guide** — How the project is developed.
-- **Architecture** — How the engine is designed.
-- **Roadmap** — Where the project is heading.
-- **Contributing** — How to contribute.
+Recommended reading order:
+
+1. Project Vision
+2. Engineering Charter
+3. Engineering Guide
+4. Engine Architecture
+5. Startup Lifecycle
+6. Roadmap
+7. Contributing
 
 ---
 
@@ -115,7 +145,7 @@ If you're interested in learning more:
 
 # License
 
-*To be determined.*
+A project license will be selected before the first public release.
 
 ---
 

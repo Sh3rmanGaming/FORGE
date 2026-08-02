@@ -10,7 +10,7 @@ Where no explicit rule exists, contributors should use the principles in this ch
 
 ---
 
-# Vision
+## Vision
 
 FORGE is an open-source gameplay framework for Farming Simulator 25.
 
@@ -24,7 +24,7 @@ Engineering excellence is how we achieve exceptional player experiences.
 
 ---
 
-# Core Principles
+## Core Principles
 
 ## 1. Player First
 
@@ -118,7 +118,7 @@ If a decision proves incorrect, improve it.
 
 Engineering integrity is more important than appearing certain.
 
-# Project Roles
+## Project Roles
 
 ## Project Architect
 
@@ -144,7 +144,7 @@ Responsible for:
 
 ---
 
-# Engineering Mindset
+## Engineering Mindset
 
 Before implementing a feature, ask:
 
@@ -158,7 +158,19 @@ If the answer to any of these questions is uncertain, pause and review the desig
 
 ---
 
-# Final Principle
+## Engineering Non-Negotiables
+
+The following principles apply to all contributions unless an accepted ADR explicitly states otherwise.
+
+- Maintain a single authoritative source for shared data.
+- Document significant architectural decisions.
+- Preserve modularity.
+- Avoid introducing hidden coupling.
+- Keep documentation aligned with implementation.
+
+---
+
+## Final Principle
 
 FORGE is engineered deliberately.
 

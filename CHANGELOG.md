@@ -1,18 +1,45 @@
 # Changelog
 
-## M0 - Foundation
+All notable changes to the FORGE project are documented in this file.
 
-Established the engineering, architectural and documentation foundation for the FORGE project.
+The format is based on chronological milestone releases rather than semantic software releases.
 
-**Released**. 2026.08.01
+---
+
+## M1 – Engine (In Progress)
 
 ### Added
 
-- Repository structure
-- Engineering Charter
-- Documentation Lifecycle
-- Coding Standards
-- Startup Lifecycle
-- ADR process
-- Initial architecture
-- Reference prototype
+- Dedicated definition tables.
+- Logging definitions.
+- Structured logging service.
+- Engine synchronisation tool.
+- Event Bus scaffold.
+- Engine bootstrap scaffold.
+- Initial logger test harness.
+
+---
+
+## M0 – Foundation
+
+**Released:** 2026-08-01
+
+### Added
+
+- Repository structure.
+- Engineering Charter.
+- Engineering Guide.
+- Development Environment guide.
+- Coding Standards.
+- Documentation Lifecycle.
+- File Header Standard.
+- Contributing guide.
+- Architecture Decision Record (ADR) process.
+- Initial engine architecture.
+- Startup lifecycle documentation.
+- Roadmap.
+- Reference prototype.
+
+---
+
+Future milestones will be appended to this document as development progresses.

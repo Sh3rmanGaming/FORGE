@@ -1,126 +1,131 @@
-# ADR-001 - Shared Definitions
+# ADR-001 - Use Dedicated Definition Tables
 
-**Status:** Accepted
-
+**Status:** Accepted  
 **Date:** 2026-08-01
-
-**Confidence:** 100%
 
 ---
 
-# Context
+## Context
 
-FORGE requires many shared values that will be referenced throughout the engine.
-
-Examples include:
-
-- Log Sources
-- Event Names
-- Project Statuses
-- Company Roles
-- Phone Applications
-- Notification Types
-- Save Versions
-- Permission Levels
-
-Using literal strings or numbers throughout the codebase introduces unnecessary risk.
+FORGE requires many shared values that are referenced throughout the engine.
 
 Examples include:
+
+- Log sources
+- Event names
+- Project statuses
+- Company roles
+- Phone applications
+- Notification types
+- Save versions
+- Permission levels
+
+Using literal strings or numeric values throughout the codebase introduces unnecessary risk, including:
 
 - Typographical errors
 - Inconsistent naming
 - Difficult refactoring
-- Poor auto-completion
+- Poor editor autocompletion
 - Harder debugging
+
+To maintain consistency and improve long-term maintainability, these shared values require a single authoritative source.
 
 ---
 
-# Options Considered
+## Options Considered
 
-## Option A
+### Option A — Use Literal Values
 
-Use literal strings and numbers throughout the code.
+Use literal strings and numeric values directly throughout the codebase.
 
-### Advantages
+#### Advantages
 
-- Fast to write
+- Fast to write initially
+- No additional files
 
-### Disadvantages
+#### Disadvantages
 
-- Error prone
+- Error-prone
 - Difficult to maintain
 - Difficult to search
 - No single source of truth
+- Inconsistent naming becomes likely
 
 ---
 
-## Option B
+### Option B — Use One Global Constants File
 
-Create a single global Constants.lua file.
+Create a single global `Constants.lua` file containing every shared value.
 
-### Advantages
+#### Advantages
 
-- Central location
+- One central location
+- Easy to discover
 
-### Disadvantages
+#### Disadvantages
 
 - Becomes a dumping ground
 - Violates the Single Responsibility Principle
-- Difficult to navigate
-- Creates unnecessary coupling
+- Difficult to navigate as the project grows
+- Creates unnecessary coupling between unrelated systems
 
 ---
 
-## Option C (Chosen)
+### Option C — Use Dedicated Definition Tables (Chosen)
 
 Create dedicated definition files for each logical group.
 
-Examples:
+Example:
 
-engine/definitions/
+```text
+engine/
+└── definitions/
+    ├── Event.lua
+    ├── LogLevel.lua
+    ├── LogSource.lua
+    ├── NotificationType.lua
+    ├── PhoneApp.lua
+    └── ProjectStatus.lua
+```
 
-- LogSource.lua
-- Event.lua
-- ProjectStatus.lua
-- PhoneApp.lua
-- CompanyRole.lua
-
-Each file owns one responsibility only.
+Each definition file owns a single logical responsibility and acts as the authoritative source for that category.
 
 ---
 
-# Decision
+## Decision
 
-FORGE will never use magic values where a reusable definition exists.
+FORGE shall not use magic values where an authoritative definition exists.
 
 Every shared value shall have one authoritative definition.
 
-Definition files shall be grouped by purpose rather than collected into a monolithic constants file.
+Definition tables shall be grouped by purpose rather than collected into a monolithic constants file.
 
 ---
 
-# Consequences
+## Consequences
 
-## Positive
+### Positive
 
-- Better IntelliSense
+- Better editor autocompletion
 - Easier refactoring
 - Easier debugging
 - Improved readability
-- Consistent naming
+- Consistent naming across the engine
 - Reduced human error
+- Clear ownership of shared values
 
-## Negative
+### Negative
 
-- More files
+- Increased number of files
 - Slightly longer initial development
+- Engine startup must load definition tables before dependent systems
 
-The long-term maintenance benefits outweigh the additional structure.
+The long-term maintenance and scalability benefits outweigh the additional structure.
 
 ---
 
-# Future Review
+## Future Review
 
-This decision should only be reconsidered if Lua gains native enum support or another language feature that makes dedicated definition tables obsolete.
+This decision should be reconsidered if Lua, the Farming Simulator scripting environment, or the FORGE architecture introduces a more maintainable mechanism for defining shared authoritative values.
 
-At the time of writing, dedicated definition tables provide the cleanest and most maintainable solution.
+At the time of writing, dedicated definition tables provide the clearest, most maintainable, and most scalable solution.

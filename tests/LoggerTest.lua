@@ -4,6 +4,16 @@
 --- Manual test harness for the FORGE Logging Service.
 ---=============================================================================
 
+local previousDevelopmentMode =
+    FORGE.Logger:isDevelopmentMode()
+
+local previousTimestampSetting =
+    FORGE.Logger:isTimestampEnabled()
+
+local previousMinimumLevel =
+    FORGE.Logger:getMinimumLevel()
+
+
 FORGE.Logger:setDevelopmentMode(true)
 FORGE.Logger:setTimestampEnabled(true)
 FORGE.Logger:setMinimumLevel(FORGE.Definitions.LogLevel.TRACE)
@@ -44,3 +54,7 @@ FORGE.Logger:info(
     "Formatting failure: %d",
     "not-a-number"
 )
+
+FORGE.Logger:setDevelopmentMode(previousDevelopmentMode)
+FORGE.Logger:setTimestampEnabled(previousTimestampSetting)
+FORGE.Logger:setMinimumLevel(previousMinimumLevel)

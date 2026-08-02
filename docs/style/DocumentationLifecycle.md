@@ -67,6 +67,7 @@ The implementation has been reviewed against the documentation.
 Characteristics:
 
 - Design and implementation match.
+- Behaviour has been validated through testing or review.
 - The document is considered authoritative.
 - Future changes require review.
 
