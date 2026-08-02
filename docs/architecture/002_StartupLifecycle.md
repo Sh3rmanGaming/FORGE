@@ -124,3 +124,29 @@ Publish forge.engine.ready
         ▼
 Gameplay Begins
 ```
+
+## Open Questions
+
+### Q1 - Event Bus Initialisation
+
+Should the Event Bus be initialised before all other services so that startup events can be published during engine initialisation?
+
+**Status:** Open
+
+---
+
+### Q2 - Definition Availability
+
+Definitions are created when Lua files execute, not during runtime.
+
+Should they appear in the startup sequence diagram, or should they simply be treated as available after Lua execution?
+
+**Status:** Open
+
+---
+
+### Q3 - Phone App Registration
+
+Should applications register themselves with the Phone OS, or should the Phone OS discover available applications automatically during startup?
+
+**Status:** Open
