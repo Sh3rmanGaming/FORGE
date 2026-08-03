@@ -7,14 +7,20 @@
 ---     • Register explicit state namespaces.
 ---     • Store runtime state within registered namespaces.
 ---     • Provide controlled access to runtime state.
+---     • Produce detached namespace snapshots.
+---     • Replace namespace state atomically.
 ---     • Remove and reset runtime state.
 ---
 --- This service must not perform persistence, networking, or gameplay validation.
 ---=============================================================================
 
-FORGE.StateStore = {
-    namespaces = {}
-}
+FORGE.StateStore = {}
+
+-----------------------------------------------------------------------------
+-- Private State
+-----------------------------------------------------------------------------
+
+local namespaces = {}
 
 -----------------------------------------------------------------------------
 -- Private Helpers
@@ -30,11 +36,51 @@ local function isValidKey(key)
         and string.match(key, "%S") ~= nil
 end
 
-local function hasNamespace(
-    namespaces,
-    namespace
-)
+local function hasNamespace(namespace)
     return namespaces[namespace] ~= nil
+end
+
+--- Creates a detached copy of a runtime value.
+---
+--- Shared references and cyclic table relationships are preserved within
+--- the copied value.
+-- @param value any
+-- @param copiedTables table|nil
+-- @return any copiedValue
+local function copyValue(
+    value,
+    copiedTables
+)
+    if type(value) ~= "table" then
+        return value
+    end
+
+    copiedTables = copiedTables or {}
+
+    if copiedTables[value] ~= nil then
+        return copiedTables[value]
+    end
+
+    local copiedValue = {}
+
+    copiedTables[value] =
+        copiedValue
+
+    for key, nestedValue in pairs(value) do
+        local copiedKey =
+            copyValue(
+                key,
+                copiedTables
+            )
+
+        copiedValue[copiedKey] =
+            copyValue(
+                nestedValue,
+                copiedTables
+            )
+    end
+
+    return copiedValue
 end
 
 -----------------------------------------------------------------------------
@@ -58,10 +104,7 @@ function FORGE.StateStore:exists(namespace)
         return false
     end
 
-    return hasNamespace(
-        self.namespaces,
-        namespace
-    )
+    return hasNamespace(namespace)
 end
 
 --- Registers a new runtime-state namespace.
@@ -81,10 +124,7 @@ function FORGE.StateStore:register(namespace)
         return false
     end
 
-    if hasNamespace(
-        self.namespaces,
-        namespace
-    ) then
+    if hasNamespace(namespace) then
         if FORGE.Logger:isDevelopmentMode() then
             FORGE.Logger:debug(
                 FORGE.Definitions.LogSource.STATE_STORE,
@@ -96,7 +136,7 @@ function FORGE.StateStore:register(namespace)
         return false
     end
 
-    self.namespaces[namespace] = {}
+    namespaces[namespace] = {}
 
     return true
 end
@@ -124,10 +164,7 @@ function FORGE.StateStore:set(
         return false
     end
 
-    if not hasNamespace(
-        self.namespaces,
-        namespace
-    ) then
+    if not hasNamespace(namespace) then
         FORGE.Logger:error(
             FORGE.Definitions.LogSource.STATE_STORE,
             "Cannot set value in unregistered namespace '%s'",
@@ -162,7 +199,7 @@ function FORGE.StateStore:set(
         return false
     end
 
-    self.namespaces[namespace][key] = value
+    namespaces[namespace][key] = value
 
     return true
 end
@@ -189,10 +226,7 @@ function FORGE.StateStore:get(
         return nil, false
     end
 
-    if not hasNamespace(
-        self.namespaces,
-        namespace
-    ) then
+    if not hasNamespace(namespace) then
         FORGE.Logger:error(
             FORGE.Definitions.LogSource.STATE_STORE,
             "Cannot get value from unregistered namespace '%s'",
@@ -217,13 +251,105 @@ function FORGE.StateStore:get(
     end
 
     local value =
-        self.namespaces[namespace][key]
+        namespaces[namespace][key]
 
     if value == nil then
         return nil, false
     end
 
     return value, true
+end
+
+--- Returns a detached copy of one registered namespace.
+---
+--- Changes made to the returned table do not modify live State Store state.
+-- @param namespace any
+-- @return table|nil snapshot
+-- @return boolean found
+function FORGE.StateStore:snapshot(namespace)
+    if not isValidNamespace(namespace) then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.STATE_STORE,
+            "Cannot snapshot invalid namespace '%s'",
+            FORGE.Logger:safeToString(
+                namespace,
+                "<unprintable>"
+            )
+        )
+
+        return nil, false
+    end
+
+    if not hasNamespace(namespace) then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.STATE_STORE,
+            "Cannot snapshot unregistered namespace '%s'",
+            namespace
+        )
+
+        return nil, false
+    end
+
+    return copyValue(
+        namespaces[namespace]
+    ), true
+end
+
+--- Atomically replaces all values within a registered namespace.
+---
+--- The supplied values are copied before being stored so subsequent changes
+--- made by the caller cannot modify live State Store state.
+-- @param namespace any
+-- @param values any
+-- @return boolean replaced
+function FORGE.StateStore:replaceNamespace(
+    namespace,
+    values
+)
+    if not isValidNamespace(namespace) then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.STATE_STORE,
+            "Cannot replace invalid namespace '%s'",
+            FORGE.Logger:safeToString(
+                namespace,
+                "<unprintable>"
+            )
+        )
+
+        return false
+    end
+
+    if not hasNamespace(namespace) then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.STATE_STORE,
+            "Cannot replace unregistered namespace '%s'",
+            namespace
+        )
+
+        return false
+    end
+
+    if type(values) ~= "table" then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.STATE_STORE,
+            "Cannot replace namespace '%s' using non-table state '%s'",
+            namespace,
+            FORGE.Logger:safeToString(
+                values,
+                "<unprintable>"
+            )
+        )
+
+        return false
+    end
+
+    local copiedValues =
+        copyValue(values)
+
+    namespaces[namespace] =
+        copiedValues
+
+    return true
 end
 
 --- Removes a value from a registered namespace.
@@ -247,10 +373,7 @@ function FORGE.StateStore:remove(
         return false
     end
 
-    if not hasNamespace(
-        self.namespaces,
-        namespace
-    ) then
+    if not hasNamespace(namespace) then
         FORGE.Logger:error(
             FORGE.Definitions.LogSource.STATE_STORE,
             "Cannot remove value from unregistered namespace '%s'",
@@ -274,11 +397,11 @@ function FORGE.StateStore:remove(
         return false
     end
 
-    if self.namespaces[namespace][key] == nil then
+    if namespaces[namespace][key] == nil then
         return false
     end
 
-    self.namespaces[namespace][key] = nil
+    namespaces[namespace][key] = nil
 
     return true
 end
@@ -300,10 +423,7 @@ function FORGE.StateStore:clear(namespace)
         return false
     end
 
-    if not hasNamespace(
-        self.namespaces,
-        namespace
-    ) then
+    if not hasNamespace(namespace) then
         FORGE.Logger:error(
             FORGE.Definitions.LogSource.STATE_STORE,
             "Cannot clear unregistered namespace '%s'",
@@ -313,7 +433,7 @@ function FORGE.StateStore:clear(namespace)
         return false
     end
 
-    self.namespaces[namespace] = {}
+    namespaces[namespace] = {}
 
     return true
 end
@@ -323,12 +443,12 @@ end
 function FORGE.StateStore:clearAll()
     local clearedNamespaceCount = 0
 
-    for _ in pairs(self.namespaces) do
+    for _ in pairs(namespaces) do
         clearedNamespaceCount =
             clearedNamespaceCount + 1
     end
 
-    self.namespaces = {}
+    namespaces = {}
 
     return clearedNamespaceCount
 end

@@ -1,4 +1,4 @@
----=============================================================================
+---==========================================================================
 --- FORGE XML Reader
 ---
 --- Deserialises FORGE runtime state from XML.
@@ -24,6 +24,15 @@ FORGE.XMLReader = {}
 local function isValidFilePath(filePath)
     return type(filePath) == "string"
         and string.match(filePath, "%S") ~= nil
+end
+
+local function isValidVersion(version)
+    return type(version) == "number"
+        and version == version
+        and version ~= math.huge
+        and version ~= -math.huge
+        and version > 0
+        and version == math.floor(version)
 end
 
 --- Opens an existing FORGE XML document.
@@ -236,7 +245,7 @@ local function readValue(
         return false, nil
     end
 
-    local values = {}
+    local tableValues = {}
     local index = 0
 
     while true do
@@ -269,7 +278,7 @@ local function readValue(
         if not keyRead
             or type(key) ~= "string"
             or string.match(key, "%S") == nil
-            or values[key] ~= nil then
+            or tableValues[key] ~= nil then
             return false, nil
         end
 
@@ -283,11 +292,11 @@ local function readValue(
             return false, nil
         end
 
-        values[key] = nestedValue
+        tableValues[key] = nestedValue
         index = index + 1
     end
 
-    return true, values
+    return true, tableValues
 end
 
 --- Reads all persisted namespaces.
@@ -436,8 +445,7 @@ function FORGE.XMLReader:read(filePath)
     local namespaces = nil
 
     if versionRead
-        and version ~= nil
-        and version > 0 then
+        and isValidVersion(version) then
         namespacesRead, namespaces =
             readNamespaces(xmlFile)
     end
@@ -446,8 +454,7 @@ function FORGE.XMLReader:read(filePath)
         releaseDocument(xmlFile)
 
     if not versionRead
-        or version == nil
-        or version <= 0 then
+        or not isValidVersion(version) then
         FORGE.Logger:error(
             FORGE.Definitions.LogSource.XML_READER,
             "Persistence document '%s' has an invalid or missing version",

@@ -32,10 +32,14 @@ local function isValidDocument(document)
         return false
     end
 
-    return document.version > 0
-        and document.version == math.floor(
-            document.version
-        )
+    local version =
+        document.version
+
+    return version == version
+        and version ~= math.huge
+        and version ~= -math.huge
+        and version > 0
+        and version == math.floor(version)
 end
 
 local function getSortedKeys(values)
@@ -155,6 +159,26 @@ local function writeBoolean(
 )
     local callSucceeded = pcall(
         setXMLBool,
+        xmlFile,
+        path,
+        value
+    )
+
+    return callSucceeded
+end
+
+--- Writes an integer attribute safely.
+-- @param xmlFile integer
+-- @param path string
+-- @param value integer
+-- @return boolean success
+local function writeInteger(
+    xmlFile,
+    path,
+    value
+)
+    local callSucceeded = pcall(
+        setXMLInt,
         xmlFile,
         path,
         value
@@ -302,26 +326,6 @@ local function writeNamespaces(
     end
 
     return true
-end
-
---- Writes an integer attribute safely.
--- @param xmlFile integer
--- @param path string
--- @param value integer
--- @return boolean success
-local function writeInteger(
-    xmlFile,
-    path,
-    value
-)
-    local callSucceeded = pcall(
-        setXMLInt,
-        xmlFile,
-        path,
-        value
-    )
-
-    return callSucceeded
 end
 
 -----------------------------------------------------------------------------

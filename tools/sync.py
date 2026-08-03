@@ -4,114 +4,167 @@ FORGE Synchronisation Tool
 =============================================================================
 
 Purpose:
-    Synchronises the authoritative FORGE engine source into the prototype
-    reference implementation.
+    Synchronises the authoritative FORGE engine and test source trees into the
+    prototype reference implementation.
 
 Responsibilities:
-    • Validate repository structure.
-    • Synchronise engine files.
-    • Synchronise test files.
+    • Validate the required repository structure.
+    • Build one combined synchronisation manifest.
+    • Recursively synchronise all engine files.
+    • Recursively synchronise all test files.
+    • Remove stale prototype files controlled by the synchronisation process.
     • Report synchronisation results.
 
 Design Principles:
     • The repository is the source of truth.
-    • Synchronisation is repeatable and idempotent.
+    • Synchronisation is recursive, repeatable, and idempotent.
+    • New source folders require no synchronisation-tool changes.
+    • Source-path collisions are rejected.
     • Fail early with clear diagnostics.
-    • Never modify the authoritative engine source.
+    • Never modify authoritative engine or test source files.
 
 This tool is part of the FORGE developer toolchain.
 =============================================================================
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 import filecmp
 import shutil
 
+
+REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+
+
 CONFIG = {
-    "version": "0.1.0-dev",
+    "version": "0.2.0-dev",
 
     "paths": {
-        "engine": Path("engine"),
-        "tests": Path("tests"),
-        "prototype": Path(
-            "prototype/FS25_FORGE_Engine/scripts/forge"
+        "engine": REPOSITORY_ROOT / "engine",
+        "tests": REPOSITORY_ROOT / "tests",
+        "prototype": (
+            REPOSITORY_ROOT
+            / "prototype"
+            / "FS25_FORGE_Engine"
+            / "scripts"
+            / "forge"
         ),
     },
 
-    "engine_directories": (
-        "definitions",
-        "services",
-        "managers",
-        "utilities",
+    "required_engine_files": (
+        Path("FORGE.lua"),
+        Path("Engine.lua"),
     ),
 
-    "engine_root_files": (
-        "FORGE.lua",
-        "Engine.lua",
-    ),
+    "excluded_directory_names": {
+        ".git",
+        ".idea",
+        ".pytest_cache",
+        ".vscode",
+        "__pycache__",
+    },
+
+    "excluded_file_names": {
+        ".DS_Store",
+        "Thumbs.db",
+    },
+
+    "excluded_file_suffixes": {
+        ".pyc",
+        ".pyo",
+    },
 }
 
 
 def main() -> int:
     """Run the FORGE synchronisation workflow."""
-    if not validate():
+    print_header()
+
+    if not validate_repository():
         return 1
 
     try:
-        sync_engine()
-        sync_tests()
-    except (OSError, ValueError) as error:
+        manifest = build_manifest()
+        result = synchronise_manifest(
+            manifest,
+            CONFIG["paths"]["prototype"],
+        )
+    except (OSError, RuntimeError, ValueError) as error:
         print()
         print("ERROR: Synchronisation failed.")
         print()
         print(f"Reason: {error}")
         return 1
 
+    print_result(result)
     print_summary()
+
     return 0
 
 
-def validate() -> bool:
-    """Validate that all required repository directories exist."""
+def print_header() -> None:
+    """Print the synchronisation-tool heading."""
     print("FORGE Synchronisation Tool")
     print()
+
+
+def display_path(path: Path) -> str:
+    """Return a repository-relative path when possible."""
+    try:
+        return str(path.relative_to(REPOSITORY_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def validate_repository() -> bool:
+    """Validate that the required repository structure exists."""
     print("Validating repository...")
     print()
 
     missing_paths: list[Path] = []
 
-    for path_name, path in CONFIG["paths"].items():
+    engine_root = CONFIG["paths"]["engine"]
+    tests_root = CONFIG["paths"]["tests"]
+    prototype_root = CONFIG["paths"]["prototype"]
+
+    required_directories = {
+        "engine": engine_root,
+        "tests": tests_root,
+        "prototype": prototype_root,
+    }
+
+    for path_name, path in required_directories.items():
         if path.is_dir():
-            print(f"[OK] {path_name}: {path}")
+            print(
+                f"[OK] {path_name}: "
+                f"{display_path(path)}"
+            )
         else:
-            print(f"[MISSING] {path_name}: {path}")
+            print(
+                f"[MISSING] {path_name}: "
+                f"{display_path(path)}"
+            )
+
             missing_paths.append(path)
 
-    print()
-
-
-    engine_root = CONFIG["paths"]["engine"]
-
-    for directory_name in CONFIG["engine_directories"]:
-        directory_path = engine_root / directory_name
-        path_name = f"engine/{directory_name}"
-
-        if directory_path.is_dir():
-            print(f"[OK] {path_name}: {directory_path}")
-        else:
-            print(f"[MISSING] {path_name}: {directory_path}")
-            missing_paths.append(directory_path)
-
-    for file_name in CONFIG["engine_root_files"]:
-        file_path = engine_root / file_name
-        path_name = f"engine/{file_name}"
+    for relative_path in CONFIG["required_engine_files"]:
+        file_path = engine_root / relative_path
 
         if file_path.is_file():
-            print(f"[OK] {path_name}: {file_path}")
+            print(
+                f"[OK] engine/{relative_path}: "
+                f"{display_path(file_path)}"
+            )
         else:
-            print(f"[MISSING] {path_name}: {file_path}")
+            print(
+                f"[MISSING] engine/{relative_path}: "
+                f"{display_path(file_path)}"
+            )
+
             missing_paths.append(file_path)
 
+    print()
 
     if missing_paths:
         print("ERROR: Repository validation failed.")
@@ -119,174 +172,342 @@ def validate() -> bool:
         print("Missing required paths:")
 
         for path in missing_paths:
-            print(f"  - {path}")
+            print(f"  - {display_path(path)}")
 
         return False
 
     print("Repository validation successful.")
+
     return True
 
 
-def sync_directory(
-    source_directory: Path,
-    destination_directory: Path,
+def is_excluded_path(
+    path: Path,
+    source_root: Path,
+) -> bool:
+    """Return whether a source path should be excluded."""
+    relative_path = path.relative_to(source_root)
+
+    excluded_directory_names = (
+        CONFIG["excluded_directory_names"]
+    )
+
+    if any(
+        part in excluded_directory_names
+        for part in relative_path.parts[:-1]
+    ):
+        return True
+
+    if path.name in CONFIG["excluded_file_names"]:
+        return True
+
+    if path.suffix.lower() in CONFIG["excluded_file_suffixes"]:
+        return True
+
+    return False
+
+
+def collect_source_files(
+    source_root: Path,
+    destination_prefix: Path,
+) -> dict[Path, Path]:
+    """
+    Collect recursively synchronised files from one source tree.
+
+    Returned keys are destination-relative paths and returned values are
+    authoritative source paths.
+    """
+    if not source_root.is_dir():
+        raise FileNotFoundError(
+            "Synchronisation source directory does not exist: "
+            f"{display_path(source_root)}"
+        )
+
+    source_files: dict[Path, Path] = {}
+
+    for source_path in source_root.rglob("*"):
+        if not source_path.is_file():
+            continue
+
+        if is_excluded_path(
+            source_path,
+            source_root,
+        ):
+            continue
+
+        source_relative_path = (
+            source_path.relative_to(source_root)
+        )
+
+        destination_relative_path = (
+            destination_prefix
+            / source_relative_path
+        )
+
+        source_files[destination_relative_path] = (
+            source_path
+        )
+
+    return source_files
+
+
+def merge_manifest_entries(
+    manifest: dict[Path, Path],
+    entries: dict[Path, Path],
+) -> None:
+    """
+    Merge source entries into the combined manifest.
+
+    Raises an error if two authoritative source files target the same
+    prototype-relative path.
+    """
+    for relative_path, source_path in entries.items():
+        existing_source = manifest.get(relative_path)
+
+        if existing_source is not None:
+            raise RuntimeError(
+                "Synchronisation source collision for "
+                f"'{relative_path}': "
+                f"'{display_path(existing_source)}' and "
+                f"'{display_path(source_path)}'"
+            )
+
+        manifest[relative_path] = source_path
+
+
+def build_manifest() -> dict[Path, Path]:
+    """
+    Build the complete prototype-file manifest.
+
+    Engine files retain their paths relative to engine/.
+
+    Test files are placed beneath tests/ in the prototype.
+    """
+    print()
+    print("Building synchronisation manifest...")
+    print()
+
+    manifest: dict[Path, Path] = {}
+
+    engine_entries = collect_source_files(
+        CONFIG["paths"]["engine"],
+        Path(),
+    )
+
+    test_entries = collect_source_files(
+        CONFIG["paths"]["tests"],
+        Path("tests"),
+    )
+
+    merge_manifest_entries(
+        manifest,
+        engine_entries,
+    )
+
+    merge_manifest_entries(
+        manifest,
+        test_entries,
+    )
+
+    print(
+        f"[MANIFEST] engine: "
+        f"{len(engine_entries)} files"
+    )
+
+    print(
+        f"[MANIFEST] tests: "
+        f"{len(test_entries)} files"
+    )
+
+    print(
+        f"[MANIFEST] total: "
+        f"{len(manifest)} files"
+    )
+
+    return manifest
+
+
+def collect_destination_files(
+    destination_root: Path,
+) -> dict[Path, Path]:
+    """Collect all files currently present in the prototype tree."""
+    if not destination_root.exists():
+        return {}
+
+    return {
+        path.relative_to(destination_root): path
+        for path in destination_root.rglob("*")
+        if path.is_file()
+    }
+
+
+def files_are_identical(
+    source_path: Path,
+    destination_path: Path,
+) -> bool:
+    """Return whether two files contain identical data."""
+    return (
+        destination_path.is_file()
+        and filecmp.cmp(
+            source_path,
+            destination_path,
+            shallow=False,
+        )
+    )
+
+
+def remove_empty_directories(
+    destination_root: Path,
+) -> list[Path]:
+    """Remove empty directories left after stale-file cleanup."""
+    removed_directories: list[Path] = []
+
+    if not destination_root.is_dir():
+        return removed_directories
+
+    directories = sorted(
+        (
+            path
+            for path in destination_root.rglob("*")
+            if path.is_dir()
+        ),
+        key=lambda path: len(path.parts),
+        reverse=True,
+    )
+
+    for directory in directories:
+        if any(directory.iterdir()):
+            continue
+
+        relative_path = (
+            directory.relative_to(destination_root)
+        )
+
+        directory.rmdir()
+        removed_directories.append(relative_path)
+
+    return removed_directories
+
+
+def synchronise_manifest(
+    manifest: dict[Path, Path],
+    destination_root: Path,
 ) -> dict[str, list[Path]]:
     """
-    Mirror one source directory into one controlled destination directory.
+    Mirror the combined manifest into the prototype destination.
 
-    Returns lists of copied, skipped and removed paths for reporting.
+    Files present in the controlled prototype tree but absent from the
+    manifest are removed.
     """
-    if not source_directory.is_dir():
-        raise FileNotFoundError(
-            f"Synchronisation source directory does not exist: "
-            f"{source_directory}"
-        )
+    print()
+    print("Synchronising prototype...")
+    print()
 
     result: dict[str, list[Path]] = {
         "copied": [],
-        "skipped": [],
+        "unchanged": [],
         "removed": [],
+        "removed_directories": [],
     }
 
-    destination_directory.mkdir(parents=True, exist_ok=True)
-
-    source_files = {
-        path.relative_to(source_directory): path
-        for path in source_directory.rglob("*")
-        if path.is_file()
-    }
-
-    destination_files = {
-        path.relative_to(destination_directory): path
-        for path in destination_directory.rglob("*")
-        if path.is_file()
-    }
-
-    for relative_path, source_path in source_files.items():
-        destination_path = destination_directory / relative_path
-        destination_path.parent.mkdir(parents=True, exist_ok=True)
-
-        if (
-            destination_path.is_file()
-            and filecmp.cmp(
-                source_path,
-                destination_path,
-                shallow=False,
-            )
-        ):
-            result["skipped"].append(relative_path)
-            continue
-
-        shutil.copy2(source_path, destination_path)
-        result["copied"].append(relative_path)
-
-    stale_paths = destination_files.keys() - source_files.keys()
-
-    for relative_path in sorted(stale_paths):
-        destination_files[relative_path].unlink()
-        result["removed"].append(relative_path)
-
-    for directory in sorted(
-        destination_directory.rglob("*"),
-        reverse=True,
-    ):
-        if directory.is_dir() and not any(directory.iterdir()):
-            directory.rmdir()
-
-    return result
-
-
-def sync_file(
-    source_file: Path,
-    destination_file: Path,
-) -> str:
-    """
-    Synchronise one controlled source file into its destination.
-
-    Returns copied or skipped for reporting.
-    """
-    if not source_file.is_file():
-        raise FileNotFoundError(
-            f"Synchronisation source file does not exist: "
-            f"{source_file}"
-        )
-
-    destination_file.parent.mkdir(
+    destination_root.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    if (
-        destination_file.is_file()
-        and filecmp.cmp(
-            source_file,
-            destination_file,
-            shallow=False,
-        )
-    ):
-        return "skipped"
-
-    shutil.copy2(source_file, destination_file)
-    return "copied"
-
-
-def sync_engine() -> None:
-    """Synchronise authoritative engine files into the prototype."""
-    engine_root = CONFIG["paths"]["engine"]
-    prototype_root = CONFIG["paths"]["prototype"]
-
-    print()
-    print("Synchronising engine...")
-    print()
-
-    for directory_name in CONFIG["engine_directories"]:
-        source_directory = engine_root / directory_name
-        destination_directory = prototype_root / directory_name
-
-        result = sync_directory(
-            source_directory,
-            destination_directory,
-        )
-
-        print(
-            f"[SYNC] {directory_name}: "
-            f"{len(result['copied'])} copied, "
-            f"{len(result['skipped'])} unchanged, "
-            f"{len(result['removed'])} removed"
-        )
-
-    for file_name in CONFIG["engine_root_files"]:
-        source_file = engine_root / file_name
-        destination_file = prototype_root / file_name
-
-        result = sync_file(
-            source_file,
-            destination_file,
-        )
-
-        print(f"[{result.upper()}] {file_name}")
-
-
-def sync_tests() -> None:
-    """Synchronise test files into the prototype."""
-    tests_root = CONFIG["paths"]["tests"]
-    prototype_tests = CONFIG["paths"]["prototype"] / "tests"
-
-    print()
-    print("Synchronising tests...")
-    print()
-
-    result = sync_directory(
-        tests_root,
-        prototype_tests,
+    destination_files = collect_destination_files(
+        destination_root
     )
 
+    for relative_path in sorted(manifest):
+        source_path = manifest[relative_path]
+        destination_path = (
+            destination_root
+            / relative_path
+        )
+
+        destination_path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        if files_are_identical(
+            source_path,
+            destination_path,
+        ):
+            result["unchanged"].append(
+                relative_path
+            )
+
+            continue
+
+        shutil.copy2(
+            source_path,
+            destination_path,
+        )
+
+        result["copied"].append(
+            relative_path
+        )
+
+    stale_paths = sorted(
+        destination_files.keys()
+        - manifest.keys()
+    )
+
+    for relative_path in stale_paths:
+        destination_path = (
+            destination_files[relative_path]
+        )
+
+        destination_path.unlink()
+
+        result["removed"].append(
+            relative_path
+        )
+
+    result["removed_directories"] = (
+        remove_empty_directories(
+            destination_root
+        )
+    )
+
+    return result
+
+
+def print_result(
+    result: dict[str, list[Path]],
+) -> None:
+    """Print synchronisation counts and changed paths."""
     print(
-        f"[SYNC] tests: "
+        "[SYNC] prototype: "
         f"{len(result['copied'])} copied, "
-        f"{len(result['skipped'])} unchanged, "
-        f"{len(result['removed'])} removed"
+        f"{len(result['unchanged'])} unchanged, "
+        f"{len(result['removed'])} removed, "
+        f"{len(result['removed_directories'])} "
+        "empty directories removed"
     )
+
+    if result["copied"]:
+        print()
+        print("Copied files:")
+
+        for path in result["copied"]:
+            print(f"  + {path}")
+
+    if result["removed"]:
+        print()
+        print("Removed stale files:")
+
+        for path in result["removed"]:
+            print(f"  - {path}")
+
+    if result["removed_directories"]:
+        print()
+        print("Removed empty directories:")
+
+        for path in result["removed_directories"]:
+            print(f"  - {path}")
 
 
 def print_summary() -> None:

@@ -1,14 +1,23 @@
 ---=============================================================================
 --- FORGE Save Manager Tests
 ---
---- Manual test harness for Save Manager persistence registration.
+--- Manual test harness for FORGE Save Manager registration and validation.
 ---
 --- Responsibilities:
 ---     • Verify persistence namespace validation.
 ---     • Verify existing State Store namespace requirements.
 ---     • Verify persistence registration.
 ---     • Verify duplicate registration behaviour.
----     • Restore shared Save Manager and State Store state after testing.
+---     • Verify supported persistence values.
+---     • Verify unsupported-value rejection.
+---     • Verify cyclic-value rejection.
+---     • Verify non-finite number rejection.
+---     • Verify stale persistence registration handling.
+---     • Verify controlled registration cleanup.
+---     • Restore shared Logger state after testing.
+---
+--- This harness assumes it runs before production State Store namespaces are
+--- registered.
 ---=============================================================================
 
 FORGE.Tests = FORGE.Tests or {}
@@ -20,14 +29,8 @@ function FORGE.Tests.runSaveManagerTests()
     local previousMinimumLevel =
         FORGE.Logger:getMinimumLevel()
 
-    local previousNamespaces =
-        FORGE.StateStore.namespaces
-
-    local previousPersistentNamespaces =
-        FORGE.SaveManager.persistentNamespaces
-
-    FORGE.StateStore.namespaces = {}
-    FORGE.SaveManager.persistentNamespaces = {}
+    local clearedRegistrationsBeforeTest =
+        FORGE.SaveManager:clearAllRegistrations()
 
     local success, errorMessage = pcall(
         function()
@@ -37,7 +40,15 @@ function FORGE.Tests.runSaveManagerTests()
                 FORGE.Definitions.LogLevel.TRACE
             )
 
-            local namespace = "forge.test.persistence"
+            local namespacesClearedBeforeTest =
+                FORGE.StateStore:clearAll()
+
+            -----------------------------------------------------------------
+            -- Persistence Registration
+            -----------------------------------------------------------------
+
+            local namespace =
+                "forge.test.persistence"
 
             local namespaceCreated =
                 FORGE.StateStore:register(namespace)
@@ -72,86 +83,186 @@ function FORGE.Tests.runSaveManagerTests()
                     "forge.test.missing"
                 )
 
+            -----------------------------------------------------------------
+            -- Valid Persistence State
+            -----------------------------------------------------------------
+
             local validNamespace =
                 "forge.test.validPersistence"
 
-            local invalidNamespace =
-                "forge.test.invalidPersistence"
+            local validNamespaceCreated =
+                FORGE.StateStore:register(
+                    validNamespace
+                )
 
-            local cyclicNamespace =
-                "forge.test.cyclicPersistence"
+            local validValuesStored =
+                FORGE.StateStore:set(
+                    validNamespace,
+                    "settings",
+                    {
+                        enabled = true,
+                        threshold = 42,
+                        label = "FORGE",
 
-            FORGE.StateStore:register(validNamespace)
+                        nested = {
+                            active = false,
+                            ratio = 0.8
+                        }
+                    }
+                )
 
-            FORGE.StateStore:set(
-                validNamespace,
-                "settings",
-                {
-                    enabled = true,
-                    threshold = 42,
-                    label = "FORGE"
-                }
-            )
-
-            FORGE.SaveManager:registerNamespace(
-                validNamespace
-            )
+            local validNamespaceRegistered =
+                FORGE.SaveManager:registerNamespace(
+                    validNamespace
+                )
 
             local validNamespaceResult =
                 FORGE.SaveManager:validateNamespace(
                     validNamespace
                 )
 
-            FORGE.StateStore:register(
-                invalidNamespace
-            )
+            -----------------------------------------------------------------
+            -- Unsupported Persistence State
+            -----------------------------------------------------------------
 
-            FORGE.StateStore:set(
-                invalidNamespace,
-                "callback",
-                function()
-                end
-            )
+            local invalidNamespace =
+                "forge.test.invalidPersistence"
 
-            FORGE.SaveManager:registerNamespace(
-                invalidNamespace
-            )
+            local invalidNamespaceCreated =
+                FORGE.StateStore:register(
+                    invalidNamespace
+                )
+
+            local unsupportedValueStored =
+                FORGE.StateStore:set(
+                    invalidNamespace,
+                    "callback",
+                    function()
+                    end
+                )
+
+            local invalidNamespaceRegistered =
+                FORGE.SaveManager:registerNamespace(
+                    invalidNamespace
+                )
 
             local invalidNamespaceResult =
                 FORGE.SaveManager:validateNamespace(
                     invalidNamespace
                 )
 
+            -----------------------------------------------------------------
+            -- Cyclic Persistence State
+            -----------------------------------------------------------------
+
+            local cyclicNamespace =
+                "forge.test.cyclicPersistence"
+
             local cyclicValue = {}
             cyclicValue.self = cyclicValue
 
-            FORGE.StateStore:register(
-                cyclicNamespace
-            )
+            local cyclicNamespaceCreated =
+                FORGE.StateStore:register(
+                    cyclicNamespace
+                )
 
-            FORGE.StateStore:set(
-                cyclicNamespace,
-                "cycle",
-                cyclicValue
-            )
+            local cyclicValueStored =
+                FORGE.StateStore:set(
+                    cyclicNamespace,
+                    "cycle",
+                    cyclicValue
+                )
 
-            FORGE.SaveManager:registerNamespace(
-                cyclicNamespace
-            )
+            local cyclicNamespaceRegistered =
+                FORGE.SaveManager:registerNamespace(
+                    cyclicNamespace
+                )
 
             local cyclicNamespaceResult =
                 FORGE.SaveManager:validateNamespace(
                     cyclicNamespace
                 )
 
+            -----------------------------------------------------------------
+            -- Non-Finite Number Rejection
+            -----------------------------------------------------------------
+
+            local nonFiniteNamespace =
+                "forge.test.nonFinitePersistence"
+
+            local nonFiniteNamespaceCreated =
+                FORGE.StateStore:register(
+                    nonFiniteNamespace
+                )
+
+            local nonFiniteValueStored =
+                FORGE.StateStore:set(
+                    nonFiniteNamespace,
+                    "infiniteValue",
+                    math.huge
+                )
+
+            local nonFiniteNamespaceRegistered =
+                FORGE.SaveManager:registerNamespace(
+                    nonFiniteNamespace
+                )
+
+            local nonFiniteNamespaceResult =
+                FORGE.SaveManager:validateNamespace(
+                    nonFiniteNamespace
+                )
+
+            -----------------------------------------------------------------
+            -- Unregistered Persistence Validation
+            -----------------------------------------------------------------
+
+            local stateOnlyNamespace =
+                "forge.test.notPersistent"
+
+            local stateOnlyNamespaceCreated =
+                FORGE.StateStore:register(
+                    stateOnlyNamespace
+                )
+
             local unregisteredValidation =
                 FORGE.SaveManager:validateNamespace(
-                    "forge.test.notPersistent"
+                    stateOnlyNamespace
                 )
+
+            -----------------------------------------------------------------
+            -- Stale Persistence Registration
+            -----------------------------------------------------------------
+
+            local staleNamespace =
+                "forge.test.stalePersistence"
+
+            local staleNamespaceCreated =
+                FORGE.StateStore:register(
+                    staleNamespace
+                )
+
+            local staleNamespaceRegistered =
+                FORGE.SaveManager:registerNamespace(
+                    staleNamespace
+                )
+
+            local stateStoreClearedForStaleTest =
+                FORGE.StateStore:clearAll()
+
+            local staleNamespaceResult =
+                FORGE.SaveManager:validateNamespace(
+                    staleNamespace
+                )
+
+            -----------------------------------------------------------------
+            -- Results
+            -----------------------------------------------------------------
 
             FORGE.Logger:info(
                 FORGE.Definitions.LogSource.TEST,
-                "Save Manager registration: stateCreated=%s registered=%s duplicate=%s isRegistered=%s missingRegistered=%s invalidRegistered=%s missingIsRegistered=%s",
+                "Save Manager registration: preTestNamespacesCleared=%d preTestRegistrationsCleared=%d stateCreated=%s registered=%s duplicate=%s isRegistered=%s missingRegistered=%s invalidRegistered=%s missingIsRegistered=%s",
+                namespacesClearedBeforeTest,
+                clearedRegistrationsBeforeTest,
                 FORGE.Logger:safeToString(
                     namespaceCreated,
                     "false"
@@ -184,32 +295,130 @@ function FORGE.Tests.runSaveManagerTests()
 
             FORGE.Logger:info(
                 FORGE.Definitions.LogSource.TEST,
-                "Save Manager validation: valid=%s unsupported=%s cyclic=%s unregistered=%s",
+                "Save Manager valid state: stateCreated=%s valueStored=%s registered=%s valid=%s",
+                FORGE.Logger:safeToString(
+                    validNamespaceCreated,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    validValuesStored,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    validNamespaceRegistered,
+                    "false"
+                ),
                 FORGE.Logger:safeToString(
                     validNamespaceResult,
+                    "false"
+                )
+            )
+
+            FORGE.Logger:info(
+                FORGE.Definitions.LogSource.TEST,
+                "Save Manager unsupported state: stateCreated=%s valueStored=%s registered=%s valid=%s",
+                FORGE.Logger:safeToString(
+                    invalidNamespaceCreated,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    unsupportedValueStored,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    invalidNamespaceRegistered,
                     "false"
                 ),
                 FORGE.Logger:safeToString(
                     invalidNamespaceResult,
                     "false"
+                )
+            )
+
+            FORGE.Logger:info(
+                FORGE.Definitions.LogSource.TEST,
+                "Save Manager cyclic state: stateCreated=%s valueStored=%s registered=%s valid=%s",
+                FORGE.Logger:safeToString(
+                    cyclicNamespaceCreated,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    cyclicValueStored,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    cyclicNamespaceRegistered,
+                    "false"
                 ),
                 FORGE.Logger:safeToString(
                     cyclicNamespaceResult,
                     "false"
+                )
+            )
+
+            FORGE.Logger:info(
+                FORGE.Definitions.LogSource.TEST,
+                "Save Manager numeric state: stateCreated=%s valueStored=%s registered=%s valid=%s",
+                FORGE.Logger:safeToString(
+                    nonFiniteNamespaceCreated,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    nonFiniteValueStored,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    nonFiniteNamespaceRegistered,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    nonFiniteNamespaceResult,
+                    "false"
+                )
+            )
+
+            FORGE.Logger:info(
+                FORGE.Definitions.LogSource.TEST,
+                "Save Manager validation boundaries: stateOnlyCreated=%s unregisteredValid=%s staleCreated=%s staleRegistered=%s clearedForStaleTest=%d staleValid=%s",
+                FORGE.Logger:safeToString(
+                    stateOnlyNamespaceCreated,
+                    "false"
                 ),
                 FORGE.Logger:safeToString(
                     unregisteredValidation,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    staleNamespaceCreated,
+                    "false"
+                ),
+                FORGE.Logger:safeToString(
+                    staleNamespaceRegistered,
+                    "false"
+                ),
+                stateStoreClearedForStaleTest,
+                FORGE.Logger:safeToString(
+                    staleNamespaceResult,
                     "false"
                 )
             )
         end
     )
 
-    FORGE.StateStore.namespaces =
-        previousNamespaces
+    local clearedNamespacesAfterTest =
+        FORGE.StateStore:clearAll()
 
-    FORGE.SaveManager.persistentNamespaces =
-        previousPersistentNamespaces
+    local clearedRegistrationsAfterTest =
+        FORGE.SaveManager:clearAllRegistrations()
+
+    if success then
+        FORGE.Logger:info(
+            FORGE.Definitions.LogSource.TEST,
+            "Save Manager cleanup: namespacesCleared=%d registrationsCleared=%d",
+            clearedNamespacesAfterTest,
+            clearedRegistrationsAfterTest
+        )
+    end
 
     FORGE.Logger:setDevelopmentMode(
         previousDevelopmentMode
