@@ -34,10 +34,10 @@
 
 ### In Progress
 
-- 🟡 M1.007 – Persistence
+- - 🟡 M1.007 – Persistence
   - ✅ M1.007.01 – Persistence Architecture and XML Writer
-  - 🟡 M1.007.02 – XML Reader
-  - ⏳ M1.007.03 – Save Manager Integration
+  - ✅ M1.007.02 – XML Reader
+  - 🟡 M1.007.03 – Save Manager Integration
   - ⏳ M1.007.04 – End-to-End Persistence Verification
 
 ### Planned
