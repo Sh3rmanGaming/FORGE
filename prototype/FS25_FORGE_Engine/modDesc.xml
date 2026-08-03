@@ -53,6 +53,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/services/StateStoreTest.lua"/>
         <sourceFile filename="scripts/forge/tests/services/SaveManagerTest.lua"/>
         <sourceFile filename="scripts/forge/tests/persistence/XMLWriterTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/persistence/XMLReaderTest.lua"/>
 
         <!-- Engine lifecycle registration must load last -->
         <sourceFile filename="scripts/forge/Engine.lua"/>

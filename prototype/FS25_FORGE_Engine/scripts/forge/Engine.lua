@@ -51,6 +51,10 @@ function FORGE.Engine:loadMap(mapName)
         if FORGE.Tests.runXMLWriterTests ~= nil then
             FORGE.Tests.runXMLWriterTests()
         end
+
+        if FORGE.Tests.runXMLReaderTests ~= nil then
+        FORGE.Tests.runXMLReaderTests()
+        end
     end
 end    
 

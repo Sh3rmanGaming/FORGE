@@ -19,6 +19,7 @@ FORGE.Definitions.LogSource = {
     STATE_STORE = "StateStore",
     SAVE_MANAGER = "SaveManager",
     XML_WRITER = "XMLWriter",
+    XML_READER = "XMLReader",
     TEST = "Test"
 
 }
