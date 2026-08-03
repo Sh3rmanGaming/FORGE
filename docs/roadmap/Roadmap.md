@@ -1,7 +1,7 @@
 # FORGE Roadmap
 
-**Status:** Active
-**Last Updated:** 2026-08-02
+**Status:** Active  
+**Last Updated:** 2026-08-03
 
 ---
 
@@ -34,13 +34,14 @@
 
 ### In Progress
 
-- 🟡 M1.010 – Engine Bootstrap
+- 🟡 M1.007 – Persistence
+  - ✅ M1.007.01 – Persistence Architecture and XML Writer
+  - 🟡 M1.007.02 – XML Reader
+  - ⏳ M1.007.03 – Save Manager Integration
+  - ⏳ M1.007.04 – End-to-End Persistence Verification
 
 ### Planned
 
-- ⏳ M1.007 – Save Manager
-            - XMLWriter
-            - XMLReader
 - ⏳ M1.008 – Campaign Manager
 - ⏳ M1.009 – Phone OS Foundation
 - ⏳ M1.010 – Engine Bootstrap
