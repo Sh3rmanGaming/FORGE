@@ -39,6 +39,8 @@
 ### Planned
 
 - ⏳ M1.007 – Save Manager
+            - XMLWriter
+            - XMLReader
 - ⏳ M1.008 – Campaign Manager
 - ⏳ M1.009 – Phone OS Foundation
 - ⏳ M1.010 – Engine Bootstrap

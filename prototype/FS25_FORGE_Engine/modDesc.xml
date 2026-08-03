@@ -26,7 +26,7 @@ This development build adds the first XML-driven campaign and live Projects app 
     <iconFilename>icon_forge.dds</iconFilename>
     <multiplayer supported="true"/>
 
-        <extraSourceFiles>
+    <extraSourceFiles>
         <!-- FORGE root namespace -->
         <sourceFile filename="scripts/forge/FORGE.lua"/>
 
@@ -40,12 +40,22 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/services/EventBus.lua"/>
         <sourceFile filename="scripts/forge/services/StateStore.lua"/>
 
+        <!-- Persistence implementation -->
+        <sourceFile filename="scripts/forge/services/persistence/XMLWriter.lua"/>
+        <sourceFile filename="scripts/forge/services/persistence/XMLReader.lua"/>
+
+        <!-- Persistence coordination -->
+        <sourceFile filename="scripts/forge/services/SaveManager.lua"/>
+
         <!-- Manual test harnesses -->
-        <sourceFile filename="scripts/forge/tests/LoggerTest.lua"/>
-        <sourceFile filename="scripts/forge/tests/EventBusTest.lua"/>
-        <sourceFile filename="scripts/forge/tests/StateStoreTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/services/LoggerTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/services/EventBusTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/services/StateStoreTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/services/SaveManagerTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/persistence/XMLWriterTest.lua"/>
 
         <!-- Engine lifecycle registration must load last -->
         <sourceFile filename="scripts/forge/Engine.lua"/>
     </extraSourceFiles>
+
 </modDesc>

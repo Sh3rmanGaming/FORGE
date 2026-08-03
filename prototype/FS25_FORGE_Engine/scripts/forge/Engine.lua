@@ -31,7 +31,7 @@ function FORGE.Engine:loadMap(mapName)
         )
     )
 
-    if FORGE.Tests ~= nil then
+        if FORGE.Tests ~= nil then
         if FORGE.Tests.runLoggerTests ~= nil then
             FORGE.Tests.runLoggerTests()
         end
@@ -40,11 +40,19 @@ function FORGE.Engine:loadMap(mapName)
             FORGE.Tests.runEventBusTests()
         end
 
-         if FORGE.Tests.runStateStoreTests ~= nil then
-        FORGE.Tests.runStateStoreTests()
+        if FORGE.Tests.runStateStoreTests ~= nil then
+            FORGE.Tests.runStateStoreTests()
+        end
+
+        if FORGE.Tests.runSaveManagerTests ~= nil then
+            FORGE.Tests.runSaveManagerTests()
+        end
+
+        if FORGE.Tests.runXMLWriterTests ~= nil then
+            FORGE.Tests.runXMLWriterTests()
         end
     end
-end
+end    
 
 --- Called by Farming Simulator when the mission unloads.
 function FORGE.Engine:deleteMap()
