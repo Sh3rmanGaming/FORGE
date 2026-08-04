@@ -34,11 +34,13 @@ These principles guide every engineering decision made within the project.
 
 Engineering decisions should be made using the following order of precedence:
 
-1. Engineering Charter
-2. Accepted ADRs
-3. Architecture documentation
-4. Coding Standards
-5. Project conventions
+1. Engineering Process for project roles and engineering workflow
+2. Engineering Charter for engineering philosophy
+3. Accepted ADRs
+4. Approved architecture and contract documentation
+5. Git Workflow
+6. Coding Standards
+7. Project conventions
 
 If documentation appears to conflict, contributors should seek clarification before implementing a change.
 
@@ -83,7 +85,9 @@ The following documents define the engineering standards for FORGE.
 
 | Document | Purpose |
 |----------|---------|
+| Engineering Process | Defines authoritative project roles and engineering workflow. |
 | Engineering Charter | Defines engineering values and decision-making principles. |
+| Git Workflow | Defines branch, staging, promotion, release, and Git safety policy. |
 | Coding Standards | Defines code structure and style expectations. |
 | Documentation Lifecycle | Defines how documentation progresses from draft to verified. |
 | File Header Standard | Defines standard headers for source files. |
@@ -121,8 +125,10 @@ Before a milestone is considered complete, the following should be reviewed wher
 
 ## Related Documents
 
-- Engineering Charter
-- Coding Standards
-- Documentation Lifecycle
-- Development Environment
-- Architecture Decision Records
+- [Engineering Process](style/EngineeringProcess.md)
+- [Engineering Charter](EngineeringCharter.md)
+- [Git Workflow](style/GitWorkflow.md)
+- [Coding Standards](style/CodingStandards.md)
+- [Documentation Lifecycle](style/DocumentationLifecycle.md)
+- [Development Environment](developer/DevelopmentEnvironment.md)
+- [Architecture Decision Records](adr/README.md)

@@ -120,27 +120,45 @@ Engineering integrity is more important than appearing certain.
 
 ## Project Roles
 
-## Project Architect
+Detailed role authority is defined in
+[EngineeringProcess.md](style/EngineeringProcess.md). The responsibilities
+previously associated with informal role titles are reconciled below.
+
+### Project Director
 
 Responsible for:
 
-- Product vision
-- Gameplay direction
-- Architecture approval
-- Milestone approval
+- product vision;
+- gameplay direction; and
+- milestone approval.
 
----
-
-## Engineering Lead
+### Chief Architect
 
 Responsible for:
 
-- Software architecture
-- Engineering standards
-- Code quality
-- Documentation quality
-- Technical mentoring
-- Code review
+- architecture approval;
+- software architecture;
+- engineering standards;
+- code quality;
+- documentation quality;
+- technical mentoring; and
+- code review.
+
+### Implementation Engineer
+
+Responsible for implementing approved scope, preserving alignment between
+documentation and implementation, performing proportionate validation, and
+reporting evidence.
+
+### Contributor
+
+Responsible for proposing focused improvements and following the documented
+engineering process.
+
+### Reviewer
+
+Responsible for assessing work within delegated expertise and reporting
+evidence without assuming approval authority.
 
 ---
 

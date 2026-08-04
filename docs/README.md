@@ -50,17 +50,22 @@ Project-wide standards that apply to every subsystem.
 style/
 ├── CodingStandards.md
 ├── DocumentationLifecycle.md
+├── EngineeringProcess.md
 ├── FileHeaderStandard.md
+└── GitWorkflow.md
 ```
 
 These documents define:
 
 - coding conventions
 - documentation conventions
+- authoritative project roles and engineering workflow
+- Git branch, promotion, and repository safety policy
 - file header requirements
 - project-wide engineering standards
 
-Every contributor should read these documents before contributing code.
+Every Contributor, Reviewer, and Implementation Engineer should read the
+applicable documents before contributing or reviewing work.
 
 ---
 
@@ -156,8 +161,13 @@ were made.
 ```text
 adr/
 ├── README.md
-└── ADR-001-Definitions.md
+├── ADR-001-Definitions.md
+└── docs/ADR/
+    └── ADR-002-Separate-Persistence-Reader-and-Writer.md
 ```
+
+ADR-002 remains in a legacy nested location and is indexed accurately until a
+separate task authorizes moving it.
 
 An ADR should explain:
 
@@ -169,6 +179,26 @@ An ADR should explain:
 ADRs should remain concise.
 
 Subsystem documentation should contain the complete design.
+
+---
+
+## Review Records
+
+Engineering and architecture review evidence is stored under:
+
+```text
+reviews/
+├── M2ArchitectureReview.md
+└── RepositoryBaselineAudit-001.md
+```
+
+Current records:
+
+- [M2 Architecture Review](reviews/M2ArchitectureReview.md)
+- [Repository Baseline Audit 001](reviews/RepositoryBaselineAudit-001.md)
+
+Review records capture evidence and outcomes. They do not change a document's
+lifecycle status unless the appropriate authority records that status change.
 
 ---
 
@@ -208,37 +238,36 @@ easier.
 
 Documentation should be reviewed before implementation begins.
 
-The applicable file-header and document-status requirements are defined in
-`style/FileHeaderStandard.md`.
+The authoritative workflow and role definitions are in
+[EngineeringProcess.md](style/EngineeringProcess.md). Git operations and
+promotion policy are defined in [GitWorkflow.md](style/GitWorkflow.md).
+File-header requirements are defined in
+[FileHeaderStandard.md](style/FileHeaderStandard.md).
 
 The implementation workflow for every subsystem is:
 
 ```text
-Architecture
+Problem or Objective
         ↓
-Documentation
+Repository and Scope Validation
         ↓
-Documentation Review
+Architecture and Contract Review
         ↓
-Commit
+READY FOR APPROVAL or STOP
         ↓
-Push
+Explicit Approval
         ↓
-Implementation
+Documentation and Implementation
         ↓
-Testing
+Testing and Audit
         ↓
 Code and Full File Review
         ↓
-Documentation Update
-        ↓
-API Freeze
-        ↓
-Git Tag
+Completion Report
 ```
 
-This workflow keeps the architecture and implementation aligned throughout the
-project.
+Branch promotion, commits, pushes, API freezes, and tags occur only when their
+requirements in the Git Workflow and applicable milestone plan are satisfied.
 
 ---
 

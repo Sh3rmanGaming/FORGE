@@ -38,6 +38,9 @@ All current ForgeOS documents are authored and have status `Review` while
 undergoing Architecture Review. They are not yet Approved, Implemented, or
 Verified.
 
+Review evidence and accepted decisions are recorded in the
+[M2 Architecture Review](../reviews/M2ArchitectureReview.md).
+
 | Document | Authored | Architecture Review | Approved | Implemented | Verified |
 |----------|----------|---------------------|----------|-------------|----------|
 | ForgeOS Architecture | ✅ Complete | 🟡 In Progress | ⬜ Not Started | ⬜ Not Started | ⬜ Not Started |
@@ -128,7 +131,7 @@ Verified.
 - Close application
 - Activate application
 - Background application
-- Disable application
+- Enabled-policy integration
 - Lifecycle validation
 - Transition validation
 - Lifecycle event publishing

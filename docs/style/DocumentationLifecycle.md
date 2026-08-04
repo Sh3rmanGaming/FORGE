@@ -38,7 +38,8 @@ Characteristics:
 
 ### Approved
 
-The design has been accepted by the Project Architect.
+The design has been accepted by the Chief Architect. Product or milestone
+acceptance remains the responsibility of the Project Director where applicable.
 
 Characteristics:
 
@@ -93,22 +94,37 @@ Documents may return to an earlier state whenever significant architectural chan
 
 ## Responsibilities
 
-### Project Architect
+Detailed role authority is defined in
+[EngineeringProcess.md](EngineeringProcess.md).
 
-- Approves documentation.
-- Owns product and architectural intent.
+### Project Director
 
-### Engineering Lead
+- Owns product intent.
+- Accepts milestones and product-facing governance where applicable.
 
-- Authors technical documentation.
-- Ensures implementation matches design.
-- Reviews documents for technical accuracy.
+### Chief Architect
 
-### Contributors
+- Owns architectural and public-contract intent.
+- Approves technical documentation when review is complete.
+- Owns technical accuracy and implementation-alignment expectations.
+
+### Implementation Engineer
+
+- Authors or updates technical documentation within approved scope.
+- Ensures implementation changes are reflected in documentation.
+- Provides evidence for Implemented and Verified status review.
+
+### Contributor
 
 - Suggest improvements.
 - Follow the documented lifecycle.
 - Do not mark documents as Approved or Verified.
+
+### Reviewer
+
+- Reviews documents within delegated expertise.
+- Reports defects, evidence, and recommendations.
+- Does not grant Project Director or Chief Architect approval.
 
 ---
 

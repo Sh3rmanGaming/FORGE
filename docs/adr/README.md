@@ -57,6 +57,10 @@ Additional sections may be added where appropriate if they improve clarity.
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| ADR-001 | Use Dedicated Definition Tables | Accepted |
+| [ADR-001](ADR-001-Definitions.md) | Use Dedicated Definition Tables | Accepted |
+| [ADR-002](docs/ADR/ADR-002-Separate-Persistence-Reader-and-Writer.md) | Separate Persistence Reading and Writing | Accepted |
 
 As new ADRs are created, update this table to provide a quick index of the project's architectural history.
+
+ADR-002 remains in its current legacy nested location. Its location is indexed
+here for discoverability; no file move is implied.

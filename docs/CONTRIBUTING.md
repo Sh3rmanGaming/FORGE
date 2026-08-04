@@ -26,13 +26,15 @@ If you are unsure why a particular standard exists, consult the project document
 
 Please familiarise yourself with the following documents:
 
-- Project Vision
-- Engineering Charter
-- Engine Architecture
-- Coding Standards
-- Documentation Lifecycle
-- Development Environment
-- Architecture Decision Records (ADRs)
+- [Engineering Process](style/EngineeringProcess.md)
+- [Git Workflow](style/GitWorkflow.md)
+- [Project Vision](architecture/000_ProjectVision.md)
+- [Engineering Charter](EngineeringCharter.md)
+- [Engine Architecture](architecture/001_EngineArchitecture.md)
+- [Coding Standards](style/CodingStandards.md)
+- [Documentation Lifecycle](style/DocumentationLifecycle.md)
+- [Development Environment](developer/DevelopmentEnvironment.md)
+- [Architecture Decision Records](adr/README.md)
 
 Understanding these documents will make contributing significantly easier.
 
@@ -40,13 +42,14 @@ Understanding these documents will make contributing significantly easier.
 
 ## Development Workflow
 
-1. Create or update documentation where appropriate.
-2. Discuss significant architectural changes before implementation.
-3. Implement the approved design.
-4. Run the FORGE Synchronisation Tool.
-5. Test your changes.
-6. Update documentation if behaviour has changed.
-7. Submit your changes for review.
+1. Validate repository state, scope, and applicable documentation.
+2. Return `STOP` for a blocker or `READY FOR APPROVAL` with a concrete plan.
+3. Wait for explicit approval.
+4. Create or update documentation where appropriate.
+5. Implement the approved design.
+6. Run applicable synchronization only when its effects are understood.
+7. Test and review changes in proportion to risk.
+8. Report changes, evidence, unresolved issues, and repository status.
 
 ---
 
