@@ -109,7 +109,8 @@ These documents define:
 
 ## ForgeOS
 
-ForgeOS documentation currently undergoing Architecture Review.
+The five ForgeOS documents are Approved as the authoritative v0.1
+implementation contract. Implementation and verification remain outstanding.
 
 ```text
 forgeos/

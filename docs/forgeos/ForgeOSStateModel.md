@@ -1,7 +1,7 @@
 # FORGE ForgeOS State Model
 
 **Version:** 0.1  
-**Status:** Review
+**Status:** Approved
 **Milestone:** M2 – ForgeOS
 
 ---

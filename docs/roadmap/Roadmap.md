@@ -34,20 +34,20 @@
 
 #### ⏳ M2.001 – Documentation
 
-All current ForgeOS documents are authored and have status `Review` while
-undergoing Architecture Review. They are not yet Approved, Implemented, or
-Verified.
+All current ForgeOS documents are authored, have completed Architecture Review,
+and have status `Approved` as the authoritative v0.1 implementation contract.
+They are not yet Implemented or Verified.
 
 Review evidence and accepted decisions are recorded in the
 [M2 Architecture Review](../reviews/M2ArchitectureReview.md).
 
 | Document | Authored | Architecture Review | Approved | Implemented | Verified |
 |----------|----------|---------------------|----------|-------------|----------|
-| ForgeOS Architecture | ✅ Complete | 🟡 In Progress | ⬜ Not Started | ⬜ Not Started | ⬜ Not Started |
-| ForgeOS Component Design | ✅ Complete | 🟡 In Progress | ⬜ Not Started | ⬜ Not Started | ⬜ Not Started |
-| ForgeOS Definitions | ✅ Complete | 🟡 In Progress | ⬜ Not Started | ⬜ Not Started | ⬜ Not Started |
-| ForgeOS App Contract | ✅ Complete | 🟡 In Progress | ⬜ Not Started | ⬜ Not Started | ⬜ Not Started |
-| ForgeOS State Model | ✅ Complete | 🟡 In Progress | ⬜ Not Started | ⬜ Not Started | ⬜ Not Started |
+| ForgeOS Architecture | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
+| ForgeOS Component Design | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
+| ForgeOS Definitions | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
+| ForgeOS App Contract | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
+| ForgeOS State Model | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
 
 ---
 

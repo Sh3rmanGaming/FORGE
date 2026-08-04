@@ -1,6 +1,6 @@
 # FORGE M2 Architecture Review
 
-**Status:** Review  
+**Status:** Approved
 **Milestone:** M2 – ForgeOS
 
 ## Purpose
@@ -9,7 +9,8 @@ This record captures the current M2 ForgeOS Architecture Review outcome,
 decisions accepted during review, unresolved decisions, deferred assumptions,
 and implementation-alignment requirements.
 
-It does not mark any Review-status document as Approved.
+It records the role-based Chief Architect approval of the reviewed ForgeOS
+documentation.
 
 ## Scope
 
@@ -42,10 +43,14 @@ The review covers the ForgeOS foundation architecture and its contracts for:
 
 ## Review Outcome
 
-The documents have been authored and reconciled and remain in Architecture
-Review. The decisions recorded below were accepted for inclusion during the
-review. Further open decisions and architecture gaps prevent final document
-approval.
+Chief Architect review is complete. The five reviewed ForgeOS documents are
+Approved as the authoritative v0.1 implementation contract. The decisions
+recorded below remain authoritative.
+
+Documented open decisions, deferred assumptions, and architecture gaps remain
+unresolved. Their preservation does not imply implementation discretion:
+implementation MUST NOT resolve them silently and later resolution requires
+approved design work.
 
 Document lifecycle status remains distinct from decision acceptance:
 
@@ -286,6 +291,21 @@ contracts.
 - State migration and long-term compatibility policy remain incomplete.
 - Notification authority and retention boundaries remain incomplete.
 
+## Contract Freeze
+
+The Approved ForgeOS v0.1 documentation contract is frozen for implementation.
+
+- Approved technical content MUST NOT change silently.
+- Contract changes require architecture review and documentation updates.
+- Open decisions MAY be resolved through later approved design work.
+- Implementation evidence MAY justify future revisions, but revisions MUST NOT
+  be applied retroactively without review.
+- Public identifiers and persistence-facing contracts require compatibility
+  review before change.
+
+This freeze records documentation approval only. Implementation, testing,
+verification, and overall M2 completion remain outstanding.
+
 ## Implementation Alignment
 
 Implementation work must align with:
@@ -305,11 +325,12 @@ not be described as implemented or verified until code and evidence exist.
 
 ## Review Status
 
-The M2 Architecture Review remains in progress.
+Chief Architect review is complete and the reviewed documentation contract is
+frozen at v0.1.
 
-- Documents: `Review`
+- Documents: `Approved`
 - Accepted decisions: recorded
-- Formal document approval: not recorded
+- Formal document approval: recorded
 - Implementation: incomplete
 - Verification: not started
 - Remaining open decisions: recorded above
