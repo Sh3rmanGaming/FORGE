@@ -1240,3 +1240,12 @@ The state model is ready for implementation when:
 8. Route parameters are safe to persist.
 9. ForgeOS state can be validated after loading.
 10. The model remains compatible with future per-player persistence.
+
+---
+
+# Related Documentation
+
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md) records accepted
+  state-model decisions, deferred assumptions, and remaining state gaps.
+- [Engineering Process](../style/EngineeringProcess.md) defines review,
+  approval, implementation, and verification governance.

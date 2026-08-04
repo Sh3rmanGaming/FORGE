@@ -687,3 +687,12 @@ system.
 ForgeOS forms the foundation upon which all future user-facing systems,
 including Projects, Banking, Companies, Communications, and the Campaign SDK,
 will be built.
+
+---
+
+# Related Documentation
+
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md) records accepted
+  decisions, deferred assumptions, and remaining architecture gaps.
+- [Engineering Process](../style/EngineeringProcess.md) defines review,
+  approval, implementation, and verification governance.

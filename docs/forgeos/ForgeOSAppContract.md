@@ -1360,3 +1360,14 @@ This contract is ready for implementation when:
 8. Registration is atomic.
 9. Resume state can safely reference app and route identifiers.
 10. The contract can be versioned independently of persistence.
+
+---
+
+# Related Documentation
+
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md) records accepted
+  application-contract decisions and unresolved contract questions.
+- [Engineering Process](../style/EngineeringProcess.md) defines review,
+  approval, implementation, and verification governance.
+- [Git Workflow](../style/GitWorkflow.md) governs promotion, tagging, and
+  release handling for public API and compatibility changes.

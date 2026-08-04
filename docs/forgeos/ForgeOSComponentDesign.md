@@ -1324,3 +1324,13 @@ implementation, including:
 - result codes
 - ForgeOS State Store namespace
 - ForgeOS log source identifiers
+
+---
+
+# Related Documentation
+
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md) records accepted
+  component decisions and the open decisions that implementations must not
+  resolve silently.
+- [Engineering Process](../style/EngineeringProcess.md) defines the review and
+  implementation workflow governing this design.

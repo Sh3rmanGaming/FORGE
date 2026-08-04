@@ -1775,3 +1775,14 @@ M2.002 – ForgeOS Definitions is complete when:
 18. Definitions have a manual test harness.
 19. No ForgeOS implementation file requires repeated raw identifiers.
 20. The documentation, App Contract, and State Model use the same vocabulary.
+
+---
+
+# Related Documentation
+
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md) records accepted
+  definition decisions, deferrals, and remaining gaps.
+- [Engineering Process](../style/EngineeringProcess.md) defines review,
+  approval, implementation, and verification governance.
+- [Git Workflow](../style/GitWorkflow.md) governs promotion, tagging, and
+  release handling for stable definitions and compatibility changes.
