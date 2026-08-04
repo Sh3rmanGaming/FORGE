@@ -248,46 +248,6 @@ local function loadPersistence(mission)
     return true
 end
 
---- Logs the currently loaded engine persistence state.
-local function logEngineState()
-    local firstRun, firstRunFound =
-        FORGE.StateStore:get(
-            ENGINE_NAMESPACE,
-            "firstRun"
-        )
-
-    local saveCount, saveCountFound =
-        FORGE.StateStore:get(
-            ENGINE_NAMESPACE,
-            "saveCount"
-        )
-
-    local saveVersion, saveVersionFound =
-        FORGE.StateStore:get(
-            ENGINE_NAMESPACE,
-            "saveVersion"
-        )
-
-    FORGE.Logger:info(
-        FORGE.Definitions.LogSource.ENGINE,
-        "FORGE engine state: firstRun=%s saveCount=%s saveVersion=%s",
-        FORGE.Logger:safeToString(
-    firstRunFound
-        and tostring(firstRun)
-        or nil,
-    "<missing>"
-),
-        FORGE.Logger:safeToString(
-            saveCountFound and saveCount or nil,
-            "<missing>"
-        ),
-        FORGE.Logger:safeToString(
-            saveVersionFound and saveVersion or nil,
-            "<missing>"
-        )
-    )
-end
-
 --- Prepares engine-owned state for one save operation.
 -- @return boolean success
 -- @return table|nil previousState
@@ -519,10 +479,6 @@ function FORGE.Engine:loadMap(mapName)
             FORGE.Definitions.LogSource.ENGINE,
             "FORGE startup completed without loaded persistence"
         )
-    end
-
-    if engineStateRegistered then
-        logEngineState()
     end
 
     self.isMissionLoaded = true

@@ -684,23 +684,6 @@ function FORGE.SaveManager:load(saveDirectory)
         return false
     end
 
-    local value, found =
-    FORGE.StateStore:get(
-        "forge.engine",
-        "firstRun"
-    )
-
-FORGE.Logger:info(
-    FORGE.Definitions.LogSource.SAVE_MANAGER,
-    "Post-load verification: value=%s found=%s type=%s",
-    FORGE.Logger:safeToString(
-        value,
-        "<nil>"
-    ),
-    tostring(found),
-    type(value)
-)
-
     if FORGE.Logger:isDevelopmentMode() then
         FORGE.Logger:debug(
             FORGE.Definitions.LogSource.SAVE_MANAGER,

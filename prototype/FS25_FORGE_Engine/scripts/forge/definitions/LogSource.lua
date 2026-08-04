@@ -20,6 +20,17 @@ FORGE.Definitions.LogSource = {
     SAVE_MANAGER = "SaveManager",
     XML_WRITER = "XMLWriter",
     XML_READER = "XMLReader",
-    TEST = "Test"
+    TEST = "Test",
+    FORGE_OS = "ForgeOS",
+    FORGE_OS_STATE = "ForgeOSState",
+    DEVICE_REGISTRY = "DeviceRegistry",
+    APP_REGISTRY = "AppRegistry",
+    APP_PRESENTATION = "AppPresentation",
+    APP_AVAILABILITY = "AppAvailability",
+    APP_LIFECYCLE = "AppLifecycle",
+    NAVIGATION = "Navigation",
+    NOTIFICATION = "Notification",
+    PHONE_HOST = "PhoneHost",
+    LAPTOP_HOST = "LaptopHost"
 
 }
