@@ -1,0 +1,1716 @@
+# FORGE ForgeOS Definitions
+
+**Version:** 0.1  
+**Status:** Draft  
+**Milestone:** M2.002 – ForgeOS Definitions
+
+---
+
+---
+
+# Purpose
+
+This document defines the authoritative identifiers, enumerations, constants,
+result codes, event names, and shared state identifiers used by ForgeOS.
+
+These definitions establish the vocabulary used by all ForgeOS components.
+
+The purpose of this document is to ensure that:
+
+- every ForgeOS component uses consistent identifiers
+- application and device states have one authoritative meaning
+- events use stable names
+- failures can be reported consistently
+- device capabilities remain data-driven
+- public identifiers can be frozen before external applications depend on them
+
+Implementation files must use these definitions rather than repeating raw
+strings throughout the codebase.
+
+---
+
+---
+
+# Definition Ownership
+
+ForgeOS definitions belong to the ForgeOS subsystem.
+
+Proposed source location:
+
+```text
+engine/forgeos/definitions/
+```
+
+Initial definition files:
+
+```text
+engine/forgeos/definitions/
+├── ForgeOSDefinitions.lua
+├── ForgeOSVersion.lua
+├── ForgeOSNamespace.lua
+├── ForgeOSPhase.lua
+├── ForgeOSPlayerId.lua
+├── DeviceId.lua
+├── DeviceCapability.lua
+├── DeviceVisibility.lua
+├── AppLifecycleState.lua
+├── AppAvailabilityReason.lua
+├── PresentationMatchType.lua
+├── NotificationPersistence.lua
+├── NotificationSeverity.lua
+├── NavigationLayer.lua
+├── ForgeOSEvent.lua
+└── ForgeOSResult.lua
+```
+
+The exact file split may change during implementation.
+
+The authoritative identifiers defined in this document should not change
+silently after the ForgeOS API is frozen.
+
+---
+
+# ForgeOS Namespace
+
+ForgeOS persistent runtime state will use the State Store namespace:
+
+```text
+forge.os
+```
+
+Proposed definition:
+
+```lua
+FORGE.Definitions.ForgeOSNamespace = {
+    CORE = "forge.os"
+}
+```
+
+The namespace contains ForgeOS-owned persistent state only.
+
+It must not contain:
+
+- device definitions
+- application definitions
+- runtime host objects
+- rendering objects
+- callbacks
+- domain gameplay state
+
+Definitions are rebuilt through registration during startup.
+
+---
+
+---
+
+# ForgeOS Versions
+
+ForgeOS uses separate version identifiers for separate compatibility
+boundaries.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.ForgeOSVersion = {
+    APP_API = 1,
+    STATE = 1
+}
+```
+
+## `APP_API`
+
+The application contract version used to validate built-in and external
+ForgeOS applications.
+
+An app definition declares the app API version it requires:
+
+```lua
+apiVersion = 1
+```
+
+ForgeOS must reject an application requiring an unsupported app API version.
+
+## `STATE`
+
+The internal version of the persistent data stored inside the `forge.os`
+namespace.
+
+This version allows ForgeOS state migrations without requiring every internal
+state change to alter the global FORGE XML schema.
+
+These versions are independent from:
+
+```text
+FORGE release version
+FORGE public addon API version
+FORGE persistence schema version
+```
+
+A change to one version must not silently imply a change to the others.
+
+---
+
+# ForgeOS Phases
+
+ForgeOS uses an explicit operating and registration lifecycle.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.ForgeOSPhase = {
+    UNAVAILABLE = "unavailable",
+    INITIALISING = "initialising",
+    REGISTRATION_OPEN = "registrationOpen",
+    VALIDATING = "validating",
+    REGISTRATION_FROZEN = "registrationFrozen",
+    RUNTIME_ACTIVE = "runtimeActive",
+    SHUTTING_DOWN = "shuttingDown",
+    STOPPED = "stopped"
+}
+```
+
+## Phase Meaning
+
+### `unavailable`
+
+ForgeOS has not started and cannot accept registrations or runtime requests.
+
+### `initialising`
+
+ForgeOS is creating its state, services, and registration environment.
+
+### `registrationOpen`
+
+Built-in and external addon mods may register devices and applications.
+
+### `validating`
+
+ForgeOS is validating completed registrations before runtime begins.
+
+### `registrationFrozen`
+
+Registration has closed. New devices and applications must be rejected.
+
+### `runtimeActive`
+
+ForgeOS is available for normal device, application, navigation, and
+notification operations.
+
+### `shuttingDown`
+
+ForgeOS is releasing runtime state and host resources.
+
+### `stopped`
+
+ForgeOS shutdown is complete.
+
+External addons must not rely on mod load order alone. They must verify that
+ForgeOS exists, supports the required API version, and currently permits
+registration.
+
+---
+
+# ForgeOS Player Identifiers
+
+ForgeOS state is conceptually scoped per player and per device.
+
+The initial M2 implementation may use one temporary local-player identifier:
+
+```lua
+FORGE.Definitions.ForgeOSPlayerId = {
+    LOCAL = "player.local"
+}
+```
+
+The literal `player.local` must be isolated behind the ForgeOS player identity
+resolver.
+
+Implementation files must not repeat this literal throughout the subsystem.
+
+The long-term public API must remain compatible with stable multiplayer player
+identities without requiring the per-device state model to be redesigned.
+
+---
+
+# ForgeOS Log Sources
+
+ForgeOS components must use authoritative Logger sources.
+
+Initial proposed sources:
+
+```lua
+FORGE.Definitions.LogSource.FORGE_OS =
+    "ForgeOS"
+
+FORGE.Definitions.LogSource.FORGE_OS_STATE =
+    "ForgeOSState"
+
+FORGE.Definitions.LogSource.DEVICE_REGISTRY =
+    "DeviceRegistry"
+
+FORGE.Definitions.LogSource.APP_REGISTRY =
+    "AppRegistry"
+
+FORGE.Definitions.LogSource.APP_PRESENTATION =
+    "AppPresentation"
+
+FORGE.Definitions.LogSource.APP_AVAILABILITY =
+    "AppAvailability"
+
+FORGE.Definitions.LogSource.APP_LIFECYCLE =
+    "AppLifecycle"
+
+FORGE.Definitions.LogSource.NAVIGATION =
+    "Navigation"
+
+FORGE.Definitions.LogSource.NOTIFICATION =
+    "Notification"
+
+FORGE.Definitions.LogSource.PHONE_HOST =
+    "PhoneHost"
+
+FORGE.Definitions.LogSource.LAPTOP_HOST =
+    "LaptopHost"
+```
+
+These identifiers describe the source of diagnostic output.
+
+They must not contain logging behaviour.
+
+---
+
+# Device Identifiers
+
+Device identifiers uniquely identify logical ForgeOS device types.
+
+Initial built-in devices:
+
+```lua
+FORGE.Definitions.DeviceId = {
+    PHONE = "phone",
+    LAPTOP = "laptop"
+}
+```
+
+## Rules
+
+Device identifiers must:
+
+- be strings
+- contain non-whitespace characters
+- be unique
+- remain stable after public release
+- use lowercase machine-readable values
+- describe a logical device rather than a runtime instance
+
+Valid examples:
+
+```text
+phone
+laptop
+tablet
+vehicleTerminal
+```
+
+Invalid examples:
+
+```text
+Phone
+My Laptop
+device 1
+```
+
+The phone and laptop identifiers are public ForgeOS identifiers.
+
+---
+
+---
+
+# Device Capabilities
+
+Capabilities describe features supported by a logical device.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.DeviceCapability = {
+    FULL_SCREEN_APPS = "fullScreenApps",
+    WINDOWED_APPS = "windowedApps",
+    TOUCH_INPUT = "touchInput",
+    POINTER_INPUT = "pointerInput",
+    KEYBOARD_INPUT = "keyboardInput",
+    NOTIFICATIONS = "notifications",
+    BACKGROUND_APPS = "backgroundApps",
+    MULTI_APP = "multiApp",
+    MODALS = "modals",
+    NAVIGATION_HISTORY = "navigationHistory"
+}
+```
+
+## Capability Meaning
+
+### `fullScreenApps`
+
+The device can display an application using the complete application surface.
+
+Initial use:
+
+- phone
+- laptop
+
+---
+
+### `windowedApps`
+
+The device can display applications within movable or managed windows.
+
+Initial use:
+
+- future laptop windowing
+
+The initial Laptop Host may not implement this capability.
+
+---
+
+### `touchInput`
+
+The device supports touch-style input interaction.
+
+Initial use:
+
+- phone-style controls
+
+This capability describes interaction behaviour and does not require a physical
+touchscreen.
+
+---
+
+### `pointerInput`
+
+The device supports pointer movement and selection.
+
+Initial use:
+
+- mouse-driven laptop interface
+
+---
+
+### `keyboardInput`
+
+The device supports keyboard input routed to applications.
+
+Initial use:
+
+- laptop
+- text-entry applications
+
+---
+
+### `notifications`
+
+The device can display ForgeOS notifications.
+
+Initial use:
+
+- phone
+- laptop
+
+---
+
+### `backgroundApps`
+
+The device supports applications remaining open without being the foreground
+application.
+
+Initial use:
+
+- phone may support suspended background apps
+- laptop may support open inactive apps
+
+The exact lifecycle behaviour remains controlled by device policy.
+
+---
+
+### `multiApp`
+
+The device supports more than one open application simultaneously.
+
+Initial implementation recommendation:
+
+- phone: false
+- laptop: false
+
+The capability may become true for the laptop after window management exists.
+
+---
+
+### `modals`
+
+The device can display a modal navigation layer above an application route.
+
+---
+
+### `navigationHistory`
+
+The device supports logical back-stack navigation.
+
+Initial use:
+
+- phone
+- laptop
+
+---
+
+---
+
+# Initial Device Capability Profiles
+
+The following profiles are design defaults, not runtime registrations.
+
+## Phone
+
+```lua
+{
+    fullScreenApps = true,
+    windowedApps = false,
+    touchInput = true,
+    pointerInput = false,
+    keyboardInput = false,
+    notifications = true,
+    backgroundApps = true,
+    multiApp = false,
+    modals = true,
+    navigationHistory = true
+}
+```
+
+## Laptop
+
+```lua
+{
+    fullScreenApps = true,
+    windowedApps = false,
+    touchInput = false,
+    pointerInput = true,
+    keyboardInput = true,
+    notifications = true,
+    backgroundApps = true,
+    multiApp = false,
+    modals = true,
+    navigationHistory = true
+}
+```
+
+Laptop windowing and multiple simultaneous applications are deferred.
+
+---
+
+---
+
+# Device Visibility
+
+Device visibility describes whether a device host is currently presented to a
+player.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.DeviceVisibility = {
+    HIDDEN = "hidden",
+    VISIBLE = "visible"
+}
+```
+
+Visibility is separate from application lifecycle.
+
+Hiding a device does not automatically close its active application or erase
+its resume state.
+
+Example:
+
+```text
+Phone visible
+    forge.projects active
+
+Phone hidden
+    forge.projects remains the phone resume target
+
+Phone visible again
+    ForgeOS restores the last valid app and route
+```
+
+Device visibility is initially player-local runtime state.
+
+Whether visibility itself should ever be persisted remains an implementation
+decision. The last valid app and route are persisted independently.
+
+---
+
+# Application Lifecycle States
+
+ForgeOS application lifecycle states describe runtime application state for a
+specific player and device.
+
+Registration and availability are not lifecycle states.
+
+They remain owned by:
+
+```text
+App Registry
+    registration
+
+Availability Service
+    calculated availability
+
+Lifecycle Service
+    runtime lifecycle
+```
+
+Authoritative lifecycle definitions:
+
+```lua
+FORGE.Definitions.AppLifecycleState = {
+    CLOSED = "closed",
+    OPEN = "open",
+    ACTIVE = "active",
+    BACKGROUND = "background",
+    DISABLED = "disabled"
+}
+```
+
+Lifecycle state must be tracked per device.
+
+The state model and public APIs must remain compatible with future per-player,
+per-device lifecycle state.
+
+---
+
+# Lifecycle State Meaning
+
+## `closed`
+
+The application has no active presentation state on the device.
+
+It remains registered and may still be available.
+
+## `open`
+
+The application has an active runtime presence on the device but is not
+necessarily the foreground application.
+
+## `active`
+
+The application is the foreground application receiving primary user
+interaction on the device.
+
+Initial ForgeOS policy supports one active application per device.
+
+## `background`
+
+The application remains open but is not the foreground application.
+
+The device must support background applications.
+
+## `disabled`
+
+The application remains registered but cannot be opened.
+
+Disabling may be administrative, campaign-defined, addon-defined, or
+system-defined.
+
+Availability must not be represented by mutating an app into an `available`
+lifecycle state.
+
+---
+
+# Lifecycle Transition Model
+
+Initial valid transitions:
+
+```text
+CLOSED     → OPEN
+CLOSED     → DISABLED
+
+OPEN       → ACTIVE
+OPEN       → BACKGROUND
+OPEN       → CLOSED
+OPEN       → DISABLED
+
+ACTIVE     → BACKGROUND
+ACTIVE     → CLOSED
+ACTIVE     → DISABLED
+
+BACKGROUND → ACTIVE
+BACKGROUND → CLOSED
+BACKGROUND → DISABLED
+
+DISABLED   → CLOSED
+```
+
+Availability must be confirmed before transitioning from `CLOSED` to `OPEN`.
+
+The Lifecycle Service must reject unsupported transitions.
+
+Device policy may impose additional restrictions.
+
+Examples:
+
+- a phone may background or close its current active app before activating
+  another app
+- a device without background support must close the previous app
+- a disabled application cannot transition directly to open or active
+- hiding a device does not automatically perform a lifecycle transition
+
+---
+
+# Application Availability Reasons
+
+Availability checks should return both a result and an authoritative reason.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.AppAvailabilityReason = {
+    AVAILABLE = "available",
+    APP_NOT_REGISTERED = "appNotRegistered",
+    DEVICE_NOT_REGISTERED = "deviceNotRegistered",
+    DEVICE_NOT_SUPPORTED = "deviceNotSupported",
+    MISSING_CAPABILITY = "missingCapability",
+    PRESENTATION_NOT_FOUND = "presentationNotFound",
+    ROUTE_NOT_FOUND = "routeNotFound",
+    ACTION_NOT_AVAILABLE = "actionNotAvailable",
+    API_VERSION_UNSUPPORTED = "apiVersionUnsupported",
+    APP_DISABLED = "appDisabled",
+    POLICY_REJECTED = "policyRejected",
+    INVALID_DEFINITION = "invalidDefinition",
+    UNKNOWN = "unknown"
+}
+```
+
+## Reason Meaning
+
+### `available`
+
+The app passed every availability and presentation-resolution check.
+
+### `appNotRegistered`
+
+The requested application does not exist in the App Registry.
+
+### `deviceNotRegistered`
+
+The requested device does not exist in the Device Registry.
+
+### `deviceNotSupported`
+
+The app does not declare support for the requested device.
+
+### `missingCapability`
+
+The device does not provide one or more capabilities required by the app or
+selected presentation.
+
+The result should identify the missing capability where possible.
+
+### `presentationNotFound`
+
+The app supports the device in principle, but ForgeOS could not resolve an
+exact, capability-compatible, or default presentation.
+
+### `routeNotFound`
+
+The requested or restored route does not exist in the resolved presentation.
+
+A resume operation should fall back to the presentation default route where
+possible.
+
+### `actionNotAvailable`
+
+The resolved presentation does not expose the requested app action, or an
+action-specific requirement was not satisfied.
+
+### `apiVersionUnsupported`
+
+The application requires a ForgeOS app API version that the current runtime does
+not support.
+
+### `appDisabled`
+
+The application is currently disabled.
+
+### `policyRejected`
+
+An external availability provider rejected access.
+
+Possible sources include:
+
+- campaign progression
+- company access
+- player permissions
+- gameplay restrictions
+
+### `invalidDefinition`
+
+The device, app, presentation, route, or action definition is malformed.
+
+This normally indicates a registration or implementation problem.
+
+### `unknown`
+
+The service could not provide a more specific reason.
+
+This should be rare and should normally produce diagnostic output.
+
+---
+
+# Presentation Match Types
+
+ForgeOS applications have one stable identity but may provide multiple
+device-specific presentations.
+
+ForgeOS records how a presentation was resolved using:
+
+```lua
+FORGE.Definitions.PresentationMatchType = {
+    EXACT_DEVICE = "exactDevice",
+    CAPABILITY = "capability",
+    DEFAULT = "default"
+}
+```
+
+## `exactDevice`
+
+The presentation was registered directly for the requested device ID.
+
+Example:
+
+```text
+device = phone
+presentation key = phone
+```
+
+## `capability`
+
+The presentation was selected because its required capabilities are satisfied
+by the device.
+
+This supports future devices without requiring every app to hardcode every
+device ID.
+
+## `default`
+
+The app's declared default presentation was used after no exact or
+capability-based presentation was selected.
+
+Presentation resolution order is:
+
+```text
+exact device presentation
+→ compatible capability presentation
+→ declared default presentation
+→ unavailable
+```
+
+Where multiple capability presentations match, explicit priority and
+deterministic ordering must be used. Registration order must not silently
+determine the result.
+
+---
+
+# Notification Persistence Policies
+
+Notifications require an explicit persistence policy.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.NotificationPersistence = {
+    TRANSIENT = "transient",
+    SESSION = "session",
+    SAVEGAME = "savegame"
+}
+```
+
+## `transient`
+
+The notification exists only long enough to be presented.
+
+It is not retained in ForgeOS notification history.
+
+Examples:
+
+- temporary status message
+- input confirmation
+- development notification
+
+---
+
+## `session`
+
+The notification remains available during the current mission session.
+
+It is removed when the mission unloads.
+
+Examples:
+
+- session reminders
+- temporary operational alerts
+- UI notices that should not survive reload
+
+---
+
+## `savegame`
+
+The notification is stored in ForgeOS persistent state.
+
+It survives:
+
+- saves
+- mission unload
+- savegame reload
+
+Examples:
+
+- received project offers
+- unread messages
+- important company notices
+- persistent account alerts
+
+Only plain persistable notification data may use this policy.
+
+---
+
+---
+
+# Notification Severity
+
+ForgeOS notifications should use consistent severity identifiers.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.NotificationSeverity = {
+    INFO = "info",
+    SUCCESS = "success",
+    WARNING = "warning",
+    ERROR = "error",
+    CRITICAL = "critical"
+}
+```
+
+Severity influences presentation but must not define notification behaviour.
+
+A host may use:
+
+- icons
+- sound
+- animation
+- emphasis
+- notification duration
+
+The notification record remains presentation-independent.
+
+---
+
+---
+
+# Navigation Layer Types
+
+ForgeOS logical navigation uses defined layer types.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.NavigationLayer = {
+    HOME = "home",
+    APP = "app",
+    ROUTE = "route",
+    MODAL = "modal"
+}
+```
+
+## `home`
+
+The device's operating-system home or launcher surface.
+
+---
+
+## `app`
+
+The application presentation context.
+
+---
+
+## `route`
+
+A logical page or destination within an application.
+
+---
+
+## `modal`
+
+A temporary navigation layer displayed above the current route.
+
+---
+
+---
+
+# ForgeOS Events
+
+ForgeOS events must use stable authoritative identifiers.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.ForgeOSEvent = {
+
+    REGISTRATION_OPENED =
+        "forge.os.registration.opened",
+
+    REGISTRATION_FROZEN =
+        "forge.os.registration.frozen",
+
+    DEVICE_REGISTERED =
+        "forge.os.device.registered",
+
+    DEVICE_ACTIVATED =
+        "forge.os.device.activated",
+
+    DEVICE_DEACTIVATED =
+        "forge.os.device.deactivated",
+
+    DEVICE_VISIBILITY_CHANGED =
+        "forge.os.device.visibilityChanged",
+
+    APP_REGISTERED =
+        "forge.os.app.registered",
+
+    APP_PRESENTATION_RESOLVED =
+        "forge.os.app.presentationResolved",
+
+    APP_AVAILABILITY_CHANGED =
+        "forge.os.app.availabilityChanged",
+
+    APP_OPENED =
+        "forge.os.app.opened",
+
+    APP_ACTIVATED =
+        "forge.os.app.activated",
+
+    APP_BACKGROUNDED =
+        "forge.os.app.backgrounded",
+
+    APP_CLOSED =
+        "forge.os.app.closed",
+
+    APP_DISABLED =
+        "forge.os.app.disabled",
+
+    APP_ENABLED =
+        "forge.os.app.enabled",
+
+    NAVIGATION_CHANGED =
+        "forge.os.navigation.changed",
+
+    NOTIFICATION_CREATED =
+        "forge.os.notification.created",
+
+    NOTIFICATION_READ =
+        "forge.os.notification.read",
+
+    NOTIFICATION_DISMISSED =
+        "forge.os.notification.dismissed",
+
+    STARTED =
+        "forge.os.started",
+
+    STOPPED =
+        "forge.os.stopped"
+}
+```
+
+Device activation and deactivation must not be treated as synonyms for device
+visibility.
+
+Events announce completed state changes.
+
+They must not replace direct API results or synchronous validation.
+
+---
+
+# Event Payload Expectations
+
+Event payload structures will be formalised with each component.
+
+Initial expectations are listed below.
+
+## Registration opened
+
+```lua
+{
+    phase = "registrationOpen"
+}
+```
+
+## Device registered
+
+```lua
+{
+    deviceId = "phone"
+}
+```
+
+## Device visibility changed
+
+```lua
+{
+    playerId = "player.local",
+    deviceId = "phone",
+    previousVisibility = "hidden",
+    currentVisibility = "visible"
+}
+```
+
+## App registered
+
+```lua
+{
+    appId = "forge.projects",
+    ownerId = "forge.projects",
+    apiVersion = 1
+}
+```
+
+## App presentation resolved
+
+```lua
+{
+    playerId = "player.local",
+    deviceId = "phone",
+    appId = "forge.projects",
+    presentationId = "projects.phone",
+    matchType = "exactDevice"
+}
+```
+
+## App lifecycle event
+
+```lua
+{
+    playerId = "player.local",
+    deviceId = "phone",
+    appId = "forge.projects",
+    previousState = "open",
+    currentState = "active"
+}
+```
+
+## Navigation changed
+
+```lua
+{
+    playerId = "player.local",
+    deviceId = "phone",
+    appId = "forge.projects",
+    previousRoute = "overview",
+    currentRoute = "projectDetails"
+}
+```
+
+## Notification created
+
+```lua
+{
+    playerId = "player.local",
+    notificationId = "notification.000001",
+    source = "forge.projects",
+    persistence = "savegame"
+}
+```
+
+Events announce completed changes.
+
+They must not replace direct API results or synchronous validation.
+
+---
+
+# ForgeOS Result Codes
+
+ForgeOS operations should return a boolean where appropriate and may also
+return an authoritative result code.
+
+Proposed definitions:
+
+```lua
+FORGE.Definitions.ForgeOSResult = {
+    SUCCESS = "success",
+    INVALID_ARGUMENT = "invalidArgument",
+    INVALID_DEFINITION = "invalidDefinition",
+    ALREADY_REGISTERED = "alreadyRegistered",
+    NOT_REGISTERED = "notRegistered",
+    REGISTRATION_CLOSED = "registrationClosed",
+    API_VERSION_UNSUPPORTED = "apiVersionUnsupported",
+    NOT_AVAILABLE = "notAvailable",
+    PRESENTATION_NOT_FOUND = "presentationNotFound",
+    ROUTE_NOT_FOUND = "routeNotFound",
+    ACTION_NOT_AVAILABLE = "actionNotAvailable",
+    INVALID_TRANSITION = "invalidTransition",
+    CAPABILITY_MISSING = "capabilityMissing",
+    POLICY_REJECTED = "policyRejected",
+    STATE_ERROR = "stateError",
+    CALLBACK_FAILED = "callbackFailed",
+    PERSISTENCE_ERROR = "persistenceError",
+    INTERNAL_ERROR = "internalError"
+}
+```
+
+## Result Contract
+
+Conceptually, ForgeOS operations may return:
+
+```lua
+return true,
+    FORGE.Definitions.ForgeOSResult.SUCCESS
+```
+
+or:
+
+```lua
+return false,
+    FORGE.Definitions.ForgeOSResult.NOT_AVAILABLE
+```
+
+Some operations may include a third detail value.
+
+Example:
+
+```lua
+return false,
+    FORGE.Definitions.ForgeOSResult.CAPABILITY_MISSING,
+    FORGE.Definitions.DeviceCapability.KEYBOARD_INPUT
+```
+
+The exact public return contracts will be defined before implementation freeze.
+
+---
+
+# Application Identifier Rules
+
+ForgeOS application identifiers must be globally unique.
+
+Recommended format:
+
+```text
+<owner>.<application>
+```
+
+Built-in FORGE apps use:
+
+```text
+forge.<application>
+```
+
+Examples:
+
+```text
+forge.settings
+forge.communications
+forge.projects
+forge.bank
+forge.companies
+```
+
+Third-party examples:
+
+```text
+example.logistics
+author.weather
+campaign.contractBoard
+```
+
+Identifiers must:
+
+- be non-empty strings
+- contain no whitespace
+- remain stable
+- be treated as case-sensitive authoritative identifiers
+- not be derived from translated display names
+
+Display names may change without changing application identifiers.
+
+---
+
+---
+
+# Route Identifier Rules
+
+Route identifiers are application-local.
+
+Examples:
+
+```text
+overview
+activeProjects
+projectDetails
+settings
+notificationPreferences
+```
+
+A route is uniquely identified by:
+
+```text
+appId + routeId
+```
+
+Example:
+
+```text
+forge.projects / projectDetails
+```
+
+Route identifiers must:
+
+- be strings
+- contain non-whitespace characters
+- remain stable where persisted or externally referenced
+- not contain translated display text
+
+---
+
+---
+
+# Notification Identifier Rules
+
+Notification identifiers must be unique within the relevant ForgeOS state
+scope.
+
+Proposed initial format:
+
+```text
+notification.<numericId>
+```
+
+Example:
+
+```text
+notification.000001
+```
+
+The Notification Service should own identifier generation.
+
+Applications and domain managers should not generate notification identifiers
+independently unless the API explicitly supports external stable identifiers.
+
+---
+
+---
+
+# Definition Validation Rules
+
+All definition tables are input data and must be validated during registration.
+
+ForgeOS should copy valid definitions into controlled internal representations
+rather than retaining mutable caller-owned tables.
+
+## Device definition requirements
+
+Required:
+
+```text
+id
+displayName
+capabilities
+```
+
+Optional:
+
+```text
+hostId
+policy
+metadata
+```
+
+## App definition requirements
+
+Required:
+
+```text
+id
+apiVersion
+displayName
+supportedDevices
+presentations
+```
+
+Optional:
+
+```text
+ownerId
+iconId
+controller
+requiredCapabilities
+defaultPresentation
+availabilityProviders
+metadata
+callbacks
+```
+
+`defaultRoute` is not an app-level field.
+
+Each presentation owns its own default route.
+
+## Presentation definition requirements
+
+Required:
+
+```text
+id
+defaultRoute
+routes
+```
+
+Optional:
+
+```text
+requiredCapabilities
+actions
+controller
+metadata
+priority
+```
+
+ForgeOS must verify that:
+
+- presentation IDs are valid and deterministic
+- every route ID is valid
+- every action ID is valid
+- `defaultRoute` exists in the presentation's route table
+- capability identifiers are recognised
+- callback and controller values satisfy the app contract
+- capability-based presentation ties are resolved deterministically
+
+## Route definition requirements
+
+A route must have a valid application-local identifier.
+
+Optional route data may include:
+
+```text
+controller
+requiredCapabilities
+availabilityProviders
+metadata
+```
+
+Persisted route parameters are runtime state and must use plain persistable
+values.
+
+## Action definition requirements
+
+An action must have a valid application-local identifier.
+
+An action may define:
+
+```text
+handler
+requiredCapabilities
+enabled
+metadata
+```
+
+An exposed action does not bypass domain-manager validation.
+
+## Unknown fields
+
+Unknown fields must not silently become part of the public contract.
+
+The initial recommendation is to ignore unknown fields only when ForgeOS creates
+a controlled validated copy containing recognised fields.
+
+Registration must be atomic.
+
+An invalid device, app, or presentation must not leave a partial registry
+entry.
+
+---
+
+# Authoritative Shared Definitions
+
+The following definitions are expected to become public and stable:
+
+```text
+ForgeOSVersion
+ForgeOSNamespace
+ForgeOSPhase
+ForgeOSPlayerId
+DeviceId
+DeviceCapability
+DeviceVisibility
+AppLifecycleState
+AppAvailabilityReason
+PresentationMatchType
+NotificationPersistence
+NotificationSeverity
+NavigationLayer
+ForgeOSEvent
+ForgeOSResult
+ForgeOS Log Sources
+```
+
+Changes to these definitions after API freeze require:
+
+1. documentation updates
+2. test updates
+3. compatibility review
+4. migration planning where persisted identifiers are affected
+5. addon compatibility review where public contracts are affected
+
+---
+
+# Initial Definition File Plan
+
+Recommended implementation:
+
+```text
+engine/forgeos/definitions/
+├── ForgeOSDefinitions.lua
+├── ForgeOSVersion.lua
+├── ForgeOSNamespace.lua
+├── ForgeOSPhase.lua
+├── ForgeOSPlayerId.lua
+├── DeviceId.lua
+├── DeviceCapability.lua
+├── DeviceVisibility.lua
+├── AppLifecycleState.lua
+├── AppAvailabilityReason.lua
+├── PresentationMatchType.lua
+├── NotificationPersistence.lua
+├── NotificationSeverity.lua
+├── NavigationLayer.lua
+├── ForgeOSEvent.lua
+└── ForgeOSResult.lua
+```
+
+`ForgeOSDefinitions.lua` establishes any shared ForgeOS definition namespace or
+load-time validation required by the subsystem.
+
+Individual definition files assign authoritative tables such as:
+
+```lua
+FORGE.Definitions.ForgeOSVersion = {}
+FORGE.Definitions.ForgeOSNamespace = {}
+FORGE.Definitions.ForgeOSPhase = {}
+FORGE.Definitions.ForgeOSPlayerId = {}
+FORGE.Definitions.DeviceId = {}
+FORGE.Definitions.DeviceCapability = {}
+FORGE.Definitions.DeviceVisibility = {}
+FORGE.Definitions.AppLifecycleState = {}
+FORGE.Definitions.AppAvailabilityReason = {}
+FORGE.Definitions.PresentationMatchType = {}
+FORGE.Definitions.NotificationPersistence = {}
+FORGE.Definitions.NotificationSeverity = {}
+FORGE.Definitions.NavigationLayer = {}
+FORGE.Definitions.ForgeOSEvent = {}
+FORGE.Definitions.ForgeOSResult = {}
+```
+
+A flatter definition structure remains consistent with existing definitions
+such as:
+
+```text
+LogLevel
+LogSource
+```
+
+The final file structure should favour contributor clarity over unnecessary
+nesting.
+
+---
+
+# Initial Implementation Order
+
+The recommended definition implementation order is:
+
+```text
+1. Extend LogSource.lua
+2. Create ForgeOSDefinitions.lua
+3. Create ForgeOSVersion.lua
+4. Create ForgeOSNamespace.lua
+5. Create ForgeOSPhase.lua
+6. Create ForgeOSPlayerId.lua
+7. Create DeviceId.lua
+8. Create DeviceCapability.lua
+9. Create DeviceVisibility.lua
+10. Create AppLifecycleState.lua
+11. Create AppAvailabilityReason.lua
+12. Create PresentationMatchType.lua
+13. Create NotificationPersistence.lua
+14. Create NotificationSeverity.lua
+15. Create NavigationLayer.lua
+16. Create ForgeOSEvent.lua
+17. Create ForgeOSResult.lua
+18. Add definitions to modDesc.xml
+19. Add definition tests
+20. Run one batch verification
+```
+
+The synchronisation manifest must include the ForgeOS definition directory
+before runtime testing begins.
+
+---
+
+# Open Definition Decisions
+
+The following items remain intentionally open.
+
+## Naming of the operating-system namespace
+
+Current recommendation:
+
+```text
+forge.os
+```
+
+Alternative:
+
+```text
+forge.forgeos
+```
+
+`forge.os` is shorter and remains clear within the FORGE namespace.
+
+## App lifecycle `closed` versus absence
+
+The design uses an explicit `closed` state.
+
+Removing lifecycle state when an app closes remains an alternative, but the
+explicit state is recommended because it:
+
+- simplifies lifecycle history
+- improves diagnostics
+- makes state transitions clearer
+- allows consistent callback handling
+- supports deterministic resume-state validation
+
+## Device identifier extensibility
+
+Built-in IDs are defined authoritatively, but third-party devices should
+eventually be allowed to register custom IDs.
+
+The `DeviceId` definition table therefore lists built-in identifiers without
+implying that only those identifiers are valid.
+
+## Stable player identity
+
+M2 uses the isolated temporary identity:
+
+```text
+player.local
+```
+
+The source of a stable multiplayer player identifier remains open.
+
+This must be solved through the identity resolver rather than by changing every
+state consumer.
+
+## Presentation priority range
+
+Capability-based presentation definitions use a numeric priority.
+
+The valid numeric range and tie-breaking details remain to be finalised by the
+Presentation Resolver design.
+
+The selected ordering must remain deterministic.
+
+## Active-device persistence
+
+The state model permits remembering the last selected device.
+
+Whether `activeDeviceId` is persisted in the first implementation remains open.
+
+This does not affect the requirement to persist separate resume state for each
+player and device.
+
+---
+
+# Frozen Pre-Implementation Decisions
+
+The following design decisions are now authoritative for the initial ForgeOS
+implementation:
+
+```text
+Registration
+    owned by App Registry and Device Registry
+
+Availability
+    calculated by Availability Service
+
+Lifecycle
+    CLOSED
+    OPEN
+    ACTIVE
+    BACKGROUND
+    DISABLED
+
+App identity
+    one stable app ID
+
+Presentations
+    exact device
+    capability fallback
+    declared default
+
+State scope
+    conceptually per player and per device
+
+Initial player scope
+    isolated player.local resolver
+
+Device visibility
+    separate from app lifecycle
+
+Resume persistence
+    last valid app
+    last valid presentation reference
+    last valid route
+    safe route parameters
+
+Navigation persistence
+    no full back stack or modal stack during M2
+
+Addon registration
+    permitted only during REGISTRATION_OPEN
+
+Compatibility
+    ForgeOS app API version is separate from persistence version
+```
+
+These decisions should not be reopened during individual registry or service
+implementation unless testing reveals a concrete architectural conflict.
+
+---
+
+# Success Criteria
+
+M2.002 – ForgeOS Definitions is complete when:
+
+1. Every initial ForgeOS identifier has one authoritative definition.
+2. ForgeOS app API and state versions are defined separately.
+3. The `forge.os` namespace is defined.
+4. ForgeOS registration and runtime phases are defined.
+5. The temporary player identity is isolated authoritatively.
+6. Built-in device IDs are defined.
+7. Device capabilities and visibility states are defined.
+8. Lifecycle states contain only runtime lifecycle conditions.
+9. Availability reasons include presentation, route, action, and API failures.
+10. Presentation match types are defined.
+11. Notification policies and severities are defined.
+12. Navigation layers are defined.
+13. Event identifiers are defined.
+14. Result codes are defined.
+15. ForgeOS log sources are added.
+16. App and presentation validation requirements match the App Contract.
+17. Definitions are loaded in the correct order.
+18. Definitions have a manual test harness.
+19. No ForgeOS implementation file requires repeated raw identifiers.
+20. The documentation, App Contract, and State Model use the same vocabulary.

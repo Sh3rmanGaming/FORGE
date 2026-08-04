@@ -10,8 +10,8 @@
 | Milestone | Status |
 |-----------|--------|
 | M0 – Foundation | ✅ Complete |
-| M1 – Engine | 🟡 In Progress |
-| M2 – Phone OS | ⬜ Planned |
+| M1 – Engine | ✅ Complete |
+| M2 – ForgeOS | 🟡 In Progress |
 | M3 – Communications | ⬜ Planned |
 | M4 – Projects | ⬜ Planned |
 | M5 – Banking | ⬜ Planned |
@@ -21,83 +21,188 @@
 
 ---
 
-## Current Milestone — M1: Engine
+## Current Milestone — M2: ForgeOS
 
 # FORGE Development Roadmap
 
 ## Completed
-
-- ✅ M1.001 – Definitions
-- ✅ M1.002 – Logger Definitions
-- ✅ M1.003 – Logging Service
-- ✅ M1.004 – Synchronisation Tool
-- ✅ M1.004.01 – Recursive Synchronisation
-- ✅ M1.005 – Event Bus
-- ✅ M1.006 – State Store
-
 ---
 
 ## In Progress
 
-### 🟡 M1.007 – Persistence
+### 🟡 M2 – ForgeOS
 
-#### ✅ M1.007.01 – XML Writer
-- Deterministic XML generation
-- Nested table serialization
-- Supported type serialization
-- Invalid document validation
-- XML writer test suite
+#### ⏳ M2.001 – Documentation
 
-#### ✅ M1.007.02 – XML Reader
-- XML document deserialization
-- Recursive value reconstruction
-- Type decoding
-- Structure validation
-- XML reader test suite
+- ✅ ForgeOS Architecture
+- ✅ ForgeOS Definitions
+- ✅ ForgeOS App Contract
+- ✅ ForgeOS State Model
 
-#### ✅ M1.007.03 – Save Manager Integration
-- Namespace registration
-- Persistence validation
-- StateStore snapshot integration
-- XML Writer integration
-- XML Reader integration
-- StateStore restore integration
-- Save Manager test suite
-- Integration test framework
+---
 
-#### ✅ M1.007.04 – End-to-End Persistence Verification
+#### ⏳ M2.002 – Definitions
 
-- ✅ M1.007.04.01 – Save Manager Round-Trip Verification
-- ✅ M1.007.04.02 – FS25 Save Lifecycle Integration
-- ✅ M1.007.04.03 – Production Engine Persistence Namespace
+- ForgeOS namespace definitions
+- ForgeOS version definitions
+- ForgeOS phase definitions
+- Player identity definitions
+- Device identifiers
+- Device capabilities
+- Device visibility definitions
+- Application lifecycle definitions
+- Application availability definitions
+- Presentation match definitions
+- Notification persistence definitions
+- Notification severity definitions
+- Navigation layer definitions
+- ForgeOS event definitions
+- ForgeOS result definitions
+- ForgeOS log sources
+- Definition validation
+- Definition test suite
 
-- ✅ M1.007.04.04 – Save Count Mutation
-  - Increment save counter on every successful save.
-  - Verify persistence across multiple saves.
+---
 
-- ✅ M1.007.04.05 – First Run State Mutation
-  - Automatically transition `firstRun` from true to false.
-  - Verify state survives reload.
+#### ⏳ M2.003 – ForgeOS Core
 
-- ✅ M1.007.04.06 – Real Savegame Reload Verification
-  - Save game.
-  - Exit to menu.
-  - Reload save.
-  - Verify complete runtime restoration.
+- Engine startup integration
+- Engine shutdown integration
+- Registration lifecycle
+- Registration validation
+- Registration freeze
+- Core service coordination
+- Public ForgeOS API
+- ForgeOS state initialization
+- Core test suite
 
-- ✅ M1.007.04.07 – Repeated Save Verification
-  - Verify repeated saves.
-  - Verify no duplicate callbacks.
-  - Verify no duplicate writes.
+---
 
-#### ⏳ M1.007.05 – Persistence Polish
+#### ⏳ M2.004 – Device Registry
 
-- Remove temporary engine diagnostics.
-- Finalise XML schema documentation.
-- Finalise persistence lifecycle documentation.
-- Finalise Save Manager documentation.
-- Final code review.
-- Freeze persistence API.
+- Device registration
+- Duplicate validation
+- Device capability registration
+- Device lookup
+- Device availability queries
+- Device validation
+- Device registry test suite
+
+---
+
+#### ⏳ M2.005 – App Registry
+
+- Application registration
+- Owner registration
+- API compatibility validation
+- Duplicate validation
+- Presentation validation
+- Callback validation
+- Registry lookup
+- Registry test suite
+
+---
+
+#### ⏳ M2.006 – Presentation Resolver
+
+- Exact device matching
+- Capability matching
+- Priority resolution
+- Deterministic tie breaking
+- Default presentation fallback
+- Presentation validation
+- Presentation resolution test suite
+
+---
+
+#### ⏳ M2.007 – Lifecycle Service
+
+- Open application
+- Close application
+- Activate application
+- Background application
+- Disable application
+- Lifecycle validation
+- Transition validation
+- Lifecycle event publishing
+- Lifecycle test suite
+
+---
+
+#### ⏳ M2.008 – Navigation Service
+
+- Route registration
+- Route validation
+- Route navigation
+- Resume state
+- Route parameter validation
+- Navigation history
+- Navigation events
+- Navigation test suite
+
+---
+
+#### ⏳ M2.009 – Notification Service
+
+- Notification creation
+- Notification dismissal
+- Notification read state
+- Notification persistence
+- Notification targeting
+- Notification events
+- Notification test suite
+
+---
+
+#### ⏳ M2.010 – Phone Host
+
+- Phone device registration
+- Phone presentation host
+- Phone lifecycle integration
+- Phone navigation integration
+- Phone notification integration
+- Phone resume support
+- Phone host test suite
+
+---
+
+#### ⏳ M2.011 – Laptop Host
+
+- Laptop device registration
+- Laptop presentation host
+- Laptop lifecycle integration
+- Laptop navigation integration
+- Laptop notification integration
+- Laptop resume support
+- Laptop host test suite
+
+---
+
+#### ⏳ M2.012 – End-to-End Integration
+
+- ForgeOS startup verification
+- Device registration verification
+- App registration verification
+- Presentation resolution verification
+- Lifecycle verification
+- Navigation verification
+- Resume state verification
+- Persistence verification
+- Notification verification
+- Multiplayer compatibility verification
+
+---
+
+#### ⏳ M2.013 – ForgeOS Polish
+
+- Remove temporary diagnostics
+- Documentation review
+- Public API review
+- Definition review
+- Code review
+- Performance review
+- Final architecture review
+- Freeze ForgeOS API
 
 ---
 
@@ -126,25 +231,89 @@
 
 # Milestone Exit Criteria
 
-## M1.007 – Persistence
+M2 – ForgeOS is considered complete when all of the following are true:
 
-Persistence is considered complete when:
+## Architecture
 
-- ✅ State Store namespaces can be registered.
-- ✅ XML documents are written deterministically.
-- ✅ XML documents are read deterministically.
-- ✅ Strings, numbers, booleans and nested tables survive round-trip serialization.
-- ✅ Empty namespaces are supported.
-- ✅ Unsupported, cyclic and non-finite values are rejected.
-- ✅ Missing persistence files are handled safely.
-- ⏳ Save version compatibility is enforced.
-- ✅ SaveManager integrates XML Reader and XML Writer.
-- ✅ Engine hooks into the FS25 save lifecycle.
-- ⏳ `saveCount` persists and increments exactly once per save.
-- ⏳ `firstRun` automatically transitions after the first successful save.
-- ⏳ Runtime state is restored after exiting and reloading a savegame.
-- ⏳ Multiple saves during one session remain deterministic.
-- ⏳ Persistence documentation is complete.
+- All ForgeOS design documentation has been reviewed and finalised.
+- No unresolved architectural decisions remain.
+- Public contracts are frozen.
+
+## Definitions
+
+- All authoritative ForgeOS definitions have been implemented.
+- Definition validation passes.
+- Definition test suite passes.
+
+## Core
+
+- ForgeOS initialises correctly with the FORGE Engine.
+- Registration lifecycle functions correctly.
+- Registration freeze is enforced.
+- Shutdown performs complete cleanup.
+
+## Device System
+
+- Devices register correctly.
+- Device capability resolution functions correctly.
+- Device validation passes.
+
+## Application System
+
+- Applications register through the public ForgeOS API.
+- Duplicate registrations are rejected.
+- API compatibility is validated.
+- Presentation definitions are validated.
+
+## Presentation System
+
+- Exact device presentation resolution functions.
+- Capability fallback resolution functions.
+- Default presentation fallback functions.
+- Deterministic resolution is verified.
+
+## Lifecycle
+
+- Application lifecycle transitions behave correctly.
+- Invalid transitions are rejected.
+- Lifecycle events publish correctly.
+
+## Navigation
+
+- Route registration functions.
+- Route validation functions.
+- Resume state restores correctly.
+- Navigation events publish correctly.
+
+## Notifications
+
+- Notifications can be created.
+- Notifications can be dismissed.
+- Read state persists correctly.
+- Persistence policies function correctly.
+
+## Device Hosts
+
+- Phone host fully integrates with ForgeOS.
+- Laptop host fully integrates with ForgeOS.
+- Device-specific resume state functions correctly.
+
+## Integration
+
+- Complete ForgeOS startup verified.
+- Complete ForgeOS shutdown verified.
+- Persistence verified across save/load.
+- Resume state verified after reload.
+- Event flow verified.
+- Multiplayer compatibility validated where applicable.
+
+## Quality
+
+- Temporary diagnostics removed.
+- Documentation updated.
+- Code review completed.
+- ForgeOS API frozen.
+- All automated and manual tests pass.
 
 ---
 

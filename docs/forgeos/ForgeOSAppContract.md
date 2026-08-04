@@ -1,0 +1,1289 @@
+# FORGE ForgeOS Application Contract
+
+**Version:** 0.1  
+**Status:** Draft  
+**Milestone:** M2 – ForgeOS
+
+---
+
+# Purpose
+
+This document defines the contract used by applications that register with
+ForgeOS.
+
+The application contract establishes how first-party and third-party addon mods
+declare:
+
+- application identity
+- application metadata
+- device support
+- device-specific presentations
+- capability-based presentation fallbacks
+- routes
+- exposed actions
+- lifecycle callbacks
+- controller bindings
+- compatibility requirements
+
+ForgeOS applications must register through the public ForgeOS API.
+
+Applications must not modify ForgeOS registries, lifecycle state, navigation
+state, or device state directly.
+
+---
+
+# Core Principle
+
+A ForgeOS application has one stable identity but may provide multiple
+device-specific presentations.
+
+Example:
+
+```text
+forge.projects
+├── Shared application controller
+├── Phone presentation
+├── Laptop presentation
+└── Capability-based fallback presentation
+```
+
+The phone and laptop presentations are not separate applications.
+
+They share:
+
+- application identity
+- domain integration
+- notification identity
+- availability policy
+- persisted application settings
+- public API compatibility
+
+They may differ in:
+
+- layout
+- routes
+- available actions
+- controls
+- navigation style
+- information density
+- presentation controller
+
+---
+
+# Application Architecture
+
+```text
+Domain Manager
+      │
+      ▼
+Shared App Controller
+      │
+      ▼
+ForgeOS App Definition
+      │
+      ├── Phone Presentation
+      ├── Laptop Presentation
+      └── Capability Presentation
+             │
+             ▼
+         Device Host
+```
+
+The domain manager owns gameplay rules.
+
+The app controller translates user-facing requests into domain operations.
+
+The presentation declares what the user may see and request through a
+particular device.
+
+ForgeOS owns registration, presentation selection, lifecycle, navigation, and
+availability.
+
+---
+
+# Public Registration
+
+Applications register through a public ForgeOS function.
+
+Conceptual API:
+
+```lua
+FORGE.ForgeOS:registerApp(appDefinition)
+```
+
+The final function signature will be frozen during implementation.
+
+Applications must not write directly into:
+
+- App Registry private state
+- Device Registry private state
+- Lifecycle Service private state
+- Navigation Service private state
+- ForgeOS State Store tables
+
+---
+
+# Application Definition
+
+A complete application definition may contain:
+
+```lua
+{
+    id = "forge.projects",
+    apiVersion = 1,
+
+    displayName = "Projects",
+    iconId = "forge.icon.projects",
+
+    controller = FORGEProjects.Controller,
+
+    supportedDevices = {
+        phone = true,
+        laptop = true
+    },
+
+    requiredCapabilities = {
+        notifications = true
+    },
+
+    defaultPresentation = "compact",
+
+    presentations = {
+        phone = {},
+        laptop = {},
+        compact = {}
+    },
+
+    availabilityProviders = {},
+
+    metadata = {}
+}
+```
+
+The exact runtime representation may use a validated internal copy.
+
+---
+
+# Required Application Fields
+
+Every application must define:
+
+```text
+id
+apiVersion
+displayName
+supportedDevices
+presentations
+```
+
+## `id`
+
+Globally unique authoritative application identifier.
+
+Example:
+
+```text
+forge.projects
+```
+
+Rules:
+
+- must be a non-empty string
+- must not contain whitespace
+- must remain stable
+- must not be derived from translated display text
+- must not duplicate another registered application
+
+Recommended format:
+
+```text
+<owner>.<application>
+```
+
+Examples:
+
+```text
+forge.projects
+forge.bank
+example.logistics
+sheridan.contractBoard
+```
+
+---
+
+## `apiVersion`
+
+The ForgeOS application contract version expected by the app.
+
+Initial value:
+
+```lua
+apiVersion = 1
+```
+
+ForgeOS must reject applications requiring an unsupported app API version.
+
+The app API version is separate from:
+
+- FORGE release version
+- FORGE public addon API version
+- persistence schema version
+
+---
+
+## `displayName`
+
+Default human-readable application name.
+
+Example:
+
+```lua
+displayName = "Projects"
+```
+
+The final implementation may later support localisation keys.
+
+The display name is presentation metadata and is not an authoritative
+identifier.
+
+---
+
+## `supportedDevices`
+
+Declares explicit device support.
+
+Example:
+
+```lua
+supportedDevices = {
+    phone = true,
+    laptop = true
+}
+```
+
+A supported device declaration does not guarantee availability.
+
+The app must also satisfy:
+
+- device registration
+- required capabilities
+- enabled state
+- external availability policies
+- valid presentation resolution
+
+---
+
+## `presentations`
+
+Contains one or more application presentation definitions.
+
+Example:
+
+```lua
+presentations = {
+    phone = phonePresentation,
+    laptop = laptopPresentation
+}
+```
+
+An application is invalid if no usable presentation can be resolved for any
+declared supported device.
+
+---
+
+# Optional Application Fields
+
+An application may define:
+
+```text
+iconId
+controller
+requiredCapabilities
+defaultPresentation
+availabilityProviders
+metadata
+callbacks
+```
+
+Unknown fields should not automatically become part of the public contract.
+
+ForgeOS may ignore unknown fields when creating its validated internal copy.
+
+---
+
+# Shared Application Controller
+
+The shared controller exposes application operations independently of device
+presentation.
+
+Example:
+
+```lua
+FORGEProjects.Controller = {}
+
+function FORGEProjects.Controller:getActiveProjects(context)
+end
+
+function FORGEProjects.Controller:getProject(context, projectId)
+end
+
+function FORGEProjects.Controller:acceptProject(context, projectId)
+end
+
+function FORGEProjects.Controller:updateSchedule(
+    context,
+    projectId,
+    schedule
+)
+end
+```
+
+The controller:
+
+- may communicate with domain managers
+- may prepare presentation-ready data
+- may validate app-level input
+- must not bypass domain validation
+- must not render UI
+- must not directly mutate ForgeOS lifecycle or navigation state
+
+---
+
+# Presentation Definition
+
+A presentation describes how an app is exposed through a device or compatible
+device profile.
+
+Example:
+
+```lua
+{
+    id = "projects.phone",
+    defaultRoute = "overview",
+
+    requiredCapabilities = {
+        fullScreenApps = true,
+        touchInput = true
+    },
+
+    routes = {},
+    actions = {},
+
+    controller = FORGEProjects.PhonePresentation
+}
+```
+
+A presentation may define:
+
+```text
+id
+defaultRoute
+requiredCapabilities
+routes
+actions
+controller
+metadata
+priority
+```
+
+---
+
+# Presentation Selection
+
+ForgeOS resolves presentations in this order:
+
+```text
+1. Exact device presentation
+2. Compatible capability-based presentation
+3. Declared default presentation
+4. Application unavailable
+```
+
+Example:
+
+```text
+phone
+    ↓
+presentations.phone
+```
+
+If no exact device presentation exists:
+
+```text
+device capabilities
+    ↓
+compatible presentation profile
+```
+
+If no compatible presentation exists:
+
+```text
+defaultPresentation
+```
+
+If no valid presentation can be resolved, the app is unavailable on that
+device.
+
+---
+
+# Exact Device Presentations
+
+An exact device presentation uses the device identifier as its registration key.
+
+Example:
+
+```lua
+presentations = {
+    phone = {
+        defaultRoute = "overview"
+    },
+
+    laptop = {
+        defaultRoute = "dashboard"
+    }
+}
+```
+
+Exact device presentations have priority over capability-based fallbacks.
+
+---
+
+# Capability-Based Presentations
+
+An app may provide reusable presentation profiles selected through required
+capabilities.
+
+Example:
+
+```lua
+presentations = {
+    compact = {
+        requiredCapabilities = {
+            fullScreenApps = true,
+            touchInput = true
+        }
+    },
+
+    desktop = {
+        requiredCapabilities = {
+            pointerInput = true,
+            keyboardInput = true
+        }
+    }
+}
+```
+
+This allows future devices to reuse existing presentations.
+
+Examples:
+
+- tablet may use `compact`
+- office terminal may use `desktop`
+- vehicle display may use a restricted compact profile
+
+---
+
+# Presentation Priority
+
+Where multiple compatible capability presentations exist, ForgeOS should use an
+explicit numeric priority.
+
+Example:
+
+```lua
+priority = 100
+```
+
+Higher priority presentations are preferred.
+
+Where priorities are equal, ForgeOS must use deterministic ordering.
+
+Registration order should not silently determine selection.
+
+---
+
+# Routes
+
+Routes represent logical destinations inside an application presentation.
+
+Example:
+
+```lua
+routes = {
+    overview = {
+        controller = "showOverview"
+    },
+
+    projectDetails = {
+        controller = "showProjectDetails"
+    }
+}
+```
+
+Route identifiers are local to the application.
+
+A complete route identity is:
+
+```text
+appId + routeId
+```
+
+Example:
+
+```text
+forge.projects / projectDetails
+```
+
+---
+
+# Route Rules
+
+Route identifiers must:
+
+- be non-empty strings
+- contain no whitespace
+- be unique within the presentation
+- remain stable where persisted or externally referenced
+- not contain translated display text
+
+Each presentation must declare a valid default route.
+
+---
+
+# Device-Specific Routes
+
+Different presentations may expose different routes.
+
+Phone example:
+
+```text
+overview
+projectDetails
+messages
+```
+
+Laptop example:
+
+```text
+dashboard
+projectDetails
+schedule
+budget
+resources
+analytics
+```
+
+A saved route from one device must not be assumed valid on another device.
+
+Resume state is scoped per player and per device.
+
+---
+
+# Route Parameters
+
+Route parameters must contain plain persistable data only.
+
+Supported values:
+
+- strings
+- finite numbers
+- booleans
+- tables with string keys
+- nested supported values
+
+Unsupported values:
+
+- functions
+- userdata
+- threads
+- cyclic tables
+- runtime objects
+- UI references
+- callback functions
+
+Route parameters must be validated before being stored as resume state.
+
+---
+
+# Actions
+
+Actions represent user-requestable application operations.
+
+Example:
+
+```lua
+actions = {
+    viewProject = {
+        handler = "viewProject"
+    },
+
+    acceptProject = {
+        handler = "acceptProject"
+    }
+}
+```
+
+An action declaration may contain:
+
+```text
+handler
+requiredCapabilities
+enabled
+metadata
+```
+
+---
+
+# Device-Specific Action Exposure
+
+Presentations decide which shared controller actions are exposed through a
+device.
+
+Phone example:
+
+```lua
+actions = {
+    viewProject = true,
+    acceptProject = true,
+    sendMessage = true
+}
+```
+
+Laptop example:
+
+```lua
+actions = {
+    viewProject = true,
+    acceptProject = true,
+    sendMessage = true,
+    editSchedule = true,
+    manageBudget = true,
+    assignResources = true,
+    exportReport = true
+}
+```
+
+The underlying shared controller may implement all operations.
+
+The presentation decides which operations are accessible through that device.
+
+---
+
+# Action Authority
+
+ForgeOS action exposure does not grant gameplay authority.
+
+Example:
+
+```text
+Laptop presentation exposes manageBudget
+        ↓
+App controller submits budget request
+        ↓
+Project Manager validates request
+        ↓
+Authoritative state changes or request is rejected
+```
+
+The domain manager remains authoritative.
+
+ForgeOS only controls whether an action is available through a presentation.
+
+---
+
+# Action Availability
+
+ForgeOS should support an availability query such as:
+
+```lua
+FORGE.ForgeOS:isAppActionAvailable(
+    playerId,
+    deviceId,
+    appId,
+    actionId
+)
+```
+
+The final API remains provisional.
+
+Action availability may depend on:
+
+- presentation exposure
+- device capabilities
+- app lifecycle state
+- app enabled state
+- external policy
+- domain controller response
+
+---
+
+# Availability Providers
+
+Applications may register controlled availability providers.
+
+Example purposes:
+
+- campaign unlock requirements
+- company membership requirements
+- player permission requirements
+- gameplay progression requirements
+
+Conceptual provider:
+
+```lua
+function provider:isAvailable(context)
+    return true
+end
+```
+
+or:
+
+```lua
+return false,
+    FORGE.Definitions.AppAvailabilityReason.POLICY_REJECTED,
+    "companyAccessRequired"
+```
+
+Availability providers must not directly mutate ForgeOS state.
+
+---
+
+# Application Lifecycle Callbacks
+
+Applications may receive lifecycle callbacks.
+
+Potential callbacks:
+
+```text
+onRegister
+onOpen
+onActivate
+onBackground
+onClose
+onDisable
+onEnable
+```
+
+Callbacks remain provisional until lifecycle implementation.
+
+---
+
+# Callback Rules
+
+Callbacks:
+
+- receive a controlled application context
+- execute after or around validated lifecycle transitions as documented
+- must not mutate private ForgeOS state
+- must not register new apps after registration closes
+- must not assume a specific device host implementation
+- must fail safely
+- must not prevent ForgeOS cleanup
+
+A callback failure should return a defined result and produce diagnostic output.
+
+---
+
+# Application Context
+
+Applications should receive a controlled context object.
+
+Potential context capabilities:
+
+```text
+query player identity
+query active device
+query app lifecycle state
+navigate
+go back
+open modal
+create notification
+request app close
+publish application event
+access owned State Store namespace
+access domain controller
+```
+
+The context must not expose:
+
+- private registry tables
+- private lifecycle tables
+- raw ForgeOS persistence tables
+- unrelated addon namespaces
+- XML Reader
+- XML Writer
+
+---
+
+# App-Owned State
+
+Application domain state should normally belong to the application's own State
+Store namespace.
+
+Examples:
+
+```text
+forge.projects
+forge.bank
+example.logistics
+```
+
+Application state must not be stored inside `forge.os` unless it is genuinely
+operating-system state.
+
+`forge.os` may store references such as:
+
+```text
+last active app
+last route
+notification read state
+device preferences
+```
+
+It must not store:
+
+```text
+project definitions
+bank balances
+company records
+message contents owned by Communications
+```
+
+---
+
+# Presentation State
+
+Presentation state must be classified.
+
+## Persisted resume state
+
+May include:
+
+- last route
+- safe route parameters
+- selected tab
+- selected app-local section
+
+## Session-only state
+
+May include:
+
+- temporary search terms
+- expanded panel state
+- current unsaved filters
+
+## Transient state
+
+Includes:
+
+- hover state
+- animation progress
+- pointer position
+- UI element references
+- open callback references
+- render targets
+
+Transient state must never be persisted.
+
+---
+
+# Device Visibility
+
+Device visibility is separate from app lifecycle.
+
+Example:
+
+```text
+Phone visible
+Phone hidden
+```
+
+Hiding a device does not automatically close its active app.
+
+When the device reopens, ForgeOS should restore:
+
+```text
+last valid app
+last valid route
+safe route parameters
+```
+
+---
+
+# Resume Validation
+
+When restoring a device, ForgeOS must validate:
+
+1. the saved app is still registered
+2. the app is still available
+3. the device is still supported
+4. a valid presentation can be resolved
+5. the saved route still exists
+6. route parameters are valid
+
+Fallback order:
+
+```text
+saved app and route
+→ saved app default route
+→ device home
+```
+
+Removed or unavailable addon apps must not prevent the device from opening.
+
+---
+
+# Addon Registration Lifecycle
+
+External addon mods may register applications only while ForgeOS registration
+is open.
+
+Proposed phases:
+
+```text
+UNAVAILABLE
+INITIALISING
+REGISTRATION_OPEN
+VALIDATING
+REGISTRATION_FROZEN
+RUNTIME_ACTIVE
+SHUTTING_DOWN
+STOPPED
+```
+
+The final phase names will be defined authoritatively.
+
+Late registrations must be rejected cleanly.
+
+---
+
+# Addon Compatibility
+
+An external addon must verify:
+
+```text
+FORGE exists
+ForgeOS exists
+required public API version is supported
+required app API version is supported
+registration is open
+dependencies are available
+```
+
+Conceptual check:
+
+```lua
+if FORGE == nil
+    or FORGE.ForgeOS == nil
+    or FORGE.ForgeOS.APP_API_VERSION ~= 1 then
+    return
+end
+```
+
+A formal compatibility API should replace direct equality checks before public
+release.
+
+---
+
+# Duplicate Registration
+
+ForgeOS must reject duplicate application identifiers.
+
+It must not:
+
+- silently replace the existing app
+- merge definitions automatically
+- accept registration based on load order
+
+Duplicate registration should return:
+
+```text
+false
+ALREADY_REGISTERED
+```
+
+and log the conflicting identifier.
+
+---
+
+# Registration Ownership
+
+An addon should have an authoritative addon identity.
+
+Applications registered by that addon should record their owner.
+
+Example:
+
+```lua
+ownerId = "forge.projects"
+```
+
+or:
+
+```lua
+ownerId = "example.logistics"
+```
+
+Ownership may later be used to enforce:
+
+- namespace access
+- asset ownership
+- lifecycle cleanup
+- dependency tracking
+- addon diagnostics
+
+---
+
+# Registration Validation
+
+ForgeOS must validate the complete app definition before committing it to the
+App Registry.
+
+Validation includes:
+
+- required fields
+- valid app ID
+- supported API version
+- unique app ID
+- valid device declarations
+- valid presentations
+- valid routes
+- valid default routes
+- valid actions
+- valid capability identifiers
+- valid callback types
+- valid owner identity
+
+Registration must be atomic.
+
+An invalid app must not leave a partial registry entry.
+
+---
+
+# Registration Result
+
+Conceptually:
+
+```lua
+local registered, resultCode, detail =
+    FORGE.ForgeOS:registerApp(appDefinition)
+```
+
+Success:
+
+```lua
+true,
+FORGE.Definitions.ForgeOSResult.SUCCESS,
+nil
+```
+
+Failure:
+
+```lua
+false,
+FORGE.Definitions.ForgeOSResult.INVALID_DEFINITION,
+"missingDefaultRoute"
+```
+
+The exact public return contract will be frozen during implementation.
+
+---
+
+# App Unregistration
+
+Application unregistration is deferred for the initial M2 implementation.
+
+Removing a live app introduces complexity involving:
+
+- active lifecycle state
+- navigation state
+- persisted resume state
+- notifications
+- device hosts
+- addon dependencies
+
+Initial rule:
+
+> Applications remain registered for the duration of the mission runtime.
+
+Controlled unregistration may be introduced later.
+
+---
+
+# Built-In and External Apps
+
+ForgeOS must use the same registration contract for:
+
+- built-in FORGE apps
+- first-party addon apps
+- third-party addon apps
+
+Built-in applications must not bypass validation.
+
+This ensures the public contract is proven by FORGE itself.
+
+---
+
+# Example Complete App Definition
+
+```lua
+local appDefinition = {
+    id = "forge.projects",
+    ownerId = "forge.projects",
+    apiVersion = 1,
+
+    displayName = "Projects",
+    iconId = "forge.icon.projects",
+
+    controller = FORGEProjects.Controller,
+
+    supportedDevices = {
+        phone = true,
+        laptop = true
+    },
+
+    requiredCapabilities = {
+        notifications = true
+    },
+
+    defaultPresentation = "compact",
+
+    presentations = {
+        phone = {
+            id = "projects.phone",
+            defaultRoute = "overview",
+
+            requiredCapabilities = {
+                fullScreenApps = true,
+                touchInput = true
+            },
+
+            routes = {
+                overview = {},
+                projectDetails = {},
+                messages = {}
+            },
+
+            actions = {
+                viewProject = true,
+                acceptProject = true,
+                sendMessage = true
+            },
+
+            controller =
+                FORGEProjects.PhonePresentation
+        },
+
+        laptop = {
+            id = "projects.laptop",
+            defaultRoute = "dashboard",
+
+            requiredCapabilities = {
+                pointerInput = true,
+                keyboardInput = true
+            },
+
+            routes = {
+                dashboard = {},
+                projectDetails = {},
+                schedule = {},
+                budget = {},
+                resources = {},
+                analytics = {}
+            },
+
+            actions = {
+                viewProject = true,
+                acceptProject = true,
+                sendMessage = true,
+                editSchedule = true,
+                manageBudget = true,
+                assignResources = true,
+                exportReport = true
+            },
+
+            controller =
+                FORGEProjects.LaptopPresentation
+        },
+
+        compact = {
+            id = "projects.compact",
+            priority = 10,
+            defaultRoute = "overview",
+
+            requiredCapabilities = {
+                fullScreenApps = true
+            },
+
+            routes = {
+                overview = {},
+                projectDetails = {}
+            },
+
+            actions = {
+                viewProject = true
+            }
+        }
+    },
+
+    availabilityProviders = {},
+
+    metadata = {}
+}
+```
+
+---
+
+# Public Contract Rules
+
+1. One application has one stable app ID.
+2. An app may provide multiple presentations.
+3. Exact device presentations take priority.
+4. Capability presentations provide reusable fallbacks.
+5. Presentations declare routes and exposed actions.
+6. Shared controllers own app-level operations.
+7. Domain managers remain authoritative over gameplay.
+8. ForgeOS owns lifecycle, navigation, and presentation resolution.
+9. App definitions are validated and copied atomically.
+10. External apps use the same contract as built-in apps.
+11. Registration is allowed only during the formal registration window.
+12. Device visibility does not automatically close the app.
+13. Persisted resume state is scoped per player and per device.
+14. Invalid saved app state must fall back safely.
+15. Apps must not access private ForgeOS implementation state.
+
+---
+
+# Open Implementation Decisions
+
+The following remain to be finalised during implementation:
+
+- exact callback timing
+- exact application context API
+- localisation metadata format
+- asset registration format
+- presentation priority limits
+- availability provider interface
+- action result format
+- formal addon dependency declarations
+- controlled app unregistration
+- per-player identity provider implementation
+
+These decisions must not invalidate the core app contract.
+
+---
+
+# Success Criteria
+
+This contract is ready for implementation when:
+
+1. Apps can register from separate addon mods.
+2. App IDs are globally unique.
+3. One app can support multiple device presentations.
+4. Laptop presentations can expose richer functions than phone presentations.
+5. Capability fallbacks support future devices.
+6. Routes and actions are validated.
+7. Domain rules remain outside ForgeOS.
+8. Registration is atomic.
+9. Resume state can safely reference app and route identifiers.
+10. The contract can be versioned independently of persistence.
