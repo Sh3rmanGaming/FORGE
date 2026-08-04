@@ -1,7 +1,7 @@
 # FORGE ForgeOS Component Design
 
 **Version:** 0.1  
-**Status:** Draft  
+**Status:** Review
 **Milestone:** M2 – ForgeOS Foundation
 
 ---
@@ -143,7 +143,7 @@ The bootstrap must not own:
 ## Proposed Location
 
 ```text
-engine/forgeos/ForgeOS.lua
+forgeos/ForgeOS.lua
 ```
 
 ## Dependency Direction
@@ -194,7 +194,7 @@ The Core coordinates specialised ForgeOS components.
 ## Proposed Location
 
 ```text
-engine/forgeos/ForgeOSCore.lua
+forgeos/ForgeOSCore.lua
 ```
 
 ## Example Public Interaction
@@ -219,7 +219,9 @@ ForgeOS API design phase.
 
 ## Responsibility
 
-The Device Registry owns authoritative registered-device definitions.
+The Device Registry owns authoritative registered device definitions and their
+registration invariants. Device terminology follows the canonical definitions
+in `ForgeOSArchitecture.md`.
 
 It stores:
 
@@ -251,6 +253,9 @@ It stores:
 }
 ```
 
+`allowCapabilityFallback = false` means undeclared device types are unsupported.
+An explicit `supportedDevices[deviceId] = false` remains an absolute block.
+
 ## Ownership
 
 The Device Registry owns registered definitions.
@@ -278,7 +283,7 @@ clear registrations
 ## Proposed Location
 
 ```text
-engine/forgeos/registries/DeviceRegistry.lua
+forgeos/registries/DeviceRegistry.lua
 ```
 
 ---
@@ -287,12 +292,15 @@ engine/forgeos/registries/DeviceRegistry.lua
 
 ## Responsibility
 
-The Device Host Registry associates logical device definitions with runtime
-presentation hosts.
+The Device Host Registry registers device host implementations and associates
+them with device definitions/profiles.
 
-A device definition describes capabilities.
+A device definition/profile describes capabilities and policy.
 
-A device host implements presentation.
+A device host implementation provides presentation code. A device host instance
+is its runtime object and does not participate in registration. The registry MAY
+create, locate, or track instances under the future host lifecycle design, but
+ownership of runtime instances is not yet approved.
 
 Example:
 
@@ -323,17 +331,33 @@ It also allows:
 Conceptually:
 
 ```text
-register host
-retrieve host
-bind host to device
-unbind host
-clear hosts
+register host implementation
+retrieve host implementation
+bind implementation to device definition/profile
+unbind implementation
+clear implementation registrations
 ```
+
+ForgeOS has one registration lifecycle:
+
+- during `REGISTRATION_OPEN`, the Device Registry accepts device
+  definitions/profiles, the Device Host Registry accepts device host
+  implementations, and the App Registry accepts application definitions;
+- during `VALIDATING`, registration is closed and all three stable registration
+  sets are validated;
+- during `REGISTRATION_FROZEN`, all three registration sets are immutable,
+  restored references MAY be validated and repaired, and final runtime
+  preparation MAY occur;
+- during `RUNTIME_ACTIVE`, normal public runtime operations are permitted and
+  registration remains closed.
+
+Public content registration MUST NOT occur during `INITIALISING`. Internal
+service creation and persistence setup are not public registration.
 
 ## Proposed Location
 
 ```text
-engine/forgeos/registries/DeviceHostRegistry.lua
+forgeos/registries/DeviceHostRegistry.lua
 ```
 
 This component may be deferred until the first host implementation if it proves
@@ -361,6 +385,7 @@ It stores metadata and declared requirements.
         phone = true,
         laptop = true
     },
+    allowCapabilityFallback = false,
     requiredCapabilities = {
         notifications = true
     }
@@ -374,6 +399,7 @@ The App Registry owns:
 - app identity
 - display metadata
 - device declarations
+- `allowCapabilityFallback` policy
 - capability requirements
 - default route
 - lifecycle callback references
@@ -401,7 +427,7 @@ clear registrations
 ## Proposed Location
 
 ```text
-engine/forgeos/registries/AppRegistry.lua
+forgeos/registries/AppRegistry.lua
 ```
 
 ---
@@ -410,8 +436,9 @@ engine/forgeos/registries/AppRegistry.lua
 
 ## Responsibility
 
-The Availability Service determines whether a registered application is
-currently available on a specific device.
+The Availability Service owns availability calculation rules and determines
+whether a registered application is currently available for a device type and
+a specific player.
 
 Availability is calculated from:
 
@@ -451,8 +478,10 @@ An application is available only when:
 
 1. the app is registered
 2. the device is registered
-3. the app supports the device
-4. the device satisfies required capabilities
+3. the app supports the device type through an authoritative exact declaration
+   or `allowCapabilityFallback = true`
+4. the device satisfies both the app-level universal minimum capabilities and
+   the additional requirements of the selected presentation
 5. the app is enabled
 6. no external policy rejects availability
 
@@ -468,10 +497,13 @@ The Availability Service must not own:
 
 It queries those sources through controlled interfaces.
 
+Presentation-level capability requirements MUST NOT weaken or override
+app-level requirements.
+
 ## Proposed Location
 
 ```text
-engine/forgeos/services/AppAvailabilityService.lua
+forgeos/services/AppAvailabilityService.lua
 ```
 
 ---
@@ -483,7 +515,9 @@ engine/forgeos/services/AppAvailabilityService.lua
 The Lifecycle Service owns application runtime state and valid state
 transitions.
 
-It tracks lifecycle state per device.
+It tracks lifecycle state as player device state. M2 MAY resolve the player
+through the isolated `player.local` identity while persistence remains
+savegame-global.
 
 Example:
 
@@ -496,23 +530,26 @@ laptop
 └── forge.bank = ACTIVE
 ```
 
-## Initial Lifecycle States
+## Authoritative Lifecycle States
 
 ```text
-REGISTERED
-AVAILABLE
+CLOSED
 OPEN
 ACTIVE
 BACKGROUND
-CLOSED
-DISABLED
 ```
 
-These names remain provisional until the ForgeOS Definitions milestone.
+Registration belongs to the App Registry. Enabled policy is a validated state
+or policy input owned outside the Lifecycle Service. Availability is calculated
+by the Availability Service for a specific player and device type. None of
+registration, enabled policy, or availability is a lifecycle state.
 
 ## Transition Ownership
 
 Only the Lifecycle Service may mutate lifecycle state.
+
+Enabled policy and calculated availability MUST constrain whether lifecycle
+transitions may occur.
 
 Applications may request transitions.
 
@@ -548,16 +585,13 @@ The service must explicitly define valid transitions.
 Conceptually:
 
 ```text
-REGISTERED → AVAILABLE
-AVAILABLE  → OPEN
+CLOSED     → OPEN
 OPEN       → ACTIVE
 ACTIVE     → BACKGROUND
 BACKGROUND → ACTIVE
 OPEN       → CLOSED
 ACTIVE     → CLOSED
 BACKGROUND → CLOSED
-AVAILABLE  → DISABLED
-DISABLED   → AVAILABLE
 ```
 
 Device policies may impose additional restrictions.
@@ -571,7 +605,7 @@ Example:
 ## Proposed Location
 
 ```text
-engine/forgeos/services/AppLifecycleService.lua
+forgeos/services/AppLifecycleService.lua
 ```
 
 ---
@@ -639,7 +673,7 @@ This is conceptual only.
 ## Proposed Location
 
 ```text
-engine/forgeos/services/NavigationService.lua
+forgeos/services/NavigationService.lua
 ```
 
 ---
@@ -700,7 +734,7 @@ The notification record may be authoritative while its animation remains local.
 ## Proposed Location
 
 ```text
-engine/forgeos/services/NotificationService.lua
+forgeos/services/NotificationService.lua
 ```
 
 ---
@@ -723,7 +757,7 @@ Possible state includes:
 
 ## State Store Namespace
 
-Proposed namespace:
+Authoritative State Store namespace:
 
 ```text
 forge.os
@@ -731,23 +765,27 @@ forge.os
 
 ## Persistence Boundary
 
-Only persistent state belongs in the ForgeOS namespace.
+The stable persistence-facing namespace is `forge.os`. Only persistent state
+defined by the ForgeOS state contract belongs in that namespace.
 
 Registry definitions should normally be rebuilt during startup rather than
 saved, because they originate from engine and module registration.
 
-Likely persistent:
+Persisted resume state MAY include:
 
 ```text
 last active device
-last active app
+last valid app
+last valid presentation
+last valid route
+safe route parameters
 read notification state
-user preferences
+approved user preferences
 accessibility preferences
 device preferences
 ```
 
-Likely transient:
+MUST NOT be persisted:
 
 ```text
 registered app definitions
@@ -759,6 +797,16 @@ input state
 open modal callbacks
 ```
 
+Runtime rendering objects and ephemeral presentation state MUST NOT be
+persisted. Stable plain-data presentation preferences or resume state MAY be
+persisted only when included in the ForgeOS state contract.
+
+Presentation-only preferences SHOULD be player-local. Preferences affecting
+gameplay access, permissions, progression, company policy, or other
+authoritative behaviour MUST remain server-authoritative or
+domain-authoritative and MUST NOT be altered by presentation preferences. The
+exact persistence mechanism remains open.
+
 ## Proposed Location
 
 ForgeOS may access state through the existing State Store rather than creating a
@@ -767,7 +815,7 @@ separate state container.
 A thin state-coordination component may still be useful:
 
 ```text
-engine/forgeos/services/ForgeOSStateService.lua
+forgeos/services/ForgeOSStateService.lua
 ```
 
 Its necessity should be decided during implementation design.
@@ -820,7 +868,7 @@ Phone Host rerenders
 ## Proposed Location
 
 ```text
-engine/forgeos/hosts/PhoneHost.lua
+forgeos/hosts/PhoneHost.lua
 ```
 
 ---
@@ -861,7 +909,7 @@ True multi-window behaviour may be a later enhancement.
 ## Proposed Location
 
 ```text
-engine/forgeos/hosts/LaptopHost.lua
+forgeos/hosts/LaptopHost.lua
 ```
 
 ---
@@ -991,6 +1039,11 @@ event announces successful change
 ```
 
 Events should not be used to hide required synchronous validation.
+
+ForgeOS MUST NOT report a multi-service operation as successful while exposing
+partially committed lifecycle, navigation, resume, notification, or visibility
+state. The exact staging, rollback, callback timing, and re-entrancy behaviour
+remain open.
 
 ---
 
@@ -1161,99 +1214,58 @@ M2.013 Documentation and API Freeze
 
 ---
 
-# Open Design Decisions
+# Open Decisions
 
-The following questions must be resolved before or during implementation.
+The following contract decisions remain unresolved. Implementations and other
+documents MUST NOT silently choose answers before architecture review records
+the decision.
 
-## Device Selection
+## Lifecycle callback timing and rollback
 
-Should ForgeOS maintain one globally active device, or should each local player
-have an independent active device?
+The point at which callbacks run relative to authoritative lifecycle mutation,
+and whether callback failure rolls back a transition, remain unresolved.
 
-The likely answer is player-local, but the multiplayer and persistence model
-must be designed first.
+## Event ordering and re-entrancy
 
-## Lifecycle Granularity
+Cross-service event order and whether event handlers may issue re-entrant
+ForgeOS operations remain unresolved.
 
-Should lifecycle state be tracked:
+## Availability provider composition
 
-- per app globally
-- per app per device
-- per app per player per device
+The composition, precedence, conflict handling, and diagnostic rules for
+multiple availability providers remain unresolved.
 
-The long-term architecture likely requires per player and per device.
+## Navigation and lifecycle atomicity
 
-The first implementation may use a simpler model if the limitation is clearly
-documented and does not hardcode an incompatible API.
+Operations that change lifecycle and navigation state MUST satisfy the minimum
+cross-service atomicity invariant. Their staging, rollback, callback timing,
+and re-entrancy behaviour remain unresolved.
 
-## Laptop Windowing
+## Notification authority boundaries
 
-Should multi-window support be part of M2, or should the Laptop Host initially
-support one active app?
+The boundary between authoritative gameplay facts, ForgeOS notification
+records, and player-local delivery state remains unresolved.
 
-The recommended initial design is one active app, with future lifecycle APIs
-remaining capable of supporting multiple open apps.
+## ForgeOSStateService
 
-## App Unlocks
+Whether a dedicated `ForgeOSStateService` is required, and which state
+invariants it would own, remains unresolved.
 
-Should progression-based unlocks be:
+## Multiplayer player identity
 
-- stored directly in ForgeOS
-- provided by domain managers
-- provided by campaign policy
-- combined through availability providers
+The stable multiplayer identity source and multiplayer persistence policy
+remain unresolved. M2 MAY use the isolated `player.local` resolver, but current
+persistence remains savegame-global.
 
-The recommended design is external availability providers so ForgeOS does not
-own gameplay progression.
+## Active device persistence
 
-## Notification Persistence
+Whether active device selection is persisted remains unresolved.
 
-Which notifications should survive reload?
+## Future multi-app and windowing implications
 
-The likely design requires an explicit persistence policy per notification:
-
-```text
-TRANSIENT
-SESSION
-SAVEGAME
-```
-
-These names remain provisional.
-
-## Application Callbacks
-
-Should callbacks live directly in app definitions, or should definitions refer
-to separate application controller objects?
-
-Separate controller objects are likely cleaner for complex apps.
-
-## Route Parameters
-
-What values may be stored in route parameters?
-
-For safety and persistence compatibility, route parameters should probably be
-limited to plain data:
-
-- strings
-- finite numbers
-- booleans
-- plain tables with string keys
-
-## Registration Timing
-
-When may external modules register devices and apps?
-
-Possible phases:
-
-```text
-definitions loaded
-ForgeOS initialising
-registration open
-registration frozen
-mission active
-```
-
-A formal registration lifecycle may prevent late or inconsistent registration.
+M2 assumes one active application per device type. The contract implications
+of multiple active applications, windows, and device host instances remain
+unresolved.
 
 ---
 
@@ -1261,12 +1273,13 @@ A formal registration lifecycle may prevent late or inconsistent registration.
 
 For the first implementation:
 
-1. Track lifecycle state per device.
-2. Support one active application per device.
-3. Allow multiple registered devices.
-4. Keep phone and laptop state separate.
+1. Track lifecycle state as player device state.
+2. Support one active application per device type.
+3. Allow multiple registered device types.
+4. Keep phone and laptop player device state separate.
 5. Use external availability providers for progression restrictions.
-6. Start with logical navigation and one route stack per app per device.
+6. Start with logical navigation and one route stack per app in each player
+   device state.
 7. Keep notification records separate from visual notification animations.
 8. Rebuild app and device definitions on startup.
 9. Persist only stable user or OS state.

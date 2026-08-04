@@ -1,7 +1,7 @@
 # FORGE ForgeOS Definitions
 
 **Version:** 0.1  
-**Status:** Draft  
+**Status:** Review
 **Milestone:** M2.002 – ForgeOS Definitions
 
 ---
@@ -35,16 +35,16 @@ strings throughout the codebase.
 
 ForgeOS definitions belong to the ForgeOS subsystem.
 
-Proposed source location:
+Source location:
 
 ```text
-engine/forgeos/definitions/
+forgeos/definitions/
 ```
 
 Initial definition files:
 
 ```text
-engine/forgeos/definitions/
+forgeos/definitions/
 ├── ForgeOSDefinitions.lua
 ├── ForgeOSVersion.lua
 ├── ForgeOSNamespace.lua
@@ -72,21 +72,22 @@ silently after the ForgeOS API is frozen.
 
 # ForgeOS Namespace
 
-ForgeOS persistent runtime state will use the State Store namespace:
+ForgeOS persistent state MUST use the authoritative State Store namespace:
 
 ```text
 forge.os
 ```
 
-Proposed definition:
+Authoritative definition:
 
 ```lua
 FORGE.Definitions.ForgeOSNamespace = {
-    CORE = "forge.os"
+    OS = "forge.os"
 }
 ```
 
-The namespace contains ForgeOS-owned persistent state only.
+The `forge.os` identifier is stable and persistence-facing. The namespace
+contains ForgeOS-owned persistent state only.
 
 It must not contain:
 
@@ -177,19 +178,25 @@ ForgeOS has not started and cannot accept registrations or runtime requests.
 
 ### `initialising`
 
-ForgeOS is creating its state, services, and registration environment.
+ForgeOS is creating its state, services, persistence integration, and
+registration environment. This internal setup is not public registration.
 
 ### `registrationOpen`
 
-Built-in and external addon mods may register devices and applications.
+The Device Registry may register device definitions/profiles, the Device Host
+Registry may register device host implementations, and the App Registry may
+register application definitions.
 
 ### `validating`
 
-ForgeOS is validating completed registrations before runtime begins.
+Registration is closed. ForgeOS validates the stable registration sets of all
+three registries before runtime begins.
 
 ### `registrationFrozen`
 
-Registration has closed. New devices and applications must be rejected.
+Validation has succeeded and all three registration sets are immutable.
+Restored references may be validated, repaired, or discarded, and final runtime
+preparation may occur. Normal runtime operations remain unavailable.
 
 ### `runtimeActive`
 
@@ -207,6 +214,62 @@ ForgeOS shutdown is complete.
 External addons must not rely on mod load order alone. They must verify that
 ForgeOS exists, supports the required API version, and currently permits
 registration.
+
+## Permitted and Forbidden Operations by Phase
+
+### `unavailable`
+
+No registration, validation, runtime, persistence-restore, or shutdown
+operation is permitted. Existence and compatibility probes MAY report that
+ForgeOS is unavailable.
+
+### `initialising`
+
+Bootstrap MAY create services, initialise state, register persistence
+integration, restore raw `forge.os` data through existing Engine persistence
+infrastructure, and prepare the registration environment. References depending
+on registered apps, devices, presentations, or routes MUST NOT yet be treated
+as validated. Public content registration and all runtime operations are
+forbidden.
+
+### `registrationOpen`
+
+Device definition/profile, device host implementation, and application
+definition registration are permitted through their respective registries.
+Runtime device host instances do not participate in registration. Registration
+validation local to one submitted definition MAY occur. Runtime device,
+application, navigation, and notification operations are forbidden.
+
+### `validating`
+
+Entering `VALIDATING` closes registration. ForgeOS MUST validate all three
+stable registration sets. New registration, registration mutation, and runtime
+operations are forbidden.
+
+### `registrationFrozen`
+
+Validation has succeeded and all three registration sets are immutable.
+Registration and normal runtime operations are forbidden. Restored references
+MAY be validated, repaired, or discarded against the frozen sets. Bootstrap MAY
+complete runtime preparation.
+
+### `runtimeActive`
+
+Normal device, application, availability, lifecycle, navigation, notification,
+and state operations are permitted through the public API. Registration and
+registration mutation are forbidden.
+
+### `shuttingDown`
+
+Bootstrap MAY coordinate cleanup, final state handling, and release of device
+host instances. New registration and normal runtime requests are forbidden.
+Required cleanup operations MUST remain permitted.
+
+### `stopped`
+
+Shutdown is complete. Registration, validation, runtime, persistence-restore,
+and cleanup operations are forbidden. Read-only diagnostics MAY report the
+stopped phase.
 
 ---
 
@@ -229,6 +292,9 @@ Implementation files must not repeat this literal throughout the subsystem.
 
 The long-term public API must remain compatible with stable multiplayer player
 identities without requiring the per-device state model to be redesigned.
+
+M2 MAY use the isolated `player.local` resolver. Current persistence is
+savegame-global and does not provide true per-player multiplayer persistence.
 
 ---
 
@@ -282,6 +348,9 @@ They must not contain logging behaviour.
 # Device Identifiers
 
 Device identifiers uniquely identify logical ForgeOS device types.
+
+Device terminology follows the canonical definitions in
+`ForgeOSArchitecture.md`.
 
 Initial built-in devices:
 
@@ -509,8 +578,8 @@ Laptop windowing and multiple simultaneous applications are deferred.
 
 # Device Visibility
 
-Device visibility describes whether a device host is currently presented to a
-player.
+Device visibility describes whether a device host instance is currently
+presented to a player.
 
 Proposed definitions:
 
@@ -551,7 +620,7 @@ decision. The last valid app and route are persisted independently.
 ForgeOS application lifecycle states describe runtime application state for a
 specific player and device.
 
-Registration and availability are not lifecycle states.
+Registration, enabled policy, and availability are not lifecycle states.
 
 They remain owned by:
 
@@ -573,15 +642,13 @@ FORGE.Definitions.AppLifecycleState = {
     CLOSED = "closed",
     OPEN = "open",
     ACTIVE = "active",
-    BACKGROUND = "background",
-    DISABLED = "disabled"
+    BACKGROUND = "background"
 }
 ```
 
-Lifecycle state must be tracked per device.
-
-The state model and public APIs must remain compatible with future per-player,
-per-device lifecycle state.
+Lifecycle state is conceptually tracked per player and per device type as part
+of player device state. M2 MAY resolve the player through the isolated
+`player.local` resolver.
 
 ---
 
@@ -611,15 +678,10 @@ The application remains open but is not the foreground application.
 
 The device must support background applications.
 
-## `disabled`
-
-The application remains registered but cannot be opened.
-
-Disabling may be administrative, campaign-defined, addon-defined, or
-system-defined.
-
-Availability must not be represented by mutating an app into an `available`
-lifecycle state.
+Enabled or disabled policy is a validated state or policy input owned outside
+the Lifecycle Service. It constrains availability and lifecycle transitions but
+is not itself a lifecycle state. Registration and calculated availability are
+also not lifecycle states.
 
 ---
 
@@ -629,25 +691,21 @@ Initial valid transitions:
 
 ```text
 CLOSED     → OPEN
-CLOSED     → DISABLED
 
 OPEN       → ACTIVE
 OPEN       → BACKGROUND
 OPEN       → CLOSED
-OPEN       → DISABLED
 
 ACTIVE     → BACKGROUND
 ACTIVE     → CLOSED
-ACTIVE     → DISABLED
 
 BACKGROUND → ACTIVE
 BACKGROUND → CLOSED
-BACKGROUND → DISABLED
-
-DISABLED   → CLOSED
 ```
 
-Availability must be confirmed before transitioning from `CLOSED` to `OPEN`.
+Enabled policy and calculated availability MUST permit a transition before it
+may occur. In particular, availability must be confirmed before transitioning
+from `CLOSED` to `OPEN`.
 
 The Lifecycle Service must reject unsupported transitions.
 
@@ -658,7 +716,7 @@ Examples:
 - a phone may background or close its current active app before activating
   another app
 - a device without background support must close the previous app
-- a disabled application cannot transition directly to open or active
+- disabled policy prevents opening or activating an application
 - hiding a device does not automatically perform a lifecycle transition
 
 ---
@@ -795,20 +853,30 @@ The presentation was selected because its required capabilities are satisfied
 by the device.
 
 This supports future devices without requiring every app to hardcode every
-device ID.
+device ID. Capability matching for a device type not listed in
+`supportedDevices` is permitted only when the app sets
+`allowCapabilityFallback = true`.
 
 ## `default`
 
 The app's declared default presentation was used after no exact or
-capability-based presentation was selected.
+capability-based presentation was selected and only when support and fallback
+rules permit it.
+
+When `supportedDevices` supplies an exact declaration for a device type, that
+declaration is authoritative. An explicit `false` is an absolute block. An app
+that does not set `allowCapabilityFallback = true` MUST be unavailable on
+undeclared device types even when their capabilities otherwise match.
 
 Presentation resolution order is:
 
 ```text
-exact device presentation
-→ compatible capability presentation
-→ declared default presentation
-→ unavailable
+1. evaluate an exact supportedDevices declaration
+2. reject an explicit false declaration
+3. resolve an exact device presentation where available
+4. resolve a compatible capability presentation when fallback is permitted
+5. resolve the declared default presentation when support and fallback rules permit it
+6. otherwise mark the app unavailable
 ```
 
 Where multiple capability presentations match, explicit priority and
@@ -1003,12 +1071,6 @@ FORGE.Definitions.ForgeOSEvent = {
     APP_CLOSED =
         "forge.os.app.closed",
 
-    APP_DISABLED =
-        "forge.os.app.disabled",
-
-    APP_ENABLED =
-        "forge.os.app.enabled",
-
     NAVIGATION_CHANGED =
         "forge.os.navigation.changed",
 
@@ -1031,6 +1093,10 @@ FORGE.Definitions.ForgeOSEvent = {
 
 Device activation and deactivation must not be treated as synonyms for device
 visibility.
+
+Enabled-policy and availability changes are not lifecycle events. Their event
+contracts remain to be defined with the owning policy and availability
+services.
 
 Events announce completed state changes.
 
@@ -1349,11 +1415,23 @@ ownerId
 iconId
 controller
 requiredCapabilities
+allowCapabilityFallback
 defaultPresentation
 availabilityProviders
 metadata
 callbacks
 ```
+
+`allowCapabilityFallback` is optional and defaults to `false`.
+
+An exact `supportedDevices[deviceId] = true` permits the device type. An exact
+`false` is an absolute block and MUST NOT be overridden by capability or default
+fallback. An undeclared device type MAY use capability or default presentation
+fallback only when `allowCapabilityFallback = true`.
+
+App-level `requiredCapabilities` are universal minimum requirements.
+Presentation-level `requiredCapabilities` are additional requirements for the
+selected presentation; they MUST NOT weaken or override app-level requirements.
 
 `defaultRoute` is not an app-level field.
 
@@ -1472,7 +1550,7 @@ Changes to these definitions after API freeze require:
 Recommended implementation:
 
 ```text
-engine/forgeos/definitions/
+forgeos/definitions/
 ├── ForgeOSDefinitions.lua
 ├── ForgeOSVersion.lua
 ├── ForgeOSNamespace.lua
@@ -1563,46 +1641,20 @@ before runtime testing begins.
 
 The following items remain intentionally open.
 
-## Naming of the operating-system namespace
-
-Current recommendation:
-
-```text
-forge.os
-```
-
-Alternative:
-
-```text
-forge.forgeos
-```
-
-`forge.os` is shorter and remains clear within the FORGE namespace.
-
-## App lifecycle `closed` versus absence
-
-The design uses an explicit `closed` state.
-
-Removing lifecycle state when an app closes remains an alternative, but the
-explicit state is recommended because it:
-
-- simplifies lifecycle history
-- improves diagnostics
-- makes state transitions clearer
-- allows consistent callback handling
-- supports deterministic resume-state validation
-
 ## Device identifier extensibility
 
-Built-in IDs are defined authoritatively, but third-party devices should
-eventually be allowed to register custom IDs.
+Built-in IDs are defined authoritatively, and third-party device types MAY
+register custom identifiers during `REGISTRATION_OPEN`.
 
 The `DeviceId` definition table therefore lists built-in identifiers without
 implying that only those identifiers are valid.
 
+Ownership rules, compatibility rules, identifier namespace rules, and collision
+prevention for third-party identifiers remain unresolved.
+
 ## Stable player identity
 
-M2 uses the isolated temporary identity:
+M2 MAY use the isolated temporary identity:
 
 ```text
 player.local
@@ -1628,8 +1680,8 @@ The state model permits remembering the last selected device.
 
 Whether `activeDeviceId` is persisted in the first implementation remains open.
 
-This does not affect the requirement to persist separate resume state for each
-player and device.
+This does not affect the conceptual per-player and per-device state shape.
+Current persistence remains savegame-global.
 
 ---
 
@@ -1640,25 +1692,29 @@ implementation:
 
 ```text
 Registration
-    owned by App Registry and Device Registry
+    one lifecycle for Device Registry, Device Host Registry, and App Registry
+    runtime device host instances are not registrations
 
 Availability
     calculated by Availability Service
+
+Enabled policy
+    validated input owned outside Lifecycle Service
 
 Lifecycle
     CLOSED
     OPEN
     ACTIVE
     BACKGROUND
-    DISABLED
 
 App identity
     one stable app ID
 
 Presentations
     exact device
-    capability fallback
-    declared default
+    explicit false is an absolute block
+    capability or default fallback only when allowCapabilityFallback is true
+    app and presentation capability requirements both apply
 
 State scope
     conceptually per player and per device
@@ -1679,7 +1735,12 @@ Navigation persistence
     no full back stack or modal stack during M2
 
 Addon registration
-    permitted only during REGISTRATION_OPEN
+    public content registration permitted only during REGISTRATION_OPEN
+
+Persistence
+    forge.os is the stable State Store namespace
+    runtime objects and ephemeral presentation state are never persisted
+    restored runtime lifecycle is reconstructed and validated
 
 Compatibility
     ForgeOS app API version is separate from persistence version

@@ -1,7 +1,7 @@
 # FORGE ForgeOS State Model
 
 **Version:** 0.1  
-**Status:** Draft  
+**Status:** Review
 **Milestone:** M2 – ForgeOS
 
 ---
@@ -26,6 +26,9 @@ It establishes:
 
 ForgeOS state must remain independent of UI rendering objects and domain
 gameplay state.
+
+Device terminology follows the canonical definitions in
+`ForgeOSArchitecture.md`.
 
 ---
 
@@ -59,7 +62,7 @@ APIs must remain compatible with future per-player state.
 
 # State Ownership
 
-ForgeOS owns:
+ForgeOS subsystem state includes:
 
 - device visibility
 - active application per device
@@ -68,7 +71,11 @@ ForgeOS owns:
 - device resume state
 - ForgeOS preferences
 - notification records owned by ForgeOS
-- app enabled-state overrides
+- app enabled-policy overrides
+
+Each value MUST be mutated only by the registry or specialised service that
+owns its state and invariants. Ownership that depends on the unresolved
+`ForgeOSStateService` decision remains candidate rather than authoritative.
 
 ForgeOS does not own:
 
@@ -177,13 +184,15 @@ Examples:
 - modal animation state
 - unsaved text input buffers
 
-Transient state must never be written into ForgeOS persistence.
+Runtime rendering objects and ephemeral presentation state MUST NOT be written
+into ForgeOS persistence. Stable plain-data presentation preferences or resume
+state MAY be persisted only when included in the ForgeOS state contract.
 
 ---
 
 # State Store Namespace
 
-ForgeOS persistent state uses:
+ForgeOS persistent state MUST use the stable, authoritative namespace:
 
 ```text
 forge.os
@@ -275,7 +284,7 @@ FORGE public addon API version
 
 # Player Scope
 
-The target architecture is per-player.
+The target architecture is conceptually per player and per device.
 
 Conceptually:
 
@@ -315,13 +324,15 @@ player.local
 That identifier must be isolated behind the player identity resolver.
 
 Future multiplayer support should replace the resolver rather than redesign all
-state consumers.
+state consumers. Current persistence is savegame-global and does not provide
+true per-player multiplayer persistence.
 
 ---
 
 # Device Scope
 
-Resume and runtime state are stored separately for each device.
+Resume and runtime state are represented separately for each device type as
+player device state.
 
 Example:
 
@@ -388,7 +399,7 @@ host must not erase its resume state.
 
 # Active Device
 
-ForgeOS may track the currently selected device for a player.
+ForgeOS may track the currently selected device type for a player.
 
 Example:
 
@@ -396,7 +407,7 @@ Example:
 activeDeviceId = phone
 ```
 
-This may be persistent where useful.
+Whether this value is persistent remains an open decision.
 
 However, active device identity must not imply device visibility.
 
@@ -416,24 +427,34 @@ remain visible.
 
 Application lifecycle is tracked per player and per device.
 
-Recommended lifecycle states:
+Authoritative lifecycle states:
 
 ```text
 CLOSED
 OPEN
 ACTIVE
 BACKGROUND
-DISABLED
 ```
 
-Registration and availability are not lifecycle states.
-
-They remain owned by:
+Application state separates:
 
 ```text
 App Registry
+    registration
+
+Validated policy or state input outside Lifecycle Service
+    enabled or disabled
+
 Availability Service
+    availability calculated for a specific player and device type
+
+Lifecycle Service
+    CLOSED, OPEN, ACTIVE, BACKGROUND
 ```
+
+Registration, enabled policy, and availability are not lifecycle states.
+Enabled policy and calculated availability MUST constrain whether lifecycle
+transitions may occur.
 
 ---
 
@@ -501,7 +522,7 @@ The active app must:
 - be available
 - support the device
 - have a resolved presentation
-- not be disabled
+- be permitted by enabled policy
 
 If any condition becomes invalid, ForgeOS must select a safe fallback.
 
@@ -547,7 +568,8 @@ Failed lifecycle or navigation requests must not overwrite valid resume state.
 
 # Resume Restoration
 
-When a device is opened, ForgeOS should:
+When a device is opened during `RUNTIME_ACTIVE`, ForgeOS should reconstruct
+runtime state from validated resume data:
 
 1. resolve player identity
 2. retrieve device state
@@ -717,6 +739,12 @@ Preferences must remain plain persistable data.
 
 Presentation-specific preferences should use a controlled subtable.
 
+Preferences affecting presentation only SHOULD be player-local. Preferences
+affecting gameplay access, permissions, progression, company policy, or other
+authoritative behaviour MUST remain server-authoritative or
+domain-authoritative. Presentation preferences MUST NOT alter gameplay
+authority. The exact persistence mechanism remains open.
+
 Example:
 
 ```lua
@@ -733,9 +761,10 @@ preferences = {
 
 ---
 
-# App Enabled State
+# App Enabled Policy Input
 
-ForgeOS may store app enabled-state overrides.
+ForgeOS MAY store validated app enabled-policy overrides. This input is owned
+outside the Lifecycle Service and is not an application lifecycle state.
 
 Conceptual structure:
 
@@ -747,14 +776,14 @@ appOverrides = {
 }
 ```
 
-Enabled state is not the same as availability.
+Enabled policy is not the same as availability.
 
 Availability is calculated from:
 
 - registration
 - device support
 - capabilities
-- enabled state
+- enabled policy
 - policy providers
 
 ---
@@ -903,17 +932,25 @@ Notification Service
 ForgeOS Core
     coordinates cross-service operations
 
-Device Host
+Device host implementation
     requests visibility changes
 ```
 
-Device hosts and apps must not edit State Store tables directly.
+A device host implementation MAY request a visibility change through the public
+ForgeOS API. It MUST NOT mutate authoritative visibility state directly. Device
+hosts and apps MUST NOT edit State Store tables directly. The final visibility
+API and authoritative state owner remain unresolved.
 
 ---
 
 # Atomic State Changes
 
-Multi-step state changes should be atomic where possible.
+ForgeOS MUST NOT report a multi-service operation as successful while exposing
+partially committed lifecycle, navigation, resume, notification, or visibility
+state.
+
+The exact staging, rollback, callback timing, and re-entrancy behaviour remain
+open architectural decisions.
 
 Example app activation:
 
@@ -928,8 +965,9 @@ update resume state
 publish event
 ```
 
-If the operation fails before completion, ForgeOS should preserve the previous
-valid state.
+If the operation fails before completion, ForgeOS MUST preserve or restore a
+valid externally visible state and MUST NOT report success for a partial
+commit.
 
 ---
 
@@ -957,19 +995,24 @@ Events must not replace synchronous validation or API return values.
 
 # State Initialisation
 
-ForgeOS startup should:
+ForgeOS startup MUST respect the operating phases:
 
-1. register `forge.os`
-2. apply default state
-3. register namespace for persistence
-4. rebuild app and device definitions
-5. allow FORGE persistence loading
-6. validate restored ForgeOS state
-7. repair or discard invalid references
-8. enter runtime state
+1. During `INITIALISING`, register `forge.os`, apply default state, establish
+   persistence integration, and allow raw State Store data to be restored
+   through existing Engine persistence infrastructure. References to apps,
+   devices, presentations, and routes are not yet validated.
+2. During `REGISTRATION_OPEN`, rebuild device definitions/profiles, device host
+   implementation registrations, app definitions, and related registration
+   data.
+3. During `VALIDATING`, close registration and validate all three stable
+   registration sets.
+4. During `REGISTRATION_FROZEN`, validate, repair, or discard restored
+   references against the immutable registration sets and reconstruct safe
+   runtime lifecycle state.
+5. During `RUNTIME_ACTIVE`, expose only validated, reconstructed runtime state.
 
-The exact integration point with the Engine lifecycle must be defined before
-implementation.
+ForgeOS MUST NOT blindly restore active runtime objects or replay stale
+lifecycle state.
 
 ---
 
@@ -998,7 +1041,8 @@ Device state may be created lazily when a registered device is first used.
 
 # Restored State Validation
 
-After persistence loading, ForgeOS must validate:
+Raw state restored during `INITIALISING` MUST be treated as unvalidated.
+During `REGISTRATION_FROZEN`, ForgeOS MUST validate:
 
 - state version
 - player tables
@@ -1073,9 +1117,9 @@ ForgeOS must not install an independent XML save process.
 
 ---
 
-# Proposed State Service Boundaries
+# Candidate State Service Boundaries
 
-Recommended ownership:
+Candidate ownership, pending the `ForgeOSStateService` open decision:
 
 ```text
 ForgeOSStateService
@@ -1094,12 +1138,17 @@ NavigationService
 NotificationService
     notifications
 
-DeviceHost
-    visibility and transient presentation state
+Device host instance
+    transient presentation state
 ```
 
-Device visibility may be coordinated through ForgeOS Core while remaining
-player-local runtime state.
+Logical device visibility requires an authoritative state owner. Candidate
+ownership remains unresolved between a dedicated state service, a device-state
+service, or another explicitly approved ForgeOS service.
+
+A device host implementation MAY request visibility changes through the public
+ForgeOS API but MUST NOT mutate authoritative visibility state directly. The
+final API remains unresolved.
 
 ---
 
@@ -1135,7 +1184,7 @@ Private State Store tables must not be exposed directly.
 # State Model Rules
 
 1. ForgeOS state is conceptually per player and per device.
-2. M2 may use one isolated local-player identity.
+2. M2 MAY use the isolated `player.local` identity resolver.
 3. Device visibility is separate from app lifecycle.
 4. Hiding a device does not erase resume state.
 5. Each device remembers its own last app and route.
@@ -1147,19 +1196,24 @@ Private State Store tables must not be exposed directly.
 11. Missing addons must not corrupt ForgeOS startup.
 12. State mutation occurs only through owning services.
 13. Completed changes publish events.
-14. Cross-service mutations should be atomic.
+14. Multi-service operations MUST NOT report success while exposing partially
+    committed lifecycle, navigation, resume, notification, or visibility state.
 15. ForgeOS uses the existing State Store and Save Manager.
+16. Current persistence is savegame-global and does not provide true
+    per-player multiplayer persistence.
 
 ---
 
-# Open Implementation Decisions
+# Open Decisions
 
-The following remain to be resolved during implementation:
+The canonical cross-component open decisions are recorded in
+`ForgeOSComponentDesign.md`. The following state-model-specific details also
+remain unresolved:
 
-- stable multiplayer player identity source
-- player-local versus server-owned preference storage
-- exact device visibility API
-- whether active device is persisted
+- authoritative device visibility owner and exact visibility API
+- stable multiplayer player identity and persistence policy
+- active-device persistence
+- exact persistence mechanism for presentation preferences
 - app state repair logging level
 - ForgeOS state migration process
 - route-level availability policies

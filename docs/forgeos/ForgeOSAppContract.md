@@ -1,7 +1,7 @@
 # FORGE ForgeOS Application Contract
 
 **Version:** 0.1  
-**Status:** Draft  
+**Status:** Review
 **Milestone:** M2 – ForgeOS
 
 ---
@@ -29,6 +29,9 @@ ForgeOS applications must register through the public ForgeOS API.
 
 Applications must not modify ForgeOS registries, lifecycle state, navigation
 state, or device state directly.
+
+Device terminology follows the canonical definitions in
+`ForgeOSArchitecture.md`.
 
 ---
 
@@ -86,7 +89,7 @@ ForgeOS App Definition
       └── Capability Presentation
              │
              ▼
-         Device Host
+  Device Host Implementation
 ```
 
 The domain manager owns gameplay rules.
@@ -96,8 +99,8 @@ The app controller translates user-facing requests into domain operations.
 The presentation declares what the user may see and request through a
 particular device.
 
-ForgeOS owns registration, presentation selection, lifecycle, navigation, and
-availability.
+ForgeOS Core coordinates registration, presentation selection, lifecycle,
+navigation, and availability through the owning registries and services.
 
 ---
 
@@ -142,6 +145,8 @@ A complete application definition may contain:
         laptop = true
     },
 
+    allowCapabilityFallback = false,
+
     requiredCapabilities = {
         notifications = true
     },
@@ -159,6 +164,10 @@ A complete application definition may contain:
     metadata = {}
 }
 ```
+
+`allowCapabilityFallback = false` is shown explicitly: undeclared device types
+are unsupported unless the app deliberately opts into capability or default
+presentation fallback.
 
 The exact runtime representation may use a validated internal copy.
 
@@ -271,6 +280,21 @@ The app must also satisfy:
 - external availability policies
 - valid presentation resolution
 
+Exact device declarations are authoritative when supplied.
+`supportedDevices[deviceId] = true` permits the device type.
+`supportedDevices[deviceId] = false` is an absolute block; capability matching
+and default presentation fallback MUST NOT override it.
+
+An app MAY support undeclared future device types through capability-based or
+default presentations only when it explicitly sets:
+
+```lua
+allowCapabilityFallback = true
+```
+
+Without `allowCapabilityFallback = true`, an undeclared device type is
+unsupported even when its capabilities match a presentation.
+
 ---
 
 ## `presentations`
@@ -299,6 +323,7 @@ An application may define:
 iconId
 controller
 requiredCapabilities
+allowCapabilityFallback
 defaultPresentation
 availabilityProviders
 metadata
@@ -308,6 +333,8 @@ callbacks
 Unknown fields should not automatically become part of the public contract.
 
 ForgeOS may ignore unknown fields when creating its validated internal copy.
+
+`allowCapabilityFallback` is optional and defaults to `false`.
 
 ---
 
@@ -386,6 +413,11 @@ metadata
 priority
 ```
 
+App-level `requiredCapabilities` are universal minimum requirements for every
+use and presentation of the app. Presentation-level `requiredCapabilities` are
+additional requirements for that presentation. Both sets MUST pass; a
+presentation MUST NOT weaken or override app-level requirements.
+
 ---
 
 # Presentation Selection
@@ -393,10 +425,12 @@ priority
 ForgeOS resolves presentations in this order:
 
 ```text
-1. Exact device presentation
-2. Compatible capability-based presentation
-3. Declared default presentation
-4. Application unavailable
+1. Evaluate any exact supportedDevices declaration
+2. Reject an explicit false declaration
+3. Resolve an exact device presentation where available
+4. Resolve a compatible capability presentation when fallback is permitted
+5. Resolve the declared default presentation when support and fallback rules permit it
+6. Otherwise mark the application unavailable
 ```
 
 Example:
@@ -420,6 +454,11 @@ If no compatible presentation exists:
 ```text
 defaultPresentation
 ```
+
+The default presentation MAY be selected only when the device type is
+explicitly supported or when the device type is undeclared and
+`allowCapabilityFallback = true`. It MUST NOT be selected for an explicitly
+unsupported device type.
 
 If no valid presentation can be resolved, the app is unavailable on that
 device.
@@ -473,7 +512,8 @@ presentations = {
 }
 ```
 
-This allows future devices to reuse existing presentations.
+This allows future devices to reuse existing presentations when the app sets
+`allowCapabilityFallback = true`.
 
 Examples:
 
@@ -760,11 +800,10 @@ onOpen
 onActivate
 onBackground
 onClose
-onDisable
-onEnable
 ```
 
-Callbacks remain provisional until lifecycle implementation.
+Enabled-policy changes are not lifecycle transitions. Callback timing and
+rollback remain provisional until lifecycle implementation.
 
 ---
 
@@ -883,7 +922,14 @@ Includes:
 - open callback references
 - render targets
 
-Transient state must never be persisted.
+Runtime rendering objects and ephemeral presentation state MUST NOT be
+persisted. Stable plain-data presentation preferences or resume state MAY be
+persisted only when included in the ForgeOS state contract.
+
+Persisted resume state MAY include the last valid app, presentation, route, safe
+route parameters, and approved preferences. Runtime lifecycle state MUST be
+reconstructed and validated during restore; ForgeOS MUST NOT restore active
+runtime objects or replay stale lifecycle state.
 
 ---
 
@@ -935,10 +981,14 @@ Removed or unavailable addon apps must not prevent the device from opening.
 
 # Addon Registration Lifecycle
 
-External addon mods may register applications only while ForgeOS registration
-is open.
+ForgeOS has one registration lifecycle. External addon mods may register
+application definitions through the App Registry only during
+`REGISTRATION_OPEN`. During the same phase, the Device Registry accepts device
+definitions/profiles and the Device Host Registry accepts device host
+implementations. Runtime device host instances do not participate in
+registration.
 
-Proposed phases:
+Authoritative phases:
 
 ```text
 UNAVAILABLE
@@ -951,9 +1001,16 @@ SHUTTING_DOWN
 STOPPED
 ```
 
-The final phase names will be defined authoritatively.
+Public content registration MUST NOT occur during `INITIALISING`; internal
+service creation and persistence setup are not public registration. Entering
+`VALIDATING` closes registration and validation MUST operate on all three stable
+registration sets. `REGISTRATION_FROZEN` means validation succeeded, all three
+sets are immutable, restored references MAY be validated and repaired, and
+normal runtime operations remain unavailable. `RUNTIME_ACTIVE` is the first
+normal runtime phase and registration remains closed.
 
-Late registrations must be rejected cleanly.
+Permitted and forbidden operations for every phase are defined in
+`ForgeOSDefinitions.md`. Late registrations MUST be rejected cleanly.
 
 ---
 
@@ -1142,6 +1199,8 @@ local appDefinition = {
         laptop = true
     },
 
+    allowCapabilityFallback = false,
+
     requiredCapabilities = {
         notifications = true
     },
@@ -1232,6 +1291,10 @@ local appDefinition = {
 }
 ```
 
+Here `allowCapabilityFallback = false` intentionally restricts support to
+explicitly permitted device types; capability and default presentations cannot
+make an undeclared device type available.
+
 ---
 
 # Public Contract Rules
@@ -1239,35 +1302,44 @@ local appDefinition = {
 1. One application has one stable app ID.
 2. An app may provide multiple presentations.
 3. Exact device presentations take priority.
-4. Capability presentations provide reusable fallbacks.
+4. Capability presentations provide reusable fallbacks only under the
+   `allowCapabilityFallback` contract.
 5. Presentations declare routes and exposed actions.
 6. Shared controllers own app-level operations.
 7. Domain managers remain authoritative over gameplay.
-8. ForgeOS owns lifecycle, navigation, and presentation resolution.
+8. ForgeOS Core coordinates lifecycle, navigation, and presentation resolution
+   through their owning services.
 9. App definitions are validated and copied atomically.
 10. External apps use the same contract as built-in apps.
 11. Registration is allowed only during the formal registration window.
 12. Device visibility does not automatically close the app.
-13. Persisted resume state is scoped per player and per device.
+13. Resume state is conceptually scoped per player and per device. M2 MAY use
+    the isolated `player.local` resolver, while current persistence remains
+    savegame-global and does not provide true per-player multiplayer
+    persistence.
 14. Invalid saved app state must fall back safely.
 15. Apps must not access private ForgeOS implementation state.
+16. Enabled policy and calculated availability constrain lifecycle transitions
+    but are not lifecycle states.
+17. ForgeOS MUST NOT report a multi-service operation as successful while
+    exposing partially committed lifecycle, navigation, resume, notification,
+    or visibility state.
 
 ---
 
-# Open Implementation Decisions
+# Open Decisions
 
-The following remain to be finalised during implementation:
+The canonical cross-component open decisions are recorded in
+`ForgeOSComponentDesign.md`. The following app-contract-specific details also
+remain unresolved:
 
-- exact callback timing
 - exact application context API
 - localisation metadata format
 - asset registration format
 - presentation priority limits
-- availability provider interface
 - action result format
 - formal addon dependency declarations
 - controlled app unregistration
-- per-player identity provider implementation
 
 These decisions must not invalidate the core app contract.
 
@@ -1281,7 +1353,8 @@ This contract is ready for implementation when:
 2. App IDs are globally unique.
 3. One app can support multiple device presentations.
 4. Laptop presentations can expose richer functions than phone presentations.
-5. Capability fallbacks support future devices.
+5. `allowCapabilityFallback` supports future device types without overriding
+   explicit device blocks.
 6. Routes and actions are validated.
 7. Domain rules remain outside ForgeOS.
 8. Registration is atomic.
