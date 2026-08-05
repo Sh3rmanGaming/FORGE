@@ -7,13 +7,19 @@
 ---     • Verify every approved ForgeOS definition table and value.
 ---     • Reject missing, unexpected, or duplicate identifiers.
 ---     • Verify ForgeOS additions without changing existing engine definitions.
+---     • Report manual test execution results through the FORGE Logger.
 ---
---- This manual harness is not currently invoked by Engine.lua.
+--- This manual harness is invoked by the Engine development test runner.
 ---=============================================================================
 
 FORGE.Tests = FORGE.Tests or {}
 
 function FORGE.Tests.runForgeOSDefinitionsTests()
+    FORGE.Logger:info(
+        FORGE.Definitions.LogSource.TEST,
+        "ForgeOS Definitions test harness started"
+    )
+
     local expectedDefinitions = {
         ForgeOSVersion = {
             APP_API = 1,
@@ -232,8 +238,22 @@ function FORGE.Tests.runForgeOSDefinitionsTests()
     )
 
     if not success then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.TEST,
+            "ForgeOS Definitions test harness failed: %s",
+            FORGE.Logger:safeToString(
+                errorMessage,
+                "<unprintable error>"
+            )
+        )
+
         return false, errorMessage
     end
+
+    FORGE.Logger:info(
+        FORGE.Definitions.LogSource.TEST,
+        "ForgeOS Definitions test harness passed"
+    )
 
     return true
 end

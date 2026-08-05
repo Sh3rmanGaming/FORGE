@@ -29,6 +29,7 @@ This tool is part of the FORGE developer toolchain.
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 import filecmp
 import shutil
@@ -43,6 +44,7 @@ CONFIG = {
     "paths": {
         "engine": REPOSITORY_ROOT / "engine",
         "tests": REPOSITORY_ROOT / "tests",
+        "forgeos": REPOSITORY_ROOT / "forgeos",
         "prototype": (
             REPOSITORY_ROOT
             / "prototype"
@@ -77,8 +79,30 @@ CONFIG = {
 }
 
 
+def parse_arguments() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description=(
+            "Synchronise authoritative FORGE source into the prototype."
+        )
+    )
+
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help=(
+            "Report prototype drift without copying, deleting, "
+            "or creating files."
+        ),
+    )
+
+    return parser.parse_args()
+
+
 def main() -> int:
     """Run the FORGE synchronisation workflow."""
+    arguments = parse_arguments()
+
     print_header()
 
     if not validate_repository():
@@ -86,18 +110,32 @@ def main() -> int:
 
     try:
         manifest = build_manifest()
-        result = synchronise_manifest(
+
+        if arguments.check:
+            result = check_manifest(
+                manifest,
+                CONFIG["paths"]["prototype"],
+            )
+
+            print_check_result(result)
+
+            if has_manifest_drift(result):
+                return 1
+
+            return 0
+
+        sync_result = synchronise_manifest(
             manifest,
             CONFIG["paths"]["prototype"],
         )
     except (OSError, RuntimeError, ValueError) as error:
         print()
-        print("ERROR: Synchronisation failed.")
+        print("ERROR: Synchronisation workflow failed.")
         print()
         print(f"Reason: {error}")
         return 1
 
-    print_result(result)
+    print_result(sync_result)
     print_summary()
 
     return 0
@@ -131,6 +169,7 @@ def validate_repository() -> bool:
     required_directories = {
         "engine": engine_root,
         "tests": tests_root,
+        "forgeos": CONFIG["paths"]["forgeos"],
         "prototype": prototype_root,
     }
 
@@ -210,6 +249,7 @@ def is_excluded_path(
 def collect_source_files(
     source_root: Path,
     destination_prefix: Path,
+    included_file_suffixes: set[str] | None = None,
 ) -> dict[Path, Path]:
     """
     Collect recursively synchronised files from one source tree.
@@ -228,6 +268,10 @@ def collect_source_files(
     for source_path in source_root.rglob("*"):
         if not source_path.is_file():
             continue
+
+        if included_file_suffixes is not None:
+            if source_path.suffix.lower() not in included_file_suffixes:
+                continue
 
         if is_excluded_path(
             source_path,
@@ -282,6 +326,8 @@ def build_manifest() -> dict[Path, Path]:
     Engine files retain their paths relative to engine/.
 
     Test files are placed beneath tests/ in the prototype.
+
+    ForgeOS Lua files are placed beneath forgeos/ in the prototype.
     """
     print()
     print("Building synchronisation manifest...")
@@ -299,6 +345,12 @@ def build_manifest() -> dict[Path, Path]:
         Path("tests"),
     )
 
+    forgeos_entries = collect_source_files(
+        CONFIG["paths"]["forgeos"],
+        Path("forgeos"),
+        included_file_suffixes={".lua"},
+    )
+
     merge_manifest_entries(
         manifest,
         engine_entries,
@@ -309,18 +361,28 @@ def build_manifest() -> dict[Path, Path]:
         test_entries,
     )
 
+    merge_manifest_entries(
+        manifest,
+        forgeos_entries,
+    )
+
     print(
-        f"[MANIFEST] engine: "
+        f"[MANIFEST] Engine: "
         f"{len(engine_entries)} files"
     )
 
     print(
-        f"[MANIFEST] tests: "
+        f"[MANIFEST] Tests: "
         f"{len(test_entries)} files"
     )
 
     print(
-        f"[MANIFEST] total: "
+        f"[MANIFEST] ForgeOS: "
+        f"{len(forgeos_entries)} files"
+    )
+
+    print(
+        f"[MANIFEST] Total: "
         f"{len(manifest)} files"
     )
 
@@ -353,6 +415,117 @@ def files_are_identical(
             destination_path,
             shallow=False,
         )
+    )
+
+
+def check_manifest(
+    manifest: dict[Path, Path],
+    destination_root: Path,
+) -> dict[str, list[Path]]:
+    """Inspect prototype drift without modifying the filesystem."""
+    result: dict[str, list[Path]] = {
+        "identical": [],
+        "divergent": [],
+        "missing": [],
+        "stale": [],
+        "collisions": [],
+    }
+
+    destination_files = collect_destination_files(
+        destination_root
+    )
+
+    for relative_path in sorted(manifest):
+        source_path = manifest[relative_path]
+        destination_path = (
+            destination_root
+            / relative_path
+        )
+
+        if not destination_path.is_file():
+            result["missing"].append(relative_path)
+            continue
+
+        if files_are_identical(
+            source_path,
+            destination_path,
+        ):
+            result["identical"].append(relative_path)
+        else:
+            result["divergent"].append(relative_path)
+
+    result["stale"] = sorted(
+        destination_files.keys()
+        - manifest.keys()
+    )
+
+    return result
+
+
+def has_manifest_drift(
+    result: dict[str, list[Path]],
+) -> bool:
+    """Return whether a manifest check found any inconsistency."""
+    return any(
+        result[result_name]
+        for result_name in (
+            "divergent",
+            "missing",
+            "stale",
+            "collisions",
+        )
+    )
+
+
+def print_check_paths(
+    heading: str,
+    paths: list[Path],
+) -> None:
+    """Print one category of synchronization-check paths."""
+    if not paths:
+        return
+
+    print()
+    print(f"{heading}:")
+
+    for path in paths:
+        print(f"  - {path}")
+
+
+def print_check_result(
+    result: dict[str, list[Path]],
+) -> None:
+    """Print non-mutating synchronization-check results."""
+    print()
+    print("Checking prototype synchronization...")
+    print()
+    print(
+        "[CHECK] "
+        f"{len(result['identical'])} identical, "
+        f"{len(result['divergent'])} divergent, "
+        f"{len(result['missing'])} missing, "
+        f"{len(result['stale'])} stale, "
+        f"{len(result['collisions'])} collisions"
+    )
+
+    print_check_paths(
+        "Divergent files",
+        result["divergent"],
+    )
+
+    print_check_paths(
+        "Missing files",
+        result["missing"],
+    )
+
+    print_check_paths(
+        "Stale files",
+        result["stale"],
+    )
+
+    print_check_paths(
+        "Destination collisions",
+        result["collisions"],
     )
 
 

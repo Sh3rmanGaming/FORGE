@@ -162,6 +162,10 @@ local function runDevelopmentTests()
         return
     end
 
+    if FORGE.Tests.runForgeOSDefinitionsTests ~= nil then
+        FORGE.Tests.runForgeOSDefinitionsTests()
+    end
+
     if FORGE.Tests.runLoggerTests ~= nil then
         FORGE.Tests.runLoggerTests()
     end

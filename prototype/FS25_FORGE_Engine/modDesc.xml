@@ -35,6 +35,24 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/definitions/LogLevel.lua"/>
         <sourceFile filename="scripts/forge/definitions/LogSource.lua"/>
 
+        <!-- ForgeOS definitions -->
+        <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSDefinitions.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSVersion.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSNamespace.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSPhase.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSPlayerId.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/DeviceId.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/DeviceCapability.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/DeviceVisibility.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/AppLifecycleState.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/AppAvailabilityReason.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationMatchType.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/NotificationPersistence.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/NotificationSeverity.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/NavigationLayer.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSEvent.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSResult.lua"/>
+
         <!-- Core services -->
         <sourceFile filename="scripts/forge/services/Logger.lua"/>
         <sourceFile filename="scripts/forge/services/EventBus.lua"/>
@@ -54,6 +72,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/services/SaveManagerTest.lua"/>
         <sourceFile filename="scripts/forge/tests/persistence/XMLWriterTest.lua"/>
         <sourceFile filename="scripts/forge/tests/persistence/XMLReaderTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/definitions/ForgeOSDefinitionsTest.lua"/>
 
         <!-- Integration test harnesses -->
         <sourceFile filename="scripts/forge/tests/integrations/SaveManagerIntegrationTest.lua"/>
