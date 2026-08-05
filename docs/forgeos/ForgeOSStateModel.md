@@ -1037,6 +1037,60 @@ A new ForgeOS state may begin as:
 
 Device state may be created lazily when a registered device is first used.
 
+## M2.003A Mandatory Bootstrap State
+
+### Contract
+
+When `forge.os` contains no restored or previously initialised state, Bootstrap
+MUST establish:
+
+```lua
+{
+    version = FORGE.Definitions.ForgeOSVersion.STATE,
+
+    players = {
+        [FORGE.Definitions.ForgeOSPlayerId.LOCAL] = {
+            activeDeviceId = nil,
+            devices = {},
+            notifications = {},
+            preferences = {}
+        }
+    }
+}
+```
+
+Bootstrap MUST use `ForgeOSNamespace.OS`, MUST NOT overwrite restored state
+with defaults, and MUST NOT create device, application, presentation, route,
+notification, or host runtime objects.
+
+Restored references remain unvalidated during M2.003A and MUST NOT be exposed
+through runtime operations.
+
+### Partial-Startup Contract
+
+Startup succeeds only after ForgeOS enters `INITIALISING`, establishes the
+namespace and mandatory state where absent, registers persistence, enters
+`REGISTRATION_OPEN`, and publishes `REGISTRATION_OPENED`.
+
+If a required step before `REGISTRATION_OPEN` fails:
+
+- startup returns the applicable failure result;
+- `REGISTRATION_OPENED` is not published;
+- Bootstrap requests `SHUTTING_DOWN`, performs safe cleanup, and requests
+  `STOPPED`;
+- partial state is not exposed as operational;
+- unrelated Engine state, registrations, and listeners remain untouched;
+- global clearing operations MUST NOT be used to simulate ForgeOS-only
+  rollback; and
+- ForgeOS allocations that cannot be safely removed through existing owning
+  services remain reusable by a later startup attempt.
+
+### Rationale
+
+The mandatory shape makes the approved base state deterministic. The rollback
+boundary preserves unrelated Engine state where existing services do not
+provide single-namespace removal.
+
 ---
 
 # Restored State Validation

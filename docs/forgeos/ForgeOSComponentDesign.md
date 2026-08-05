@@ -213,6 +213,156 @@ FORGE.ForgeOS:openApp(
 These are conceptual interfaces only. Final names will be defined during the
 ForgeOS API design phase.
 
+## M2.003A Public Facade Clarification
+
+### Architectural Intent
+
+This clarification defines only the lifecycle and compatibility surface needed
+for M2.003A. Future ForgeOS API design remains responsible for registration,
+device, application, navigation, notification, and state-operation methods.
+
+### Contract
+
+The M2.003A public facade is:
+
+```lua
+FORGE.ForgeOS
+```
+
+It exposes these read-only queries:
+
+```lua
+FORGE.ForgeOS:getPhase()
+FORGE.ForgeOS:getAppApiVersion()
+FORGE.ForgeOS:supportsAppApiVersion(requiredVersion)
+FORGE.ForgeOS:isAvailable()
+FORGE.ForgeOS:isRegistrationOpen()
+FORGE.ForgeOS:isRuntimeActive()
+```
+
+Queries return primitive or read-only values and never mutate state or publish
+events. `isAvailable()` and `isRuntimeActive()` are true only during
+`RUNTIME_ACTIVE`. `isRegistrationOpen()` is true only during
+`REGISTRATION_OPEN`. Compatibility queries remain permitted in every phase.
+
+Operations that request state changes return a `ForgeOSResult`. For M2.003A,
+the lifecycle operations are:
+
+```lua
+FORGE.ForgeOS:start()
+FORGE.ForgeOS:shutdown()
+```
+
+Bootstrap coordinates those operations, but Core owns the authoritative phase
+and performs every phase change. Bootstrap requests lifecycle changes and
+MUST NOT mutate lifecycle state directly. The transition operation is internal
+and is not part of the public facade.
+
+### Rationale
+
+Primitive queries report facts, while result-bearing operations request state
+changes. This distinction provides a consistent API rule without prematurely
+defining later subsystem operations.
+
+## M2.003B Registration Coordinator
+
+### Responsibility
+
+The Registration Coordinator owns:
+
+- registration-participant coordination;
+- validation and freeze orchestration;
+- deterministic participant ordering;
+- registration-gate results;
+- registration lifecycle transition requests; and
+- participant cleanup coordination.
+
+It does not own registered definitions, registry storage, duplicate detection,
+identifier validation, registry-specific invariants, or concrete lookup APIs.
+
+### Registration Participant Contract
+
+A Registration Participant is an internal ForgeOS component that owns one
+complete registration set. It MUST implement:
+
+```lua
+participant:getRegistrationRole()
+participant:validateRegistrationSet()
+participant:freezeRegistrationSet()
+participant:clearRegistrationSet()
+participant:isRegistrationSetFrozen()
+```
+
+Return contracts:
+
+| Operation | Return |
+|---|---|
+| `getRegistrationRole()` | One coordinator-recognised internal role |
+| `validateRegistrationSet()` | One `ForgeOSResult` |
+| `freezeRegistrationSet()` | One `ForgeOSResult` |
+| `clearRegistrationSet()` | One `ForgeOSResult` |
+| `isRegistrationSetFrozen()` | Boolean |
+
+Validation MUST NOT freeze or mutate the registration set. Successful freeze
+makes the set immutable. Cleanup MUST be safe and idempotent. The participant
+contract is internal and does not define public addon or concrete registry
+APIs.
+
+### Required Roles and Ordering
+
+Exactly one participant is required for each role. Coordination order is:
+
+```text
+Device Registry
+    ↓
+Device Host Registry
+    ↓
+App Registry
+```
+
+Registration order, addon load order, Lua table iteration order, and callback
+insertion order MUST NOT determine coordination order.
+
+The role identifiers are defined once inside the M2.003B coordinator
+implementation boundary. They are not added to the public ForgeOS definitions
+package.
+
+### Startup Completion
+
+The public facade exposes:
+
+```lua
+FORGE.ForgeOS:completeStartup()
+```
+
+The coordinator internally completes registration. All participants validate
+before freeze begins. Missing, duplicate, or invalid role assignments prevent
+startup from leaving `REGISTRATION_OPEN`.
+
+Validation or freeze failure MUST NOT expose partially completed registration
+as runtime-active. ForgeOS shuts down and invokes idempotent cleanup for every
+installed participant. Registration is not automatically reopened.
+
+### Registration Gate
+
+The shared internal gate returns `SUCCESS` only during `REGISTRATION_OPEN` and
+`REGISTRATION_CLOSED` in every other phase. Future concrete registries MUST
+consult this gate before committing registration state.
+
+The coordinator does not itself accept device, host, or application
+definitions.
+
+### Proposed Location
+
+```text
+forgeos/ForgeOSRegistrationCoordinator.lua
+```
+
+### Rationale
+
+This boundary provides lifecycle coordination without absorbing the concrete
+registry milestones.
+
 ---
 
 # Device Registry

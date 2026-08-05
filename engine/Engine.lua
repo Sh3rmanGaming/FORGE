@@ -7,6 +7,7 @@
 ---     • Receive FS25 mission lifecycle callbacks.
 ---     • Coordinate FORGE startup.
 ---     • Coordinate development test execution.
+---     • Coordinate ForgeOS startup and shutdown.
 ---     • Register engine-owned persistent state.
 ---     • Coordinate persistence loading and saving.
 ---     • Coordinate FORGE shutdown.
@@ -194,6 +195,36 @@ local function runDevelopmentTests()
         ~= nil then
         FORGE.Tests
             .runSaveManagerIntegrationTests()
+    end
+
+    if FORGE.Tests.runForgeOSCoreTests ~= nil then
+        FORGE.Tests.runForgeOSCoreTests()
+    end
+
+    if FORGE.Tests.runForgeOSBootstrapTests
+        ~= nil then
+        FORGE.Tests.runForgeOSBootstrapTests()
+    end
+
+    if FORGE.Tests
+        .runForgeOSCoreLifecycleIntegrationTests
+        ~= nil then
+        FORGE.Tests
+            .runForgeOSCoreLifecycleIntegrationTests()
+    end
+
+    if FORGE.Tests
+        .runForgeOSRegistrationCoordinatorTests
+        ~= nil then
+        FORGE.Tests
+            .runForgeOSRegistrationCoordinatorTests()
+    end
+
+    if FORGE.Tests
+        .runForgeOSRegistrationLifecycleIntegrationTests
+        ~= nil then
+        FORGE.Tests
+            .runForgeOSRegistrationLifecycleIntegrationTests()
     end
 end
 
@@ -438,6 +469,22 @@ function FORGE.Engine:loadMap(mapName)
     runDevelopmentTests()
 
     -------------------------------------------------------------------------
+    -- ForgeOS Bootstrap
+    -------------------------------------------------------------------------
+
+    local forgeOSStarted =
+        FORGE.ForgeOS:start()
+            == FORGE.Definitions
+                .ForgeOSResult.SUCCESS
+
+    if not forgeOSStarted then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.ENGINE,
+            "FORGE startup could not initialise ForgeOS"
+        )
+    end
+
+    -------------------------------------------------------------------------
     -- Production State Registration
     -------------------------------------------------------------------------
 
@@ -558,6 +605,19 @@ end
 function FORGE.Engine:deleteMap()
     self.isMissionLoaded = false
     self.mapName = nil
+
+    local forgeOSShutdownResult =
+        FORGE.ForgeOS:shutdown()
+
+    if forgeOSShutdownResult
+        ~= FORGE.Definitions
+            .ForgeOSResult.SUCCESS then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.ENGINE,
+            "ForgeOS shutdown failed with result '%s'",
+            forgeOSShutdownResult
+        )
+    end
 
     local clearedEvents =
         FORGE.EventBus:clearAll()

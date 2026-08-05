@@ -271,6 +271,236 @@ Shutdown is complete. Registration, validation, runtime, persistence-restore,
 and cleanup operations are forbidden. Read-only diagnostics MAY report the
 stopped phase.
 
+## M2.003A Lifecycle Contract Clarification
+
+### Architectural Intent
+
+This clarification defines only the observable lifecycle behaviour required by
+the M2.003A Core Lifecycle Foundation. It introduces no phase or capability and
+does not alter the complete v0.1 lifecycle.
+
+### Query Contract
+
+The public Core facade provides:
+
+```lua
+FORGE.ForgeOS:getPhase()
+FORGE.ForgeOS:getAppApiVersion()
+FORGE.ForgeOS:supportsAppApiVersion(requiredVersion)
+FORGE.ForgeOS:isAvailable()
+FORGE.ForgeOS:isRegistrationOpen()
+FORGE.ForgeOS:isRuntimeActive()
+```
+
+`getPhase()` returns one authoritative `ForgeOSPhase` value.
+`getAppApiVersion()` returns `ForgeOSVersion.APP_API`.
+`supportsAppApiVersion(requiredVersion)` returns true only for a positive
+integer equal to the supported application API version. Invalid input returns
+false.
+
+`isAvailable()` and `isRuntimeActive()` return true only during
+`RUNTIME_ACTIVE`. `isRegistrationOpen()` returns true only during
+`REGISTRATION_OPEN`. Queries are permitted in every phase and never mutate
+state or publish events.
+
+### Operation Result Contract
+
+Queries return primitive or read-only values. Operations requesting state
+changes return a `ForgeOSResult`.
+
+For M2.003A, `start()` and `shutdown()` use:
+
+| Condition | Result |
+|---|---|
+| Completed operation or idempotent no-op | `SUCCESS` |
+| Operation forbidden by the current phase | `INVALID_TRANSITION` |
+| Base-state initialisation failure | `STATE_ERROR` |
+| Persistence-registration failure | `PERSISTENCE_ERROR` |
+| Unexpected internal failure | `INTERNAL_ERROR` |
+
+Future registration operations rejected outside `REGISTRATION_OPEN` return
+`REGISTRATION_CLOSED`. Future runtime operations rejected outside
+`RUNTIME_ACTIVE` return `NOT_AVAILABLE`.
+
+### M2.003A Transition Matrix
+
+| Current phase | Next phase |
+|---|---|
+| `UNAVAILABLE` | `INITIALISING` |
+| `INITIALISING` | `REGISTRATION_OPEN` |
+| `INITIALISING` | `SHUTTING_DOWN` |
+| `REGISTRATION_OPEN` | `SHUTTING_DOWN` |
+| `SHUTTING_DOWN` | `STOPPED` |
+| `STOPPED` | `INITIALISING` |
+
+Every other transition is rejected without changing phase.
+
+The direct transition from `REGISTRATION_OPEN` to `SHUTTING_DOWN` is permitted
+because validation, registration freeze, and runtime activation are
+intentionally deferred during M2.003A. A future complete startup MUST proceed
+through those phases and MUST NOT use this bounded milestone path to bypass
+them.
+
+### Idempotence Contract
+
+Starting from `UNAVAILABLE` or `STOPPED` performs startup. Starting from
+`REGISTRATION_OPEN` returns `SUCCESS` without repeating work. Starting during
+`INITIALISING`, `SHUTTING_DOWN`, or a later lifecycle phase returns
+`INVALID_TRANSITION` during M2.003A.
+
+Shutdown from `INITIALISING` or `REGISTRATION_OPEN` performs cleanup and
+stopping. Shutdown from `UNAVAILABLE`, `SHUTTING_DOWN`, or `STOPPED` returns
+`SUCCESS` without repeating work.
+
+Idempotent calls do not repeat state creation, persistence registration,
+cleanup, phase transitions, or event publication.
+
+### Lifecycle Ownership
+
+ForgeOS Core owns and performs authoritative phase changes. ForgeOS Bootstrap
+coordinates startup and shutdown and requests changes from Core. Bootstrap
+MUST NOT mutate phase state directly. No other component may maintain an
+independent authoritative phase.
+
+### Lifecycle Events
+
+`REGISTRATION_OPENED` is published exactly once after a successful startup has
+entered `REGISTRATION_OPEN`:
+
+```lua
+{
+    phase = FORGE.Definitions.ForgeOSPhase.REGISTRATION_OPEN,
+    appApiVersion = FORGE.Definitions.ForgeOSVersion.APP_API
+}
+```
+
+`STOPPED` is published exactly once after cleanup completes and the
+authoritative phase becomes `STOPPED`:
+
+```lua
+{
+    phase = FORGE.Definitions.ForgeOSPhase.STOPPED
+}
+```
+
+Listeners observe completed transitions. Listener failure does not reverse
+either completed transition. Idempotent calls do not republish events.
+`STARTED` is not published during M2.003A and remains associated with successful
+entry into `RUNTIME_ACTIVE`.
+
+### Runtime Gating
+
+Lifecycle and compatibility queries are always permitted. Registration is
+phase-permitted only during `REGISTRATION_OPEN`, although registry APIs are not
+introduced by M2.003A. Normal runtime operations remain forbidden because
+M2.003A does not reach `RUNTIME_ACTIVE`.
+
+Rejected operations do not mutate state or publish completion events. Tests
+may exercise internal phase gating without introducing placeholder public
+subsystem operations.
+
+## M2.003B Registration Lifecycle Clarification
+
+### Architectural Intent
+
+M2.003B defines registration coordination and the transition into
+`RUNTIME_ACTIVE`. It does not define or implement concrete registry behaviour
+or runtime-active subsystem operations.
+
+### Startup Completion Result
+
+`FORGE.ForgeOS:completeStartup()` returns one `ForgeOSResult`:
+
+| Condition | Result |
+|---|---|
+| Startup completion succeeds | `SUCCESS` |
+| Already `RUNTIME_ACTIVE` | `SUCCESS` |
+| Current phase cannot complete startup | `INVALID_TRANSITION` |
+| A required participant is absent or invalid | `NOT_AVAILABLE` |
+| Participant validation or freeze fails | Participant failure result |
+| Unexpected coordination failure | `INTERNAL_ERROR` |
+
+An idempotent call during `RUNTIME_ACTIVE` does not repeat validation, freeze,
+phase transitions, or event publication.
+
+### Transition Matrix Extension
+
+M2.003B adds:
+
+| Current phase | Next phase | Condition |
+|---|---|---|
+| `REGISTRATION_OPEN` | `VALIDATING` | Registration completion begins |
+| `VALIDATING` | `REGISTRATION_FROZEN` | All participants validate |
+| `VALIDATING` | `SHUTTING_DOWN` | Validation fails |
+| `REGISTRATION_FROZEN` | `RUNTIME_ACTIVE` | All participants freeze |
+| `REGISTRATION_FROZEN` | `SHUTTING_DOWN` | Freeze or finalisation fails |
+| `RUNTIME_ACTIVE` | `SHUTTING_DOWN` | Normal shutdown |
+
+Existing M2.003A transitions remain valid. Core authoritatively performs every
+phase change.
+
+### Validation and Freeze Failure
+
+Validation stops at the first failing participant. No participant is frozen,
+registration is not reopened, and ForgeOS shuts down to `STOPPED`.
+
+Freeze stops at the first failing participant. Runtime activation and
+`STARTED` publication do not occur. Every installed participant receives
+idempotent cleanup, including already frozen participants, and ForgeOS shuts
+down to `STOPPED`.
+
+Partially completed coordination MUST NOT be reported as successful or exposed
+as runtime-active.
+
+### Registration Gate
+
+The internal shared registration gate returns:
+
+```text
+SUCCESS               during REGISTRATION_OPEN
+REGISTRATION_CLOSED   during every other phase
+```
+
+Future concrete registries use this decision before committing registration
+state. A rejected late registration does not mutate state or publish a
+registry-specific event.
+
+### Registration Frozen Event
+
+After all participants freeze and Core enters `REGISTRATION_FROZEN`, publish
+`ForgeOSEvent.REGISTRATION_FROZEN` exactly once:
+
+```lua
+{
+    phase =
+        FORGE.Definitions.ForgeOSPhase.REGISTRATION_FROZEN
+}
+```
+
+### Started Event
+
+After Core enters `RUNTIME_ACTIVE`, publish `ForgeOSEvent.STARTED` exactly
+once:
+
+```lua
+{
+    phase =
+        FORGE.Definitions.ForgeOSPhase.RUNTIME_ACTIVE,
+    appApiVersion =
+        FORGE.Definitions.ForgeOSVersion.APP_API
+}
+```
+
+Listeners observe completed transitions. Listener failure does not reverse a
+completed transition.
+
+### Restart and Cleanup
+
+Registration state is rebuilt for every ForgeOS lifecycle and is not
+persisted. Shutdown or failed completion invokes participant cleanup. A
+restarted lifecycle begins with mutable, unfrozen participant sets and may
+install each required role once.
+
 ---
 
 # ForgeOS Player Identifiers

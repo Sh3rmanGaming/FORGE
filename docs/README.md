@@ -192,6 +192,7 @@ Engineering and architecture review evidence is stored under:
 ```text
 reviews/
 ├── M2.002RuntimeVerification.md
+├── M2.003ARuntimeVerification.md
 ├── M2ArchitectureReview.md
 └── RepositoryBaselineAudit-001.md
 ```
@@ -199,6 +200,7 @@ reviews/
 Current records:
 
 - [M2.002 Runtime Verification](reviews/M2.002RuntimeVerification.md)
+- [M2.003A Runtime Verification](reviews/M2.003ARuntimeVerification.md)
 - [M2 Architecture Review](reviews/M2ArchitectureReview.md)
 - [Repository Baseline Audit 001](reviews/RepositoryBaselineAudit-001.md)
 
@@ -338,12 +340,13 @@ Completed implementation:
 
 ```text
 M2.002 – Definitions
+M2.003A – ForgeOS Core Lifecycle Foundation
 ```
 
 Next implementation stage:
 
 ```text
-M2.003 – ForgeOS Core
+M2.003B – ForgeOS Registration Foundation
 ```
 
 ---

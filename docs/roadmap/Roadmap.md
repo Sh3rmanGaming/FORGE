@@ -88,17 +88,47 @@ Evidence:
 
 ---
 
-#### ⏳ M2.003 – ForgeOS Core
+#### ✅ M2.003A – ForgeOS Core Lifecycle Foundation
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.003A implements and verifies the bounded Core lifecycle from `UNAVAILABLE`
+through `REGISTRATION_OPEN`, plus clean shutdown to `STOPPED`.
+
+Evidence:
+
+- [ForgeOS Architecture](../forgeos/ForgeOSArchitecture.md)
+- [ForgeOS Component Design](../forgeos/ForgeOSComponentDesign.md)
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [ForgeOS State Model](../forgeos/ForgeOSStateModel.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.003A Runtime Verification](../reviews/M2.003ARuntimeVerification.md)
 
 - Engine startup integration
 - Engine shutdown integration
-- Registration lifecycle
+- authoritative lifecycle phase ownership
+- M2.003A transition enforcement
+- Core lifecycle and compatibility queries
+- ForgeOS state initialization
+- persistence registration
+- registration-open and stopped events
+- Core and Bootstrap component tests
+- Core lifecycle integration tests
+
+---
+
+#### ⏳ M2.003B – ForgeOS Registration Foundation
+
+- Device, device-host, and application registries
+- Registration coordination
 - Registration validation
 - Registration freeze
-- Core service coordination
-- Public ForgeOS API
-- ForgeOS state initialization
-- Core test suite
+- Late-registration rejection
+- Transition to runtime-active
+- Started event publication
+- Registration and Core integration tests
 
 ---
 

@@ -228,6 +228,38 @@ Authoritative ownership remains unresolved.
 - **Documents affected:** Component Design, State Model.
 - **Classification:** Inconsistency correction.
 
+### 11. M2.003A Core lifecycle clarification
+
+- **Previous contract:** ForgeOS v0.1 defined phase meanings, ownership
+  boundaries, and conceptual Core interfaces but left the bounded M2.003A
+  transition, query, idempotence, rollback, base-state, and lifecycle-event
+  behaviour insufficiently deterministic for implementation.
+- **Accepted contract:** Core authoritatively owns and performs phase changes;
+  Bootstrap requests and coordinates them. M2.003A defines its read-only Core
+  queries, result-bearing lifecycle operations, bounded transition matrix,
+  idempotence, safe partial-startup handling, mandatory initial state,
+  lifecycle-event timing and payloads, and runtime gating.
+- **Reason:** Clarify behaviour already implied by the Approved v0.1 contracts
+  without adding capability or resolving unrelated open decisions.
+- **Documents affected:** Architecture, Component Design, Definitions, State
+  Model, M2 Architecture Review.
+- **Classification:** Clarification.
+
+### 12. M2.003B registration coordination boundary
+
+- **Previous contract:** ForgeOS required one lifecycle across three stable
+  registration sets but did not define a deterministic coordinator boundary or
+  an exact internal participant contract.
+- **Accepted contract:** M2.003B coordinates three explicit Registration
+  Participant roles through a fixed internal contract, deterministic
+  validation and freeze ordering, shared phase gating, failure cleanup, and
+  `completeStartup()`. Concrete registry capabilities remain deferred.
+- **Reason:** Make the Approved unified registration lifecycle implementable
+  without absorbing concrete registry milestones.
+- **Documents affected:** Architecture, Component Design, Definitions, App
+  Contract, M2 Architecture Review.
+- **Classification:** Clarification.
+
 ## Remaining Open Decisions
 
 ### Cross-component
@@ -311,10 +343,38 @@ passed in Farming Simulator 25 and that Engine startup subsequently completed.
 The authoritative evidence is recorded in
 [M2.002 Runtime Verification](M2.002RuntimeVerification.md).
 
-This evidence implements and verifies M2.002 only. ForgeOS Core, Bootstrap,
-registries, services, device hosts, applications, and all later M2 work remain
-outstanding. All open decisions, deferred assumptions, and architecture gaps
-recorded in this review remain unresolved.
+This evidence implements and verifies M2.002 only. At the M2.002 acceptance
+point, ForgeOS Core, Bootstrap, registries, services, device hosts,
+applications, and all later M2 work remained outstanding. All open decisions,
+deferred assumptions, and architecture gaps recorded in this review remained
+unresolved.
+
+## M2.003A Implementation and Verification
+
+The accepted M2.003A Core lifecycle clarification has been implemented and
+verified.
+
+Implementation evidence confirms:
+
+- ForgeOS Core owns and enforces the authoritative lifecycle phase;
+- Bootstrap requests phase changes and coordinates startup and shutdown;
+- the approved lifecycle and compatibility queries are exposed;
+- mandatory `forge.os` state and persistence registration are established;
+- registration-open and stopped events follow completed transitions;
+- Engine startup reaches `REGISTRATION_OPEN`; and
+- Engine shutdown stops ForgeOS before global cleanup.
+
+Runtime evidence confirms that the Core, Bootstrap, and lifecycle integration
+harnesses started and passed in Farming Simulator 25. Production ForgeOS
+startup reached registration-open before Engine startup completed, and ForgeOS
+stopped before Engine shutdown completed. The authoritative evidence is
+recorded in
+[M2.003A Runtime Verification](M2.003ARuntimeVerification.md).
+
+This evidence implements and verifies M2.003A only. Registration validation,
+registration freeze, runtime activation, registries, hosts, applications, and
+later ForgeOS services remain outstanding. Every unrelated open decision,
+deferred assumption, and architecture gap remains unresolved.
 
 ## Contract Freeze
 
@@ -355,6 +415,16 @@ contract and is verified by the M2.002 runtime evidence. Remaining ForgeOS
 components and services must not be described as implemented or verified until
 code and evidence exist.
 
+The M2.003A Core lifecycle clarification is accepted as part of the frozen v0.1
+implementation contract. It is limited to the Core Lifecycle Foundation.
+Implementation and runtime evidence now advance M2.003A to Implemented and
+Verified without advancing later ForgeOS work.
+
+The M2.003B Registration Participant and coordinator clarification is accepted
+as part of the frozen v0.1 implementation contract. It does not advance
+M2.003B to Implemented or Verified and does not change concrete registry
+milestone ownership.
+
 ## Review Status
 
 Chief Architect review is complete and the reviewed documentation contract is
@@ -366,5 +436,7 @@ frozen at v0.1.
 - Formal document approval: recorded
 - M2.002 implementation: complete
 - M2.002 verification: complete
+- M2.003A implementation: complete
+- M2.003A verification: complete
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

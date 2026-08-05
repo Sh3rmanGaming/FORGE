@@ -436,6 +436,78 @@ registration remains closed.
 The complete permitted and forbidden operation contract for every phase is
 defined in `ForgeOSDefinitions.md`.
 
+## M2.003A Core Lifecycle Clarification
+
+### Architectural Intent
+
+This clarification makes the Approved v0.1 contracts sufficiently
+deterministic for the M2.003A Core Lifecycle Foundation. It introduces no new
+ForgeOS capability and does not resolve decisions outside that implementation
+stage.
+
+### Contract
+
+`FORGE.ForgeOS` is the stable public ForgeOS facade. The facade may exist while
+ForgeOS is unavailable and does not expose mutable lifecycle state or direct
+State Store data.
+
+ForgeOS Core owns the authoritative phase, validates lifecycle transition
+requests, performs permitted phase changes, and supplies phase-gating queries.
+ForgeOS Bootstrap coordinates startup and shutdown and requests lifecycle
+changes from Core. Bootstrap MUST NOT mutate lifecycle state directly.
+
+M2.003A ends at `REGISTRATION_OPEN`. Validation, registration freeze, runtime
+activation, and the `STARTED` event remain deferred. Normal runtime operations
+therefore remain unavailable throughout this stage.
+
+### Rationale
+
+The clarification establishes deterministic ownership and observable
+behaviour without defining registry or runtime APIs ahead of their approved
+implementation stages.
+
+## M2.003B Registration Coordination Clarification
+
+### Architectural Intent
+
+M2.003B separates registration lifecycle coordination from concrete registry
+implementation. It introduces no registry storage, lookup, identifier
+validation, duplicate detection, or registry-specific invariant.
+
+### Contract
+
+The ForgeOS Registration Coordinator orchestrates the three required
+Registration Participant roles:
+
+```text
+Device Registry
+Device Host Registry
+App Registry
+```
+
+All three roles MUST be installed exactly once for a ForgeOS lifecycle before
+startup may leave `REGISTRATION_OPEN`. Concrete participants retain ownership
+of their registration data, mutation rules, validation rules, freeze
+invariants, and cleanup.
+
+The coordinator requests lifecycle changes from Core and MUST NOT mutate phase
+state directly. Registration completion is internal to the coordinator. The
+public facade exposes the overall startup operation:
+
+```lua
+FORGE.ForgeOS:completeStartup()
+```
+
+Successful completion proceeds through `VALIDATING`,
+`REGISTRATION_FROZEN`, and `RUNTIME_ACTIVE`. This phase transition does not
+implement device, host, application, navigation, notification, or other
+runtime-active subsystem behaviour.
+
+### Rationale
+
+The coordinator establishes one deterministic lifecycle mechanism while
+leaving concrete registry capabilities in their dedicated milestones.
+
 ---
 
 # Navigation

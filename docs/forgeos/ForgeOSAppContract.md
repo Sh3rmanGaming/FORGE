@@ -1012,6 +1012,24 @@ normal runtime phase and registration remains closed.
 Permitted and forbidden operations for every phase are defined in
 `ForgeOSDefinitions.md`. Late registrations MUST be rejected cleanly.
 
+## M2.003B Coordination Boundary
+
+M2.003B implements only the coordinator that orchestrates the Device Registry,
+Device Host Registry, and App Registry participant roles.
+
+Concrete application registration, definition storage, duplicate detection,
+identifier validation, lookup, and App Registry invariants remain deferred to
+the dedicated App Registry milestone.
+
+The public operation `FORGE.ForgeOS:completeStartup()` completes validation,
+freeze, and transition to `RUNTIME_ACTIVE` only after all three internal
+Registration Participants are installed. The coordinator does not accept
+application definitions.
+
+Future App Registry registration operations MUST consult the shared
+registration gate and return `REGISTRATION_CLOSED` without mutation when
+registration is not open.
+
 ---
 
 # Addon Compatibility
