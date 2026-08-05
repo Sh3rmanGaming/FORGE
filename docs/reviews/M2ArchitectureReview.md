@@ -291,9 +291,36 @@ contracts.
 - State migration and long-term compatibility policy remain incomplete.
 - Notification authority and retention boundaries remain incomplete.
 
+## M2.002 Implementation and Verification
+
+The Approved ForgeOS v0.1 definitions contract has been implemented and
+verified.
+
+M2.002 implementation evidence confirms:
+
+- all authoritative ForgeOS definition files exist;
+- the approved ForgeOS log sources are implemented;
+- ForgeOS Lua sources are included in synchronization;
+- authoritative and prototype copies are aligned;
+- the prototype loads all ForgeOS definitions in the approved order; and
+- the manual ForgeOS Definitions harness is invoked by the Engine development
+  test runner.
+
+Runtime evidence confirms that the ForgeOS Definitions harness started and
+passed in Farming Simulator 25 and that Engine startup subsequently completed.
+The authoritative evidence is recorded in
+[M2.002 Runtime Verification](M2.002RuntimeVerification.md).
+
+This evidence implements and verifies M2.002 only. ForgeOS Core, Bootstrap,
+registries, services, device hosts, applications, and all later M2 work remain
+outstanding. All open decisions, deferred assumptions, and architecture gaps
+recorded in this review remain unresolved.
+
 ## Contract Freeze
 
-The Approved ForgeOS v0.1 documentation contract is frozen for implementation.
+The ForgeOS v0.1 documentation contract remains frozen. The verified
+definitions package is now the authoritative v0.1 implementation baseline for
+subsequent M2 work.
 
 - Approved technical content MUST NOT change silently.
 - Contract changes require architecture review and documentation updates.
@@ -302,9 +329,13 @@ The Approved ForgeOS v0.1 documentation contract is frozen for implementation.
   be applied retroactively without review.
 - Public identifiers and persistence-facing contracts require compatibility
   review before change.
+- Definition changes require corresponding test updates.
+- Synchronized prototype definitions must remain aligned with authoritative
+  source.
 
-This freeze records documentation approval only. Implementation, testing,
-verification, and overall M2 completion remain outstanding.
+This freeze records implementation and verification of M2.002 only.
+Implementation, testing, and verification of the remaining ForgeOS subsystem,
+and overall M2 completion, remain outstanding.
 
 ## Implementation Alignment
 
@@ -319,18 +350,21 @@ Implementation work must align with:
 - the minimum atomicity invariant; and
 - controlled visibility requests without direct host mutation.
 
-Existing `ForgeOSPhase.lua` and `ForgeOSNamespace.lua` align with the accepted
-phase and namespace contracts. Remaining ForgeOS definitions and services must
-not be described as implemented or verified until code and evidence exist.
+The ForgeOS definition package aligns with the accepted v0.1 definitions
+contract and is verified by the M2.002 runtime evidence. Remaining ForgeOS
+components and services must not be described as implemented or verified until
+code and evidence exist.
 
 ## Review Status
 
 Chief Architect review is complete and the reviewed documentation contract is
 frozen at v0.1.
 
-- Documents: `Approved`
+- ForgeOS Definitions document: `Verified`
+- Remaining reviewed documents: `Approved`
 - Accepted decisions: recorded
 - Formal document approval: recorded
-- Implementation: incomplete
-- Verification: not started
+- M2.002 implementation: complete
+- M2.002 verification: complete
+- Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

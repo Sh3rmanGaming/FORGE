@@ -1,7 +1,7 @@
 # FORGE Roadmap
 
 **Status:** Active  
-**Last Updated:** 2026-08-03
+**Last Updated:** 2026-08-05
 
 ---
 
@@ -34,9 +34,9 @@
 
 #### ⏳ M2.001 – Documentation
 
-All current ForgeOS documents are authored, have completed Architecture Review,
-and have status `Approved` as the authoritative v0.1 implementation contract.
-They are not yet Implemented or Verified.
+All current ForgeOS documents are authored and have completed Architecture
+Review. Four remain `Approved` as authoritative v0.1 implementation contracts.
+ForgeOS Definitions has been implemented and verified.
 
 Review evidence and accepted decisions are recorded in the
 [M2 Architecture Review](../reviews/M2ArchitectureReview.md).
@@ -45,13 +45,27 @@ Review evidence and accepted decisions are recorded in the
 |----------|----------|---------------------|----------|-------------|----------|
 | ForgeOS Architecture | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
 | ForgeOS Component Design | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
-| ForgeOS Definitions | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
+| ForgeOS Definitions | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
 | ForgeOS App Contract | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
 | ForgeOS State Model | ✅ Complete | ✅ Complete | ✅ Complete | ⬜ Not Started | ⬜ Not Started |
 
 ---
 
-#### ⏳ M2.002 – Definitions
+#### ✅ M2.002 – Definitions
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.002 is complete. The Approved v0.1 definitions contract has been
+implemented, synchronized into the prototype, loaded in the approved order,
+and verified in Farming Simulator 25.
+
+Evidence:
+
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.002 Runtime Verification](../reviews/M2.002RuntimeVerification.md)
 
 - ForgeOS namespace definitions
 - ForgeOS version definitions

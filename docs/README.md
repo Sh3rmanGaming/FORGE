@@ -109,8 +109,10 @@ These documents define:
 
 ## ForgeOS
 
-The five ForgeOS documents are Approved as the authoritative v0.1
-implementation contract. Implementation and verification remain outstanding.
+ForgeOS Definitions is Verified as the authoritative v0.1 definitions
+implementation contract. The other four ForgeOS documents remain Approved as
+authoritative v0.1 implementation contracts, with their implementation and
+verification outstanding.
 
 ```text
 forgeos/
@@ -189,12 +191,14 @@ Engineering and architecture review evidence is stored under:
 
 ```text
 reviews/
+├── M2.002RuntimeVerification.md
 ├── M2ArchitectureReview.md
 └── RepositoryBaselineAudit-001.md
 ```
 
 Current records:
 
+- [M2.002 Runtime Verification](reviews/M2.002RuntimeVerification.md)
 - [M2 Architecture Review](reviews/M2ArchitectureReview.md)
 - [Repository Baseline Audit 001](reviews/RepositoryBaselineAudit-001.md)
 
@@ -330,10 +334,16 @@ Current Milestone
 M2 – ForgeOS
 ```
 
-Current implementation:
+Completed implementation:
 
 ```text
 M2.002 – Definitions
+```
+
+Next implementation stage:
+
+```text
+M2.003 – ForgeOS Core
 ```
 
 ---
