@@ -376,6 +376,53 @@ registration freeze, runtime activation, registries, hosts, applications, and
 later ForgeOS services remain outstanding. Every unrelated open decision,
 deferred assumption, and architecture gap remains unresolved.
 
+## M2.003B Implementation and Verification
+
+The accepted coordinator-only Registration Foundation has been implemented and
+verified.
+
+Implementation evidence confirms:
+
+- Registration Coordinator ownership;
+- the explicit internal Registration Participant contract;
+- exactly one required Device Registry, Device Host Registry, and App Registry
+  participant role per lifecycle;
+- deterministic Device, Device Host, then App coordination order;
+- participant completeness and shared registration gating;
+- validation and freeze orchestration;
+- failure cleanup, shutdown, and restart behaviour;
+- transition capability through `VALIDATING`, `REGISTRATION_FROZEN`, and
+  `RUNTIME_ACTIVE`; and
+- registration-frozen and started event publication.
+
+Coordinator capability evidence uses explicit test participants. The harnesses
+reach registration-frozen and runtime-active, observe the approved events, shut
+down, and restart successfully.
+
+Production integration evidence has a different boundary. Concrete registry
+participants do not yet exist, so production correctly opens registration,
+loads persistence, completes Engine startup, and remains at
+`REGISTRATION_OPEN`. It then reaches `STOPPED` before Engine shutdown
+completes. Production registration freeze, runtime activation, and started
+event publication remain deferred until all three concrete participants exist.
+
+The authoritative evidence is recorded in
+[M2.003B Runtime Verification](M2.003BRuntimeVerification.md).
+
+## Parent M2.003 Acceptance
+
+The Project Director accepts M2.003 – ForgeOS Core as complete.
+
+M2.003A and M2.003B together provide the implemented and verified Core
+Lifecycle and Registration Coordinator foundations. Parent maturity is:
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| Complete | Complete | Complete | Complete | Complete |
+
+This acceptance does not complete the overall M2 ForgeOS milestone. The next
+implementation boundary is M2.004 – Device Registry, which has not started.
+
 ## Contract Freeze
 
 The ForgeOS v0.1 documentation contract remains frozen. The verified
@@ -396,6 +443,50 @@ subsequent M2 work.
 This freeze records implementation and verification of M2.002 only.
 Implementation, testing, and verification of the remaining ForgeOS subsystem,
 and overall M2 completion, remain outstanding.
+
+### M2.003 Parent Implementation Freeze
+
+The implemented and verified parent M2.003 baseline is frozen for:
+
+- `FORGE.ForgeOS` as the public Core facade;
+- ForgeOS Bootstrap lifecycle coordination;
+- Core ownership of authoritative phase state;
+- Bootstrap-driven lifecycle transition requests;
+- lifecycle and compatibility queries;
+- the query-return versus operation-result rule;
+- `start()`, `shutdown()`, and `completeStartup()`;
+- M2.003 phase transitions and idempotence;
+- mandatory base-state initialisation;
+- persistence registration;
+- implemented lifecycle event timing and payloads;
+- Registration Coordinator ownership;
+- the Registration Participant internal contract;
+- the three required participant roles and deterministic ordering;
+- registration gating;
+- validation and freeze orchestration;
+- failure cleanup, restart, and shutdown behaviour; and
+- synchronization, load order, testing, and runtime-evidence requirements.
+
+These contracts MUST NOT change silently. Contract changes require architecture
+review; public-facing changes require compatibility review; persistence-facing
+changes require migration and compatibility review where applicable; tests
+must accompany approved changes; and synchronized outputs must remain aligned
+with authoritative source.
+
+### Explicit M2.003 Non-Freeze Scope
+
+The M2.003 implementation freeze does not claim implementation or verification
+of:
+
+- Device Registry, Device Host Registry, or App Registry;
+- registry storage, duplicate-definition detection, identifier validation,
+  definition-specific validation, or concrete lookup;
+- device-host binding or runtime host instances;
+- applications, presentation resolution, or availability;
+- application lifecycle, navigation, or notification services;
+- Phone Host, Laptop Host, or UI rendering;
+- multiplayer identity or true per-player persistence; or
+- later ForgeOS services and applications.
 
 ## Implementation Alignment
 
@@ -421,9 +512,13 @@ Implementation and runtime evidence now advance M2.003A to Implemented and
 Verified without advancing later ForgeOS work.
 
 The M2.003B Registration Participant and coordinator clarification is accepted
-as part of the frozen v0.1 implementation contract. It does not advance
-M2.003B to Implemented or Verified and does not change concrete registry
-milestone ownership.
+as part of the frozen v0.1 implementation contract. Implementation and runtime
+evidence advance M2.003B to Implemented and Verified without changing concrete
+registry milestone ownership.
+
+Parent M2.003 is accepted as Implemented and Verified within the bounded freeze
+recorded above. Production remaining at `REGISTRATION_OPEN` is expected until
+concrete registry participants are implemented.
 
 ## Review Status
 
@@ -438,5 +533,10 @@ frozen at v0.1.
 - M2.002 verification: complete
 - M2.003A implementation: complete
 - M2.003A verification: complete
+- M2.003B implementation: complete
+- M2.003B verification: complete
+- Parent M2.003 acceptance: complete
+- Parent M2.003 freeze: recorded
+- Next implementation boundary: M2.004 – Device Registry
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

@@ -88,7 +88,17 @@ Evidence:
 
 ---
 
-#### ✅ M2.003A – ForgeOS Core Lifecycle Foundation
+#### ✅ M2.003 – ForgeOS Core
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.003 is complete. It delivers the verified Core Lifecycle Foundation and
+Registration Coordinator Foundation without implementing the concrete
+registries assigned to later milestones.
+
+##### ✅ M2.003A – Core Lifecycle Foundation
 
 | Authored | Architecture Review | Approved | Implemented | Verified |
 |----------|---------------------|----------|-------------|----------|
@@ -117,18 +127,40 @@ Evidence:
 - Core and Bootstrap component tests
 - Core lifecycle integration tests
 
----
+##### ✅ M2.003B – Registration Coordinator Foundation
 
-#### ⏳ M2.003B – ForgeOS Registration Foundation
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
 
-- Device, device-host, and application registries
-- Registration coordination
-- Registration validation
-- Registration freeze
-- Late-registration rejection
-- Transition to runtime-active
-- Started event publication
-- Registration and Core integration tests
+M2.003B implements and verifies registration lifecycle coordination without
+implementing concrete Device Registry, Device Host Registry, or App Registry
+capabilities.
+
+Evidence:
+
+- [ForgeOS Architecture](../forgeos/ForgeOSArchitecture.md)
+- [ForgeOS Component Design](../forgeos/ForgeOSComponentDesign.md)
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [ForgeOS App Contract](../forgeos/ForgeOSAppContract.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.003B Runtime Verification](../reviews/M2.003BRuntimeVerification.md)
+
+- Registration Coordinator ownership
+- explicit Registration Participant internal contract
+- three required participant roles
+- deterministic participant ordering
+- validation and freeze orchestration
+- registration gating and late-participant rejection
+- failure cleanup, shutdown, and restart
+- registration-frozen and started event publication
+- component and registration-lifecycle integration tests
+
+Coordinator capability is verified using explicit test participants through
+`REGISTRATION_FROZEN` and `RUNTIME_ACTIVE`. Production integration is verified
+while correctly remaining at `REGISTRATION_OPEN` until the concrete
+participants exist. Production runtime activation is deferred to those later
+registry milestones.
 
 ---
 

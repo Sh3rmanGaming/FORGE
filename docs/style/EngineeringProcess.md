@@ -115,6 +115,29 @@ Milestone Acceptance where applicable
 Steps MAY be combined for a small, low-risk task, but validation, authorization,
 and evidence MUST remain explicit.
 
+## Capability Batches and Architecture Clarification
+
+Implementation SHOULD be organised into coherent, independently testable
+capability batches rather than arbitrary file-sized batches.
+
+Execution subdivisions of a parent milestone MAY be implemented and verified
+independently. Parent milestone acceptance and contract freeze occur only after
+every required batch is complete and the Project Director accepts the combined
+evidence.
+
+When implementation encounters a bounded ambiguity in otherwise Approved
+architecture, Architecture Clarification Mode MAY:
+
+1. identify the exact ambiguity and affected implementation;
+2. draft a narrowly scoped clarification that preserves the Approved design;
+3. obtain the required Project Director and Chief Architect approval; and
+4. resume the validated engineering task without repeating unaffected audit
+   work.
+
+Clarification MAY make approved intent deterministic. It MUST NOT silently
+invent observable behaviour, introduce an unapproved capability, or resolve an
+unrelated open decision.
+
 ## Documentation-First Rule
 
 Approved documentation is the implementation contract. Draft and Review
