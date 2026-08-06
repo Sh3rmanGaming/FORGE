@@ -98,6 +98,13 @@ local function publishRegistrationOpened()
     )
 end
 
+local function installDeviceRegistry()
+    return FORGE.ForgeOSRegistrationCoordinator
+        :installParticipant(
+            FORGE.DeviceRegistry
+        )
+end
+
 local function publishStopped()
     FORGE.EventBus:publish(
         Event.STOPPED,
@@ -198,6 +205,14 @@ local function start()
                     Phase.REGISTRATION_OPEN
                 ) then
                     return Result.INTERNAL_ERROR
+                end
+
+                local installationResult =
+                    installDeviceRegistry()
+
+                if installationResult
+                    ~= Result.SUCCESS then
+                    return installationResult
                 end
 
                 publishRegistrationOpened()
@@ -331,6 +346,39 @@ end
 function FORGE.ForgeOS:isRuntimeActive()
     return FORGE.ForgeOSCore
         :isRuntimeOperationPermitted()
+end
+
+--- Registers one device definition during the registration-open phase.
+-- @param deviceDefinition any
+-- @return string result
+function FORGE.ForgeOS:registerDevice(
+    deviceDefinition
+)
+    return FORGE.DeviceRegistry
+        :registerDevice(deviceDefinition)
+end
+
+--- Returns whether a device identifier is registered.
+-- @param deviceId any
+-- @return boolean registered
+function FORGE.ForgeOS:isDeviceRegistered(deviceId)
+    return FORGE.DeviceRegistry
+        :isDeviceRegistered(deviceId)
+end
+
+--- Returns a detached registered device definition.
+-- @param deviceId any
+-- @return table|nil definition
+function FORGE.ForgeOS:getDeviceDefinition(deviceId)
+    return FORGE.DeviceRegistry
+        :getDeviceDefinition(deviceId)
+end
+
+--- Returns detached registered identifiers in lexical order.
+-- @return table identifiers
+function FORGE.ForgeOS:getRegisteredDeviceIds()
+    return FORGE.DeviceRegistry
+        :getRegisteredDeviceIds()
 end
 
 --- Starts or idempotently confirms the ForgeOS lifecycle.

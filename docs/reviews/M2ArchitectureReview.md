@@ -260,6 +260,100 @@ Authoritative ownership remains unresolved.
   Contract, M2 Architecture Review.
 - **Classification:** Clarification.
 
+### 13. M2.004 Device Registry deterministic contract
+
+- **Previous contract:** ForgeOS v0.1 assigned Device Registry ownership and a
+  conceptual schema but did not freeze exact facade methods, deterministic
+  result ordering, copy isolation, event completion behaviour, or production
+  participant installation timing.
+- **Accepted contract:** M2.004 defines the public registration and query
+  facade, controlled plain-data storage, detached and lexically ordered query
+  results, lifecycle-local uniqueness, atomic deterministic registration
+  results, `DEVICE_REGISTERED` completion semantics, participant behaviour,
+  and installation before `REGISTRATION_OPENED` observers.
+- **Reason:** Make the existing Device Registry capability implementable
+  without absorbing later registries or resolving preserved identifier,
+  host-binding, policy, and metadata decisions.
+- **Documents affected:** Architecture, Component Design, Definitions, M2
+  Architecture Review.
+- **Classification:** Clarification.
+
+## M2.004 Test-Lifecycle Reconciliation
+
+M2.004 preserves every existing manual harness and public harness entry point
+while separating production diagnostics from development regression execution.
+
+When the existing Logger development mode is disabled, Engine does not invoke
+manual harnesses. Normal logs contain only genuine operational startup,
+persistence, lifecycle, warning, failure, and shutdown diagnostics.
+
+When development mode is enabled, Engine invokes the complete retained
+development suite, including the Device Registry component and integration
+harnesses. The M2.003B coordinator harnesses use the production Device Registry
+installed by ForgeOS and retain explicit test participants only for the
+deferred Device Host Registry and App Registry roles.
+
+Current harness classification:
+
+| Classification | Harnesses |
+|---|---|
+| Operational smoke | Production Engine, persistence, and ForgeOS lifecycle diagnostics |
+| Active regression | Definitions, Event Bus, State Store, Save Manager, Save Manager integration, Bootstrap, Registration Coordinator, Registration Lifecycle, Device Registry, Device Registry integration |
+| Development diagnostic | XML Writer, XML Reader, Core, Core lifecycle |
+| Trace/debug candidate | Logger and the focused persistence/Core diagnostic harnesses |
+| Historical archive | None |
+| Obsolete | None |
+
+No historical harness is deleted or archived by M2.004. Intentional
+negative-path diagnostics are development evidence and do not execute during
+normal operation.
+
+## Future Engineering Recommendation
+
+### FORGE Diagnostics and Runtime Profiles
+
+A separately reviewed capability should consider `OFF`, `OPERATIONAL`,
+`DEVELOPMENT`, and `TRACE` profiles, centralized suite selection, structured
+fault classification, diagnostic-session identifiers, concise operational
+summaries, optional full traces, separation of subsystem diagnostics from
+suite orchestration, and beta/development build or configuration control.
+
+M2.004 does not introduce these profiles, public definitions, a diagnostics
+API, or a new configuration contract. It uses only the existing internal
+Logger development-mode setting.
+
+## M2.004 Development Verification Bootstrap
+
+No deterministic repository-controlled mechanism previously enabled Logger
+development mode before Engine invoked the approved development suite.
+M2.004 therefore includes a temporary internal
+`DevelopmentTestBootstrap.lua`.
+
+The bootstrap loads after Logger and before the remaining services, ForgeOS,
+manual harnesses, and Engine. It enables the already approved suite through
+the existing `FORGE.Logger:setDevelopmentMode(true)` operation, confirms the
+setting through `isDevelopmentMode()`, and emits one concise activation or
+failure diagnostic.
+
+The bootstrap:
+
+- defines no public API, setting, profile, or second development flag;
+- performs no ForgeOS, persistence, registry, gameplay, or test operation;
+- does not change Logger's permanent `developmentMode = false` default;
+- is activated only by its explicit development-verification `modDesc.xml`
+  source entry; and
+- is not part of the frozen Device Registry contract or production ForgeOS
+  capability.
+
+Beta and operational load order MUST exclude the bootstrap entry. Normal
+execution MUST emit neither its activation message nor manual-suite
+diagnostics. Packaging review MUST verify that exclusion and the unchanged
+Logger default. The authoritative and synchronized bootstrap source MAY remain
+available while unloaded.
+
+This temporary mechanism is expected to be superseded by the separately
+reviewed future FORGE Diagnostics and Runtime Profiles capability.
+
 ## Remaining Open Decisions
 
 ### Cross-component

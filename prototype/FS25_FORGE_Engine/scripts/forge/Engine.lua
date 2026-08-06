@@ -159,72 +159,93 @@ end
 
 --- Runs all currently registered manual development tests.
 local function runDevelopmentTests()
-    if FORGE.Tests == nil then
+    if not FORGE.Logger:isDevelopmentMode()
+        or FORGE.Tests == nil then
         return
     end
 
-    if FORGE.Tests.runForgeOSDefinitionsTests ~= nil then
-        FORGE.Tests.runForgeOSDefinitionsTests()
+    FORGE.Logger:info(
+        FORGE.Definitions.LogSource.TEST,
+        "FORGE development test suite started"
+    )
+
+    local suitePassed = true
+
+    local function runHarness(operation)
+        if operation == nil then
+            return
+        end
+
+        local callSucceeded, harnessResult =
+            pcall(operation)
+
+        if not callSucceeded
+            or harnessResult == false then
+            suitePassed = false
+        end
     end
 
-    if FORGE.Tests.runLoggerTests ~= nil then
-        FORGE.Tests.runLoggerTests()
-    end
+    runHarness(
+        FORGE.Tests.runForgeOSDefinitionsTests
+    )
 
-    if FORGE.Tests.runEventBusTests ~= nil then
-        FORGE.Tests.runEventBusTests()
-    end
+    runHarness(FORGE.Tests.runLoggerTests)
 
-    if FORGE.Tests.runStateStoreTests ~= nil then
-        FORGE.Tests.runStateStoreTests()
-    end
+    runHarness(FORGE.Tests.runEventBusTests)
 
-    if FORGE.Tests.runSaveManagerTests ~= nil then
-        FORGE.Tests.runSaveManagerTests()
-    end
+    runHarness(FORGE.Tests.runStateStoreTests)
 
-    if FORGE.Tests.runXMLWriterTests ~= nil then
-        FORGE.Tests.runXMLWriterTests()
-    end
+    runHarness(FORGE.Tests.runSaveManagerTests)
 
-    if FORGE.Tests.runXMLReaderTests ~= nil then
-        FORGE.Tests.runXMLReaderTests()
-    end
+    runHarness(FORGE.Tests.runXMLWriterTests)
 
-    if FORGE.Tests.runSaveManagerIntegrationTests
-        ~= nil then
+    runHarness(FORGE.Tests.runXMLReaderTests)
+
+    runHarness(
         FORGE.Tests
-            .runSaveManagerIntegrationTests()
-    end
+            .runSaveManagerIntegrationTests
+    )
 
-    if FORGE.Tests.runForgeOSCoreTests ~= nil then
-        FORGE.Tests.runForgeOSCoreTests()
-    end
+    runHarness(FORGE.Tests.runForgeOSCoreTests)
 
-    if FORGE.Tests.runForgeOSBootstrapTests
-        ~= nil then
-        FORGE.Tests.runForgeOSBootstrapTests()
-    end
+    runHarness(
+        FORGE.Tests.runForgeOSBootstrapTests
+    )
 
-    if FORGE.Tests
-        .runForgeOSCoreLifecycleIntegrationTests
-        ~= nil then
+    runHarness(
         FORGE.Tests
-            .runForgeOSCoreLifecycleIntegrationTests()
-    end
+            .runForgeOSCoreLifecycleIntegrationTests
+    )
 
-    if FORGE.Tests
-        .runForgeOSRegistrationCoordinatorTests
-        ~= nil then
+    runHarness(
         FORGE.Tests
-            .runForgeOSRegistrationCoordinatorTests()
-    end
+            .runForgeOSRegistrationCoordinatorTests
+    )
 
-    if FORGE.Tests
-        .runForgeOSRegistrationLifecycleIntegrationTests
-        ~= nil then
+    runHarness(
         FORGE.Tests
-            .runForgeOSRegistrationLifecycleIntegrationTests()
+            .runForgeOSRegistrationLifecycleIntegrationTests
+    )
+
+    runHarness(
+        FORGE.Tests.runDeviceRegistryTests
+    )
+
+    runHarness(
+        FORGE.Tests
+            .runForgeOSDeviceRegistryIntegrationTests
+    )
+
+    if suitePassed then
+        FORGE.Logger:info(
+            FORGE.Definitions.LogSource.TEST,
+            "FORGE development test suite passed"
+        )
+    else
+        FORGE.Logger:warning(
+            FORGE.Definitions.LogSource.TEST,
+            "FORGE development test suite completed with one or more reported failures"
+        )
     end
 end
 

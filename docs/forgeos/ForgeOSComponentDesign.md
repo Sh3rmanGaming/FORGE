@@ -420,15 +420,74 @@ The Device Registry does not own:
 
 ## Required Operations
 
-Conceptually, the registry must support:
+The public ForgeOS facade provides:
 
-```text
-register device
-check whether device exists
-retrieve device definition
-retrieve all devices
-clear registrations
+```lua
+FORGE.ForgeOS:registerDevice(deviceDefinition)
+FORGE.ForgeOS:isDeviceRegistered(deviceId)
+FORGE.ForgeOS:getDeviceDefinition(deviceId)
+FORGE.ForgeOS:getRegisteredDeviceIds()
 ```
+
+`registerDevice()` is an operation returning one `ForgeOSResult`.
+`isDeviceRegistered()` returns a Boolean. `getDeviceDefinition()` returns a
+detached definition or `nil`. `getRegisteredDeviceIds()` returns a detached,
+lexically sorted array. Queries do not mutate state or publish events.
+
+The internal registry implements the Registration Participant contract. It
+validates its complete set without mutation, freezes safely and idempotently,
+rejects later registration, and clears its definitions and frozen state safely
+and idempotently.
+
+## M2.004 Registration Contract
+
+The shared registration gate is checked before any registration mutation.
+`nil` or non-table input returns `INVALID_ARGUMENT`. A supplied table that
+fails schema or controlled-data validation returns `INVALID_DEFINITION`.
+Duplicate detection follows successful schema validation and returns
+`ALREADY_REGISTERED`. A valid atomic commit returns `SUCCESS`.
+`INTERNAL_ERROR` is reserved for an unexpected internal failure.
+
+Recognized definition fields are:
+
+| Field | Requirement |
+|---|---|
+| `id` | Required non-empty string without whitespace |
+| `displayName` | Required non-empty string |
+| `capabilities` | Required table of recognized `DeviceCapability` keys and Boolean values |
+| `hostId` | Optional non-empty string without whitespace |
+| `policy` | Optional opaque plain-data table |
+| `metadata` | Optional opaque plain-data table |
+
+An empty capability table is valid. Unknown fields are omitted. Plain data may
+contain finite numbers, strings, Booleans, and acyclic nested tables; it must
+not contain functions, userdata, threads, callbacks, runtime objects, cycles,
+or non-finite numbers.
+
+The registry never retains caller-owned tables. Recognized fields and nested
+plain data are copied into controlled storage, and definition queries return
+new detached copies.
+
+After a valid definition commits, the registry publishes
+`ForgeOSEvent.DEVICE_REGISTERED` with:
+
+```lua
+{
+    deviceId = registeredDeviceId
+}
+```
+
+Rejected operations do not publish the event. Listener failure follows the
+existing Event Bus and Logger failure path, does not roll back the committed
+definition, and does not change `registerDevice()` from `SUCCESS`.
+
+The registry enforces basic identifier validity and lifecycle-local
+uniqueness only. It does not validate that `hostId` resolves, interpret
+`policy` or `metadata`, or resolve third-party namespace and ownership rules.
+
+One production Device Registry participant is installed after entry into
+`REGISTRATION_OPEN` and before `REGISTRATION_OPENED` publication. Device Host
+Registry and App Registry production participants remain deferred.
 
 ## Proposed Location
 

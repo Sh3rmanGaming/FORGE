@@ -20,6 +20,15 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
         "ForgeOS Registration Coordinator test harness started"
     )
 
+    local DeviceRegistry =
+        FORGE.DeviceRegistry
+
+    local originalValidate =
+        DeviceRegistry.validateRegistrationSet
+
+    local originalFreeze =
+        DeviceRegistry.freezeRegistrationSet
+
     local success, errorMessage = pcall(
         function()
             local Coordinator =
@@ -35,6 +44,42 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                 FORGE.Definitions.ForgeOSPhase
 
             local trace = {}
+            local insideDeviceFreeze = false
+
+            function DeviceRegistry:validateRegistrationSet()
+                if not insideDeviceFreeze then
+                    table.insert(
+                        trace,
+                        "validate:"
+                            .. Coordinator.Role
+                                .DEVICE_REGISTRY
+                    )
+                end
+
+                return originalValidate(self)
+            end
+
+            function DeviceRegistry:freezeRegistrationSet()
+                table.insert(
+                    trace,
+                    "freeze:"
+                        .. Coordinator.Role
+                            .DEVICE_REGISTRY
+                )
+
+                insideDeviceFreeze = true
+
+                local callSucceeded, result =
+                    pcall(originalFreeze, self)
+
+                insideDeviceFreeze = false
+
+                if not callSucceeded then
+                    error(result)
+                end
+
+                return result
+            end
 
             local function createParticipant(
                 role,
@@ -117,11 +162,6 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                 error("Invalid participant was accepted")
             end
 
-            local device =
-                createParticipant(
-                    Role.DEVICE_REGISTRY
-                )
-
             local host =
                 createParticipant(
                     Role.DEVICE_HOST_REGISTRY
@@ -133,8 +173,6 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                 )
 
             if Coordinator:installParticipant(app)
-                    ~= Result.SUCCESS
-                or Coordinator:installParticipant(device)
                     ~= Result.SUCCESS
                 or Coordinator:installParticipant(host)
                     ~= Result.SUCCESS
@@ -167,6 +205,10 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                 "freeze:" .. Role.APP_REGISTRY
             }
 
+            if #trace ~= #expectedTrace then
+                error("Participant order trace contained unexpected callbacks")
+            end
+
             for index, expected in ipairs(
                 expectedTrace
             ) do
@@ -190,12 +232,6 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
 
             trace = {}
             startLifecycle()
-
-            Coordinator:installParticipant(
-                createParticipant(
-                    Role.DEVICE_REGISTRY
-                )
-            )
 
             Coordinator:installParticipant(
                 createParticipant(
@@ -231,12 +267,6 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
 
             Coordinator:installParticipant(
                 createParticipant(
-                    Role.DEVICE_REGISTRY
-                )
-            )
-
-            Coordinator:installParticipant(
-                createParticipant(
                     Role.DEVICE_HOST_REGISTRY,
                     Result.SUCCESS,
                     Result.INTERNAL_ERROR
@@ -264,8 +294,57 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
             FORGE.EventBus:clearAll()
             FORGE.StateStore:clearAll()
             FORGE.SaveManager:clearAllRegistrations()
+
         end
     )
+
+    DeviceRegistry.validateRegistrationSet =
+        originalValidate
+
+    DeviceRegistry.freezeRegistrationSet =
+        originalFreeze
+
+    local cleanupSucceeded, cleanupError =
+        pcall(
+            function()
+                local Result =
+                    FORGE.Definitions
+                        .ForgeOSResult
+
+                if FORGE.ForgeOS:shutdown()
+                    ~= Result.SUCCESS then
+                    error("ForgeOS test cleanup failed")
+                end
+
+                if FORGE
+                    .ForgeOSRegistrationCoordinator
+                    :clearRegistrationParticipants()
+                    ~= Result.SUCCESS then
+                    error("Registration participant cleanup failed")
+                end
+
+                FORGE.EventBus:clearAll()
+                FORGE.StateStore:clearAll()
+                FORGE.SaveManager
+                    :clearAllRegistrations()
+            end
+        )
+
+    if not cleanupSucceeded then
+        if success then
+            success = false
+            errorMessage = cleanupError
+        else
+            FORGE.Logger:error(
+                FORGE.Definitions.LogSource.TEST,
+                "ForgeOS Registration Coordinator test cleanup also failed: %s",
+                FORGE.Logger:safeToString(
+                    cleanupError,
+                    "<unprintable error>"
+                )
+            )
+        end
+    end
 
     if not success then
         FORGE.Logger:error(

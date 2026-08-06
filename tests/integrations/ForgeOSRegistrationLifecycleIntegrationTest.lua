@@ -20,6 +20,12 @@ function FORGE.Tests.runForgeOSRegistrationLifecycleIntegrationTests()
         "ForgeOS Registration Lifecycle integration test started"
     )
 
+    local DeviceRegistry =
+        FORGE.DeviceRegistry
+
+    local originalClear =
+        DeviceRegistry.clearRegistrationSet
+
     local success, errorMessage = pcall(
         function()
             local Coordinator =
@@ -38,6 +44,12 @@ function FORGE.Tests.runForgeOSRegistrationLifecycleIntegrationTests()
                 FORGE.Definitions.ForgeOSEvent
 
             local cleanupCount = 0
+
+            function DeviceRegistry:clearRegistrationSet()
+                cleanupCount = cleanupCount + 1
+
+                return originalClear(self)
+            end
 
             local function createParticipant(role)
                 local participant = {
@@ -83,11 +95,6 @@ function FORGE.Tests.runForgeOSRegistrationLifecycleIntegrationTests()
                     and Coordinator:installParticipant(
                         createParticipant(
                             Role.DEVICE_HOST_REGISTRY
-                        )
-                    ) == Result.SUCCESS
-                    and Coordinator:installParticipant(
-                        createParticipant(
-                            Role.DEVICE_REGISTRY
                         )
                     ) == Result.SUCCESS
 
@@ -220,8 +227,12 @@ function FORGE.Tests.runForgeOSRegistrationLifecycleIntegrationTests()
             FORGE.EventBus:clearAll()
             FORGE.StateStore:clearAll()
             FORGE.SaveManager:clearAllRegistrations()
+
         end
     )
+
+    DeviceRegistry.clearRegistrationSet =
+        originalClear
 
     if not success then
         FORGE.Logger:error(

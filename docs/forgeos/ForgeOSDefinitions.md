@@ -1626,6 +1626,61 @@ policy
 metadata
 ```
 
+### M2.004 Device Registry validation
+
+The M2.004 public operation:
+
+```lua
+FORGE.ForgeOS:registerDevice(deviceDefinition)
+```
+
+uses this deterministic result order:
+
+1. the shared registration gate is checked first and returns
+   `REGISTRATION_CLOSED` when registration is unavailable;
+2. `nil` or non-table input returns `INVALID_ARGUMENT`;
+3. a supplied table failing the schema or controlled-data rules returns
+   `INVALID_DEFINITION`;
+4. an already registered validated identifier returns `ALREADY_REGISTERED`;
+5. a valid atomic commit returns `SUCCESS`; and
+6. `INTERNAL_ERROR` is reserved for an unexpected internal failure.
+
+`id` is a non-empty string without whitespace. `displayName` is a non-empty
+string. `capabilities` is a table whose keys are approved
+`DeviceCapability` values and whose values are Boolean; the table may be
+empty. Optional `hostId` is a non-empty string without whitespace.
+
+Optional `policy` and `metadata` are opaque plain-data tables. Controlled data
+may contain finite numbers, strings, Booleans, and acyclic nested tables. It
+must not contain functions, userdata, threads, callbacks, runtime objects,
+cycles, or non-finite numbers. Unknown fields are ignored and not stored.
+
+Registration copies recognized fields into controlled storage. Queries return
+detached data and cannot expose a mutable reference to authoritative registry
+state. Registered identifier enumeration is lexical.
+
+Successful commit publishes:
+
+```lua
+FORGE.Definitions.ForgeOSEvent.DEVICE_REGISTERED
+```
+
+with:
+
+```lua
+{
+    deviceId = registeredDeviceId
+}
+```
+
+Rejected registration does not publish the event. Listener failure is reported
+through the existing Event Bus and Logger path, does not remove the committed
+definition, and does not change the operation result from `SUCCESS`.
+
+These rules do not define third-party namespace ownership, resolve `hostId`,
+interpret `policy` or `metadata`, or automatically create built-in device
+profiles.
+
 ## App definition requirements
 
 Required:

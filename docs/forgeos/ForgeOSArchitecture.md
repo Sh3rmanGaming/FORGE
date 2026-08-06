@@ -508,6 +508,59 @@ runtime-active subsystem behaviour.
 The coordinator establishes one deterministic lifecycle mechanism while
 leaving concrete registry capabilities in their dedicated milestones.
 
+## M2.004 Device Registry Clarification
+
+### Architectural Intent
+
+This clarification makes the Approved ForgeOS v0.1 Device Registry contract
+sufficiently deterministic for M2.004. It introduces no Device Host Registry,
+App Registry, host-binding, policy, metadata, or third-party namespace
+capability.
+
+### Contract
+
+The Device Registry owns authoritative device definitions, lifecycle-local
+identifier uniqueness, controlled storage and retrieval, registry-specific
+validation and freeze invariants, cleanup, and successful device-registration
+event publication.
+
+ForgeOS Core exposes the public facade and delegates registry operations. The
+Registration Coordinator coordinates the registry as its required Device
+Registry participant but does not own device definitions or their invariants.
+The Device Host Registry retains responsibility for concrete hosts and host
+lookup.
+
+The public M2.004 facade is:
+
+```lua
+FORGE.ForgeOS:registerDevice(deviceDefinition)
+FORGE.ForgeOS:isDeviceRegistered(deviceId)
+FORGE.ForgeOS:getDeviceDefinition(deviceId)
+FORGE.ForgeOS:getRegisteredDeviceIds()
+```
+
+`registerDevice()` returns one `ForgeOSResult`. Queries return primitive or
+detached read-only values, do not mutate state, and do not publish events.
+Definitions are copied into controlled storage, query results are detached,
+and identifier enumeration is lexically ordered.
+
+One production Device Registry participant is installed after Core enters
+`REGISTRATION_OPEN` and before `REGISTRATION_OPENED` observers are invited to
+register. Installation failure follows the existing partial-startup rollback
+contract. Cleanup clears definitions and frozen state, and restart reinstalls
+the participant for the new lifecycle.
+
+M2.004 does not automatically register built-in device profiles. Production
+ForgeOS remains at `REGISTRATION_OPEN` until concrete Device Host Registry and
+App Registry participants exist. Explicit test participants may represent
+those deferred roles in development verification only.
+
+### Rationale
+
+This establishes an authoritative concrete registry without absorbing later
+registry ownership or silently resolving preserved identifier and host-binding
+decisions.
+
 ---
 
 # Navigation
