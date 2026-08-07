@@ -55,7 +55,6 @@ This development build adds the first XML-driven campaign and live Projects app 
 
         <!-- Core services -->
         <sourceFile filename="scripts/forge/services/Logger.lua"/>
-        <sourceFile filename="scripts/forge/tests/DevelopmentTestBootstrap.lua"/>
         <sourceFile filename="scripts/forge/services/EventBus.lua"/>
         <sourceFile filename="scripts/forge/services/StateStore.lua"/>
 

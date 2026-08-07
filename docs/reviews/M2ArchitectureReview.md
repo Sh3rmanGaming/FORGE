@@ -517,6 +517,95 @@ Lifecycle and Registration Coordinator foundations. Parent maturity is:
 This acceptance does not complete the overall M2 ForgeOS milestone. The next
 implementation boundary is M2.004 – Device Registry, which has not started.
 
+## M2.004 Implementation, Verification, and Acceptance
+
+The Project Director accepts M2.004 – Device Registry as complete.
+
+Maturity is:
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| Complete | Complete | Complete | Complete | Complete |
+
+Implementation and runtime evidence confirm:
+
+- the public Device Registry facade;
+- authoritative device-definition storage;
+- deterministic argument, schema, duplicate, and registration-gate results;
+- lifecycle-local identifier uniqueness;
+- controlled detached copies and lexical identifier ordering;
+- atomic registration;
+- `DEVICE_REGISTERED` timing, payload, and listener-failure isolation;
+- Device Registry Registration Participant behaviour;
+- production participant installation before `REGISTRATION_OPENED`;
+- validation, freeze, cleanup, shutdown, and restart;
+- coordinator integration using explicit deferred-role test participants;
+- production integration while correctly remaining at `REGISTRATION_OPEN`;
+- synchronization and load-order alignment; and
+- a passing complete FS25 development-verification suite.
+
+The authoritative runtime evidence is recorded in
+[M2.004 Runtime Verification](M2.004RuntimeVerification.md).
+
+This acceptance does not complete the overall M2 ForgeOS milestone. The next
+implementation boundary is M2.005 – App Registry, which has not started.
+
+### M2.004 Contract Freeze
+
+The implemented and verified M2.004 baseline is frozen for:
+
+- `FORGE.DeviceRegistry`;
+- `FORGE.ForgeOS:registerDevice(deviceDefinition)`;
+- `FORGE.ForgeOS:isDeviceRegistered(deviceId)`;
+- `FORGE.ForgeOS:getDeviceDefinition(deviceId)`;
+- `FORGE.ForgeOS:getRegisteredDeviceIds()`;
+- recognized required and optional device-definition fields;
+- controlled plain-data validation;
+- deterministic registration result ordering;
+- lifecycle-local duplicate rejection and atomic mutation;
+- detached authoritative storage and query isolation;
+- lexical registered-identifier ordering;
+- `DEVICE_REGISTERED` completion timing, payload, and listener-failure
+  behaviour;
+- the Device Registry Registration Participant role and operations;
+- validation, idempotent freeze, late-registration rejection, cleanup, and
+  restart;
+- production installation before registration-open observers;
+- production waiting at `REGISTRATION_OPEN` for deferred participants; and
+- applicable synchronization, load-order, regression-test, and runtime
+  evidence requirements.
+
+These contracts MUST NOT change silently. Changes require architecture review,
+compatibility assessment where applicable, corresponding tests, and aligned
+synchronized output.
+
+### Explicit M2.004 Non-Freeze Scope
+
+The M2.004 freeze does not implement, verify, or resolve:
+
+- Device Host Registry or App Registry;
+- production registration freeze, runtime activation, or `STARTED`;
+- concrete host binding or host lookup;
+- automatic built-in phone or laptop profile registration;
+- third-party device namespace ownership or allocation;
+- policy or metadata semantics;
+- device availability dependent on players, hosts, saves, or runtime policy;
+- later ForgeOS services, applications, or UI; or
+- unrelated open decisions, deferred assumptions, and architecture gaps.
+
+### Development Bootstrap Operational Exclusion
+
+The temporary M2.004 Development Verification Bootstrap remains available in
+authoritative and synchronized test source but is excluded from operational
+`modDesc.xml` load order after verification.
+
+Logger retains its permanent `developmentMode = false` default. Without the
+explicit bootstrap load entry, normal Engine execution does not invoke manual
+harnesses and emits no bootstrap or suite diagnostics. A future explicitly
+approved development-verification package may restore the entry; beta and
+operational packages MUST exclude it until the future Diagnostics and Runtime
+Profiles capability supersedes this mechanism.
+
 ## Contract Freeze
 
 The ForgeOS v0.1 documentation contract remains frozen. The verified
@@ -631,6 +720,11 @@ frozen at v0.1.
 - M2.003B verification: complete
 - Parent M2.003 acceptance: complete
 - Parent M2.003 freeze: recorded
-- Next implementation boundary: M2.004 – Device Registry
+- M2.004 implementation: complete
+- M2.004 verification: complete
+- M2.004 acceptance: complete
+- M2.004 freeze: recorded
+- Development Verification Bootstrap: excluded from operational load order
+- Next implementation boundary: M2.005 – App Registry
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

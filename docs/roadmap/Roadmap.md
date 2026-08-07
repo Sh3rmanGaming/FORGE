@@ -164,15 +164,38 @@ registry milestones.
 
 ---
 
-#### ⏳ M2.004 – Device Registry
+#### ✅ M2.004 – Device Registry
 
-- Device registration
-- Duplicate validation
-- Device capability registration
-- Device lookup
-- Device availability queries
-- Device validation
-- Device registry test suite
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.004 is complete. It implements and verifies the concrete Device Registry
+without implementing the deferred Device Host Registry or App Registry.
+
+Evidence:
+
+- [ForgeOS Architecture](../forgeos/ForgeOSArchitecture.md)
+- [ForgeOS Component Design](../forgeos/ForgeOSComponentDesign.md)
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.004 Runtime Verification](../reviews/M2.004RuntimeVerification.md)
+
+- authoritative device-definition registration
+- deterministic argument, schema, duplicate, and gate results
+- device capability validation
+- lifecycle-local duplicate rejection
+- detached controlled storage and lookup
+- deterministic identifier enumeration
+- `DEVICE_REGISTERED` publication and listener-failure isolation
+- Registration Participant validation, freeze, cleanup, and restart
+- production participant installation before registration-open observers
+- component and lifecycle integration tests
+- synchronized prototype and FS25 runtime verification
+
+Production ForgeOS correctly remains at `REGISTRATION_OPEN` until the concrete
+Device Host Registry and App Registry participants are implemented. Production
+runtime activation remains deferred.
 
 ---
 
