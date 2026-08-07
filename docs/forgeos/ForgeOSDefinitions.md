@@ -1718,6 +1718,68 @@ App-level `requiredCapabilities` are universal minimum requirements.
 Presentation-level `requiredCapabilities` are additional requirements for the
 selected presentation; they MUST NOT weaken or override app-level requirements.
 
+### M2.005 App Registry validation
+
+The M2.005 public operation:
+
+```lua
+FORGE.ForgeOS:registerApp(appDefinition)
+```
+
+uses this deterministic result order:
+
+1. the shared registration gate is checked first and returns
+   `REGISTRATION_CLOSED` when registration is unavailable;
+2. `nil` or non-table input returns `INVALID_ARGUMENT`;
+3. a supplied table failing schema or controlled-data rules returns
+   `INVALID_DEFINITION`;
+4. an unsupported `apiVersion` returns `API_VERSION_UNSUPPORTED`;
+5. an already registered validated identifier returns `ALREADY_REGISTERED`;
+6. a valid atomic commit returns `SUCCESS`; and
+7. `INTERNAL_ERROR` is reserved for an unexpected internal failure.
+
+Identifiers and optional `ownerId` are non-empty strings without whitespace.
+Required display names are non-empty strings. Device declarations are Boolean.
+Capability requirements use approved `DeviceCapability` identifiers and may
+only require a capability with `true`.
+
+Presentations, routes, actions, defaults, and capability declarations must be
+internally consistent. Optional declarative metadata is controlled plain data:
+finite numbers, strings, Booleans, and acyclic nested tables only. Unknown
+fields are ignored.
+
+Executable references are runtime-owned implementation assets. Controllers,
+callbacks, availability-provider functions, route controllers, and action
+handlers are validated by type and may be retained privately, but are excluded
+from serialization and public definition snapshots. M2.005 does not invoke
+them.
+
+Registration copies recognized data into controlled storage. Queries return
+detached public data and cannot expose authoritative registry state.
+Registered identifier enumeration is lexical.
+
+Successful commit publishes:
+
+```lua
+FORGE.Definitions.ForgeOSEvent.APP_REGISTERED
+```
+
+with:
+
+```lua
+{
+    appId = registeredAppId
+}
+```
+
+Rejected registration does not publish the event. Listener failure is reported
+through the existing Event Bus and Logger path, does not remove the committed
+definition, and does not change the operation result from `SUCCESS`.
+
+These rules do not resolve owner identity, select presentations, invoke
+executable references, or implement lifecycle, navigation, availability, host,
+or persistence behaviour for applications.
+
 `defaultRoute` is not an app-level field.
 
 Each presentation owns its own default route.

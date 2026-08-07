@@ -236,6 +236,15 @@ local function runDevelopmentTests()
             .runForgeOSDeviceRegistryIntegrationTests
     )
 
+    runHarness(
+        FORGE.Tests.runAppRegistryTests
+    )
+
+    runHarness(
+        FORGE.Tests
+            .runForgeOSAppRegistryIntegrationTests
+    )
+
     if suitePassed then
         FORGE.Logger:info(
             FORGE.Definitions.LogSource.TEST,

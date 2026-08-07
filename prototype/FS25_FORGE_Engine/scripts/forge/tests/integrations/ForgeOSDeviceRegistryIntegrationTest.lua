@@ -124,13 +124,8 @@ function FORGE.Tests.runForgeOSDeviceRegistryIntegrationTests()
                     createParticipant(
                         Role.DEVICE_HOST_REGISTRY
                     )
-                ) ~= Result.SUCCESS
-                or Coordinator:installParticipant(
-                    createParticipant(
-                        Role.APP_REGISTRY
-                    )
                 ) ~= Result.SUCCESS then
-                error("Explicit deferred-role participants were not installed")
+                error("Explicit Device Host participant was not installed")
             end
 
             if FORGE.ForgeOS:completeStartup()

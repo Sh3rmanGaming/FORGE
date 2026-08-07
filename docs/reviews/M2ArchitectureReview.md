@@ -278,6 +278,46 @@ Authoritative ownership remains unresolved.
   Architecture Review.
 - **Classification:** Clarification.
 
+### 14. M2.005 App Registry deterministic contract
+
+- **Previous contract:** ForgeOS v0.1 assigned App Registry ownership and an
+  application schema but did not freeze exact facade methods, deterministic
+  result ordering, copy isolation, runtime-reference visibility, event
+  completion behaviour, or production participant installation timing.
+- **Accepted contract:** M2.005 defines the public registration and query
+  facade, controlled declarative storage, private runtime-owned executable
+  references, detached and lexically ordered query results, lifecycle-local
+  uniqueness, atomic deterministic registration results, `APP_REGISTERED`
+  completion semantics, participant behaviour, and installation after Device
+  Registry and before `REGISTRATION_OPENED`.
+- **Reason:** Make the approved App Registry capability implementable without
+  absorbing presentation resolution, lifecycle, navigation, availability,
+  ownership enforcement, host behaviour, or later application runtime work.
+- **Documents affected:** Architecture, Component Design, Definitions, App
+  Contract, M2 Architecture Review.
+- **Classification:** Clarification.
+
+## M2.005 App Registry Architecture Clarification
+
+M2.005 establishes the App Registry as the authoritative owner of application
+definitions and as the production App Registry Registration Participant.
+ForgeOS delegates four public registration and query operations to it.
+
+Executable references are runtime-owned implementation assets. They may be
+retained privately for later milestones but are intentionally excluded from
+serialization and public snapshots, and M2.005 does not invoke them.
+
+The registry validates application-definition structure, supported App API,
+device and capability declarations, presentations, routes, actions, optional
+owner identifier shape, controlled data, and executable-reference types. It
+does not resolve owners, select presentations, calculate availability, execute
+application lifecycle, navigate, bind hosts, or implement persistence.
+
+The production App Registry installs after Device Registry and before
+`REGISTRATION_OPENED`. With Device Host Registry still deferred, production
+correctly remains at `REGISTRATION_OPEN`. This clarification does not advance
+M2.005 maturity or freeze its implementation.
+
 ## M2.004 Test-Lifecycle Reconciliation
 
 M2.004 preserves every existing manual harness and public harness entry point
@@ -606,6 +646,108 @@ approved development-verification package may restore the entry; beta and
 operational packages MUST exclude it until the future Diagnostics and Runtime
 Profiles capability supersedes this mechanism.
 
+## M2.005 Implementation, Verification, and Acceptance
+
+The Project Director accepts M2.005 – App Registry as complete.
+
+Maturity is:
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| Complete | Complete | Complete | Complete | Complete |
+
+Implementation and runtime evidence confirm:
+
+- App Registry ownership of authoritative application definitions;
+- the public App Registry facade;
+- lifecycle-local identifier uniqueness and atomic registration;
+- deterministic gate, argument, schema, API compatibility, and duplicate
+  results;
+- supported-device, capability, presentation, route, action, callback,
+  provider, owner identifier, and controlled-data validation;
+- private runtime-owned executable references excluded from persistence and
+  public snapshots;
+- detached public snapshots and lexical identifier enumeration;
+- `APP_REGISTERED` timing, payload, and listener-failure isolation;
+- App Registry Registration Participant behaviour;
+- production Device Registry then App Registry installation before
+  `REGISTRATION_OPENED`;
+- validation, freeze, cleanup, shutdown, and restart;
+- reconciled prerequisite, component, and integration harnesses;
+- a passing complete FS25 development-verification suite;
+- production integration while correctly remaining at `REGISTRATION_OPEN`;
+  and
+- synchronization and operational load-order alignment.
+
+The authoritative runtime evidence is recorded in
+[M2.005 Runtime Verification](M2.005RuntimeVerification.md).
+
+The controlled test lifecycle reaches registration freeze and runtime active
+using an explicit Device Host test participant. Production installs the Device
+and App participants, opens registration, loads persistence, and completes
+Engine startup, but correctly remains at `REGISTRATION_OPEN` because the
+concrete Device Host Registry is deferred. Production does not claim
+`RUNTIME_ACTIVE` or `STARTED` for M2.005.
+
+This acceptance does not complete the overall M2 ForgeOS milestone. The next
+implementation boundary is M2.006 – Presentation Resolver, which has not
+started.
+
+### M2.005 App Registry Contract Freeze
+
+The implemented and verified M2.005 baseline is frozen for:
+
+- App Registry ownership of authoritative application definitions;
+- lifecycle-local app identifier uniqueness;
+- optional owner identifier recording and basic validation;
+- `FORGE.ForgeOS:registerApp(appDefinition)`;
+- `FORGE.ForgeOS:isAppRegistered(appId)`;
+- `FORGE.ForgeOS:getAppDefinition(appId)`;
+- `FORGE.ForgeOS:getRegisteredAppIds()`;
+- registration-gate precedence and deterministic result ordering;
+- the `INVALID_ARGUMENT` and `INVALID_DEFINITION` distinction;
+- `API_VERSION_UNSUPPORTED` behaviour;
+- duplicate rejection and atomic registration;
+- supported-device and required-capability structural validation;
+- presentation, route, action, callback, and availability-provider structural
+  validation;
+- controlled plain-data validation;
+- private runtime-owned executable references and their exclusion from
+  persistence and public snapshots;
+- detached public snapshots and lexical identifier enumeration;
+- `APP_REGISTERED` timing, payload, and listener-failure isolation;
+- App Registry Registration Participant validation, freeze, cleanup, and
+  restart behaviour;
+- Device Registry then App Registry production installation before
+  `REGISTRATION_OPENED`;
+- test reconciliation using production Device and App registries;
+- synchronization and load-order requirements; and
+- M2.005 component, integration, and runtime-verification evidence.
+
+These implemented contracts MUST NOT change silently. Future changes require
+the applicable architecture, compatibility, test, and documentation review.
+
+### Explicit M2.005 Non-Freeze Scope
+
+The M2.005 freeze does not implement, verify, or resolve:
+
+- Device Host Registry;
+- Presentation Resolver, presentation selection, priority comparison,
+  tie-breaking, or capability resolution;
+- Availability Service or provider execution and composition;
+- Lifecycle Service or callback execution, context, timing, rollback, or
+  re-entrancy;
+- Navigation Service or action execution and action-result semantics;
+- Owner Registry, owner authority, namespace authority, owner resolution, or
+  addon dependency resolution;
+- controlled app unregistration or app-definition persistence;
+- application runtime state;
+- Phone Host or Laptop Host;
+- production runtime activation or `STARTED`;
+- multiplayer-specific App Registry behaviour;
+- later ForgeOS services or applications; or
+- unrelated open decisions, deferred assumptions, and architecture gaps.
+
 ## Contract Freeze
 
 The ForgeOS v0.1 documentation contract remains frozen. The verified
@@ -724,7 +866,11 @@ frozen at v0.1.
 - M2.004 verification: complete
 - M2.004 acceptance: complete
 - M2.004 freeze: recorded
+- M2.005 implementation: complete
+- M2.005 verification: complete
+- M2.005 acceptance: complete
+- M2.005 freeze: recorded
 - Development Verification Bootstrap: excluded from operational load order
-- Next implementation boundary: M2.005 – App Registry
+- Next implementation boundary: M2.006 – Presentation Resolver
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

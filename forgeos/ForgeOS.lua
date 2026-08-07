@@ -98,10 +98,20 @@ local function publishRegistrationOpened()
     )
 end
 
-local function installDeviceRegistry()
-    return FORGE.ForgeOSRegistrationCoordinator
+local function installProductionRegistries()
+    local deviceResult =
+        FORGE.ForgeOSRegistrationCoordinator
         :installParticipant(
             FORGE.DeviceRegistry
+        )
+
+    if deviceResult ~= Result.SUCCESS then
+        return deviceResult
+    end
+
+    return FORGE.ForgeOSRegistrationCoordinator
+        :installParticipant(
+            FORGE.AppRegistry
         )
 end
 
@@ -208,7 +218,7 @@ local function start()
                 end
 
                 local installationResult =
-                    installDeviceRegistry()
+                    installProductionRegistries()
 
                 if installationResult
                     ~= Result.SUCCESS then
@@ -379,6 +389,37 @@ end
 function FORGE.ForgeOS:getRegisteredDeviceIds()
     return FORGE.DeviceRegistry
         :getRegisteredDeviceIds()
+end
+
+--- Registers one application definition during registration.
+-- @param appDefinition any
+-- @return string result
+function FORGE.ForgeOS:registerApp(appDefinition)
+    return FORGE.AppRegistry
+        :registerApp(appDefinition)
+end
+
+--- Returns whether an application identifier is registered.
+-- @param appId any
+-- @return boolean registered
+function FORGE.ForgeOS:isAppRegistered(appId)
+    return FORGE.AppRegistry
+        :isAppRegistered(appId)
+end
+
+--- Returns a detached declarative application snapshot.
+-- @param appId any
+-- @return table|nil definition
+function FORGE.ForgeOS:getAppDefinition(appId)
+    return FORGE.AppRegistry
+        :getAppDefinition(appId)
+end
+
+--- Returns registered application identifiers in lexical order.
+-- @return table identifiers
+function FORGE.ForgeOS:getRegisteredAppIds()
+    return FORGE.AppRegistry
+        :getRegisteredAppIds()
 end
 
 --- Starts or idempotently confirms the ForgeOS lifecycle.

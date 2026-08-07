@@ -29,6 +29,12 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
     local originalFreeze =
         DeviceRegistry.freezeRegistrationSet
 
+    local AppRegistry = FORGE.AppRegistry
+    local originalAppValidate =
+        AppRegistry.validateRegistrationSet
+    local originalAppFreeze =
+        AppRegistry.freezeRegistrationSet
+
     local success, errorMessage = pcall(
         function()
             local Coordinator =
@@ -45,6 +51,7 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
 
             local trace = {}
             local insideDeviceFreeze = false
+            local insideAppFreeze = false
 
             function DeviceRegistry:validateRegistrationSet()
                 if not insideDeviceFreeze then
@@ -78,6 +85,35 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                     error(result)
                 end
 
+                return result
+            end
+
+            function AppRegistry:validateRegistrationSet()
+                if not insideAppFreeze then
+                    table.insert(
+                        trace,
+                        "validate:"
+                            .. Coordinator.Role
+                                .APP_REGISTRY
+                    )
+                end
+                return originalAppValidate(self)
+            end
+
+            function AppRegistry:freezeRegistrationSet()
+                table.insert(
+                    trace,
+                    "freeze:"
+                        .. Coordinator.Role
+                            .APP_REGISTRY
+                )
+                insideAppFreeze = true
+                local callSucceeded, result =
+                    pcall(originalAppFreeze, self)
+                insideAppFreeze = false
+                if not callSucceeded then
+                    error(result)
+                end
                 return result
             end
 
@@ -167,14 +203,7 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                     Role.DEVICE_HOST_REGISTRY
                 )
 
-            local app =
-                createParticipant(
-                    Role.APP_REGISTRY
-                )
-
-            if Coordinator:installParticipant(app)
-                    ~= Result.SUCCESS
-                or Coordinator:installParticipant(host)
+            if Coordinator:installParticipant(host)
                     ~= Result.SUCCESS
                 or not Coordinator
                     :hasCompleteParticipantSet() then
@@ -240,12 +269,6 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                 )
             )
 
-            Coordinator:installParticipant(
-                createParticipant(
-                    Role.APP_REGISTRY
-                )
-            )
-
             if Coordinator:completeRegistration()
                     ~= Result.INVALID_DEFINITION
                 or FORGE.ForgeOS:getPhase()
@@ -273,12 +296,6 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                 )
             )
 
-            Coordinator:installParticipant(
-                createParticipant(
-                    Role.APP_REGISTRY
-                )
-            )
-
             if Coordinator:completeRegistration()
                     ~= Result.INTERNAL_ERROR
                 or FORGE.ForgeOS:getPhase()
@@ -303,6 +320,10 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
 
     DeviceRegistry.freezeRegistrationSet =
         originalFreeze
+    AppRegistry.validateRegistrationSet =
+        originalAppValidate
+    AppRegistry.freezeRegistrationSet =
+        originalAppFreeze
 
     local cleanupSucceeded, cleanupError =
         pcall(

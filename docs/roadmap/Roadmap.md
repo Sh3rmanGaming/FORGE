@@ -199,16 +199,42 @@ runtime activation remains deferred.
 
 ---
 
-#### ⏳ M2.005 – App Registry
+#### ✅ M2.005 – App Registry
 
-- Application registration
-- Owner registration
-- API compatibility validation
-- Duplicate validation
-- Presentation validation
-- Callback validation
-- Registry lookup
-- Registry test suite
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.005 is complete. It implements and verifies the bounded App Registry
+capability without implementing presentation resolution, application
+lifecycle, availability, navigation, owner authority, or the deferred Device
+Host Registry.
+
+Evidence:
+
+- [ForgeOS Architecture](../forgeos/ForgeOSArchitecture.md)
+- [ForgeOS Component Design](../forgeos/ForgeOSComponentDesign.md)
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [ForgeOS App Contract](../forgeos/ForgeOSAppContract.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.005 Runtime Verification](../reviews/M2.005RuntimeVerification.md)
+
+- authoritative application-definition registration
+- owner identifier recording and basic validation
+- App API compatibility validation
+- deterministic argument, schema, API, duplicate, and gate results
+- nested presentation, route, action, callback, and provider shape validation
+- controlled declarative storage and private executable references
+- detached snapshots and lexical identifier enumeration
+- `APP_REGISTERED` publication and listener-failure isolation
+- Registration Participant validation, freeze, cleanup, and restart
+- production Device Registry then App Registry installation
+- reconciled component and lifecycle integration tests
+- synchronized prototype and FS25 runtime verification
+
+Production ForgeOS correctly remains at `REGISTRATION_OPEN` until the concrete
+Device Host Registry participant exists. Production runtime activation and
+`STARTED` remain deferred.
 
 ---
 

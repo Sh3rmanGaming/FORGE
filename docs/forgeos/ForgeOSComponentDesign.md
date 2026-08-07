@@ -623,15 +623,42 @@ It does not own:
 
 ## Required Operations
 
-Conceptually:
+The M2.005 public facade is:
 
-```text
-register app
-check whether app exists
-retrieve app definition
-retrieve all apps
-clear registrations
+```lua
+FORGE.ForgeOS:registerApp(appDefinition)
+FORGE.ForgeOS:isAppRegistered(appId)
+FORGE.ForgeOS:getAppDefinition(appId)
+FORGE.ForgeOS:getRegisteredAppIds()
 ```
+
+`registerApp()` returns one `ForgeOSResult`. Queries return primitive or
+detached public definition data. Identifier enumeration is lexical.
+
+The registry is the App Registry Registration Participant. It validates and
+freezes its own set, reports frozen state, and clears its definitions and
+private runtime assets during lifecycle cleanup.
+
+One production instance is installed after the Device Registry and before
+`REGISTRATION_OPENED`. The Registration Coordinator owns orchestration only.
+
+## M2.005 Storage Boundary
+
+Recognized declarative fields are copied into controlled registry storage.
+Unknown fields are ignored. Query results are detached from authoritative
+state.
+
+Executable references are runtime-owned implementation assets. Controllers,
+callbacks, availability-provider functions, route controllers, and action
+handlers may be retained in private runtime storage for later milestones, but
+are excluded from serialization and public snapshots. M2.005 does not invoke
+them.
+
+The App Registry records and validates the basic shape of `ownerId` but does
+not resolve ownership or introduce an Owner Registry. It validates
+presentation, route, action, device, and capability declarations only as
+definition structure; it does not select presentations or execute lifecycle,
+navigation, availability, or host behaviour.
 
 ## Proposed Location
 

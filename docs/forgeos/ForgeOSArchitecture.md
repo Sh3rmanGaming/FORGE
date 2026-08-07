@@ -561,6 +561,60 @@ This establishes an authoritative concrete registry without absorbing later
 registry ownership or silently resolving preserved identifier and host-binding
 decisions.
 
+## M2.005 App Registry Clarification
+
+### Architectural Intent
+
+This clarification makes the Approved ForgeOS v0.1 App Registry contract
+sufficiently deterministic for M2.005. It introduces no Presentation Resolver,
+application Lifecycle Service, Navigation Service, Availability Service, Owner
+Registry, or Device Host Registry capability.
+
+### Contract
+
+The App Registry owns authoritative application definitions,
+lifecycle-local identifier uniqueness, controlled storage and retrieval,
+registry-specific validation and freeze invariants, cleanup, and successful
+application-registration event publication.
+
+ForgeOS exposes the public facade and delegates registry operations. The
+Registration Coordinator coordinates the registry as its required App Registry
+participant but does not own application definitions or their invariants.
+
+The public M2.005 facade is:
+
+```lua
+FORGE.ForgeOS:registerApp(appDefinition)
+FORGE.ForgeOS:isAppRegistered(appId)
+FORGE.ForgeOS:getAppDefinition(appId)
+FORGE.ForgeOS:getRegisteredAppIds()
+```
+
+`registerApp()` returns one `ForgeOSResult`. Queries return primitive or
+detached public definition data, do not mutate state, and do not publish
+events. Registered identifiers are lexically ordered.
+
+Executable references, including controllers, callbacks, provider functions,
+route controllers, and action handlers, are runtime-owned implementation
+assets. The registry may retain them privately for later milestones, but they
+are intentionally excluded from serialization and public definition
+snapshots. M2.005 does not invoke them.
+
+One production App Registry participant is installed after the Device Registry
+and before `REGISTRATION_OPENED` observers are invited to register.
+Installation failure follows the existing partial-startup rollback contract.
+Cleanup clears definitions, private runtime assets, and frozen state.
+
+Production ForgeOS remains at `REGISTRATION_OPEN` until the concrete Device
+Host Registry participant exists. Explicit tests may represent that deferred
+role in development verification only.
+
+### Rationale
+
+This establishes the approved application-definition authority without
+absorbing presentation selection, application execution, navigation,
+availability, ownership enforcement, or host behaviour.
+
 ---
 
 # Navigation

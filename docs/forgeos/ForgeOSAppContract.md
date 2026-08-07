@@ -1030,6 +1030,35 @@ Future App Registry registration operations MUST consult the shared
 registration gate and return `REGISTRATION_CLOSED` without mutation when
 registration is not open.
 
+## M2.005 App Registry Boundary
+
+M2.005 implements the concrete App Registry as the authoritative owner of
+registered application definitions. ForgeOS exposes:
+
+```lua
+FORGE.ForgeOS:registerApp(appDefinition)
+FORGE.ForgeOS:isAppRegistered(appId)
+FORGE.ForgeOS:getAppDefinition(appId)
+FORGE.ForgeOS:getRegisteredAppIds()
+```
+
+Registration is atomic, phase-gated, API-compatible, lifecycle-local, and
+duplicate-safe. Public queries return detached definition data and lexical
+identifier lists. Successful commit publishes `APP_REGISTERED` with only the
+registered `appId`.
+
+Executable references are runtime-owned implementation assets. Controllers,
+callbacks, providers, route controllers, and action handlers are excluded from
+serialization and public snapshots and are not invoked by M2.005.
+
+The App Registry validates structural consistency only. It records `ownerId`
+without resolving ownership and does not select a presentation, calculate
+availability, execute lifecycle callbacks, navigate, or bind a device host.
+
+The production participant installs after the Device Registry and before
+`REGISTRATION_OPENED`. Production remains at `REGISTRATION_OPEN` until the
+concrete Device Host Registry exists.
+
 ---
 
 # Addon Compatibility
@@ -1137,30 +1166,27 @@ An invalid app must not leave a partial registry entry.
 
 # Registration Result
 
-Conceptually:
+`registerApp()` is an operation and returns one `ForgeOSResult`:
 
 ```lua
-local registered, resultCode, detail =
+local result =
     FORGE.ForgeOS:registerApp(appDefinition)
 ```
 
 Success:
 
 ```lua
-true,
-FORGE.Definitions.ForgeOSResult.SUCCESS,
-nil
+FORGE.Definitions.ForgeOSResult.SUCCESS
 ```
 
-Failure:
+Example failure:
 
 ```lua
-false,
-FORGE.Definitions.ForgeOSResult.INVALID_DEFINITION,
-"missingDefaultRoute"
+FORGE.Definitions.ForgeOSResult.INVALID_DEFINITION
 ```
 
-The exact public return contract will be frozen during implementation.
+Registration diagnostics are reported through the existing Logger path rather
+than additional public return values.
 
 ---
 
