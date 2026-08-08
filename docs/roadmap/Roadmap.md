@@ -277,17 +277,43 @@ Device Host test participant. Production correctly remains at
 
 ---
 
-#### ⏳ M2.007 – Lifecycle Service
+#### ✅ M2.007 – Lifecycle Service
 
-- Open application
-- Close application
-- Activate application
-- Background application
-- Enabled-policy integration
-- Lifecycle validation
-- Transition validation
-- Lifecycle event publishing
-- Lifecycle test suite
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.007 is complete. It implements and verifies the bounded local-player
+Lifecycle Service without implementing Availability, Navigation, rendering,
+resume restoration, multiplayer identity, or a production Device Host
+Registry.
+
+Evidence:
+
+- [ForgeOS Architecture](../forgeos/ForgeOSArchitecture.md)
+- [ForgeOS Component Design](../forgeos/ForgeOSComponentDesign.md)
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [ForgeOS App Contract](../forgeos/ForgeOSAppContract.md)
+- [ForgeOS State Model](../forgeos/ForgeOSStateModel.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.007 Runtime Verification](../reviews/M2.007RuntimeVerification.md)
+
+- public open, activate, background, and close operations
+- lifecycle-state and active-app queries
+- runtime-only local-player/device/app lifecycle state
+- one-active-app invariant and deterministic displacement
+- bounded enabled-policy integration
+- Presentation Resolver eligibility for opening
+- private lifecycle-callback access after registry freeze
+- callback timing, controlled failure, and non-reentrancy
+- atomic ForgeOS lifecycle-state and active-app commit
+- completed lifecycle events and listener-failure isolation
+- cleanup, shutdown, restart, and non-persistence
+- complete retained regression and FS25 runtime verification
+
+Controlled tests verify lifecycle behavior at `RUNTIME_ACTIVE` using one
+explicit Device Host test participant. Production correctly remains at
+`REGISTRATION_OPEN` until the concrete Device Host Registry exists.
 
 ---
 

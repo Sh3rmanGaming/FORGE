@@ -872,6 +872,38 @@ Example:
 forgeos/services/AppLifecycleService.lua
 ```
 
+## M2.007 Deterministic Contract
+
+The Lifecycle Service exposes runtime operations through `FORGE.ForgeOS` for
+open, activate, background, and close, plus non-mutating lifecycle-state and
+active-app queries. M2.007 uses `player.local` internally and owns no public
+player-identity API.
+
+Operation precedence is argument validation, `RUNTIME_ACTIVE`, registered
+device, registered app, presentation eligibility when entering `OPEN`, enabled
+policy, transition validation, displacement staging, callbacks, atomic state
+commit, and completed events. An idempotent request returns `SUCCESS` without
+callbacks or events. Activating a `CLOSED` app is invalid and does not
+implicitly open it.
+
+The App Registry supplies only the internal read-only operation
+`getLifecycleCallback(appId, callbackName)`. It permits `onOpen`, `onActivate`,
+`onBackground`, and `onClose`; returns a function or nil after registration
+freeze; and exposes no other executable asset or private definition.
+Executable references remain runtime-owned, non-serializable, and absent from
+public snapshots.
+
+Callbacks receive a detached context containing only local player, device,
+app, previous state, and requested state. All callbacks complete before the
+atomic ForgeOS lifecycle-state commit. A callback failure returns
+`CALLBACK_FAILED`, commits no lifecycle state, and publishes no lifecycle
+completion event. Earlier arbitrary callback side effects are app-owned and
+are not transactionally reversed.
+
+The service-local operation guard rejects re-entrant lifecycle operations with
+`NOT_AVAILABLE`. Shutdown clears runtime lifecycle records, active-app
+ownership, and enabled overrides without invoking app callbacks.
+
 ---
 
 # Navigation Service
@@ -1453,19 +1485,19 @@ M2.001 ForgeOS Architecture
     ↓
 M2.002 ForgeOS Definitions
     ↓
-M2.003 Device Registry
+M2.003 ForgeOS Core
     ↓
-M2.004 App Registry
+M2.004 Device Registry
     ↓
-M2.005 App Availability
+M2.005 App Registry
     ↓
-M2.006 App Lifecycle
+M2.006 Presentation Resolver
     ↓
-M2.007 Navigation
+M2.007 App Lifecycle
     ↓
-M2.008 Notifications
+M2.008 Navigation
     ↓
-M2.009 ForgeOS Persistence
+M2.009 Notifications
     ↓
 M2.010 Phone Host Foundation
     ↓

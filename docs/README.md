@@ -197,6 +197,7 @@ reviews/
 ├── M2.004RuntimeVerification.md
 ├── M2.005RuntimeVerification.md
 ├── M2.006RuntimeVerification.md
+├── M2.007RuntimeVerification.md
 ├── M2ArchitectureReview.md
 └── RepositoryBaselineAudit-001.md
 ```
@@ -209,6 +210,7 @@ Current records:
 - [M2.004 Runtime Verification](reviews/M2.004RuntimeVerification.md)
 - [M2.005 Runtime Verification](reviews/M2.005RuntimeVerification.md)
 - [M2.006 Runtime Verification](reviews/M2.006RuntimeVerification.md)
+- [M2.007 Runtime Verification](reviews/M2.007RuntimeVerification.md)
 - [M2 Architecture Review](reviews/M2ArchitectureReview.md)
 - [Repository Baseline Audit 001](reviews/RepositoryBaselineAudit-001.md)
 
@@ -354,15 +356,16 @@ M2.003 – ForgeOS Core
 M2.004 – Device Registry
 M2.005 – App Registry
 M2.006 – Presentation Resolver
+M2.007 – Lifecycle Service
 ```
 
 Next implementation stage:
 
 ```text
-M2.007 – Lifecycle Service
+M2.008 – Navigation Service
 ```
 
-M2.006 is implemented, synchronized, accepted, and runtime verified. M2.007
+M2.007 is implemented, synchronized, accepted, and runtime verified. M2.008
 has not started. The overall M2 ForgeOS milestone remains in progress.
 
 ---

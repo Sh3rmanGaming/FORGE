@@ -437,6 +437,33 @@ available while unloaded.
 This temporary mechanism is expected to be superseded by the separately
 reviewed future FORGE Diagnostics and Runtime Profiles capability.
 
+## M2.007 Lifecycle Service Clarification
+
+The Project Director and Chief Architect approved the bounded M2.007 Lifecycle
+Service contract against baseline `e73ceca`.
+
+Accepted behavior includes the local-player public lifecycle facade; runtime
+state and one-active-app ownership; the approved transition matrix and
+idempotence; Presentation Resolver eligibility for open; internal runtime-only
+enabled overrides; deterministic active-app displacement; completed lifecycle
+events; shutdown cleanup; and Lifecycle Service-local re-entrancy rejection.
+
+The App Registry provides one internal read-only callback accessor limited to
+`onOpen`, `onActivate`, `onBackground`, and `onClose`. Executable references
+remain private runtime assets excluded from public snapshots and persistence.
+
+All callbacks execute after validation and staging and before one atomic commit
+of ForgeOS lifecycle state and active-app ownership. Callback failure commits
+no ForgeOS lifecycle state and publishes no lifecycle event. ForgeOS does not
+transactionally reverse arbitrary application-owned callback side effects,
+introduce compensation callbacks, replay callbacks, or create cross-service
+transactions.
+
+Production remains at `REGISTRATION_OPEN` pending Device Host Registry.
+Runtime-active lifecycle verification uses one explicit test participant and
+does not implement a production host, Availability Service, Navigation
+Service, resume restoration, or multiplayer identity.
+
 ## Remaining Open Decisions
 
 ### Cross-component
@@ -833,7 +860,7 @@ Production does not claim registration freeze, `RUNTIME_ACTIVE`, or `STARTED`
 for M2.006 because the concrete Device Host Registry remains deferred.
 
 This acceptance does not complete the overall M2 ForgeOS milestone. The next
-implementation boundary is M2.007 – Lifecycle Service, which has not started.
+implementation boundary is M2.007 – Lifecycle Service, now in implementation.
 
 ### M2.006 Presentation Resolver Contract Freeze
 
@@ -874,6 +901,95 @@ The M2.006 freeze does not implement, verify, or resolve:
 - presentation or application runtime persistence;
 - multiplayer-specific presentation-resolution behaviour;
 - later ForgeOS services or applications; or
+- unrelated open decisions, deferred assumptions, and architecture gaps.
+
+## M2.007 Implementation, Verification, and Acceptance
+
+The Project Director accepts M2.007 – Lifecycle Service as complete.
+
+Maturity is:
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| Complete | Complete | Complete | Complete | Complete |
+
+Implementation and runtime evidence confirm:
+
+- the public open, activate, background, and close facade operations;
+- non-mutating lifecycle-state and active-app queries;
+- local-player/device/app runtime lifecycle ownership;
+- the approved transition matrix and idempotent results;
+- Presentation Resolver eligibility before opening;
+- bounded runtime-only enabled overrides;
+- one active app per device and deterministic background-or-close
+  displacement;
+- the narrow frozen-registry lifecycle-callback accessor;
+- detached callback context and service-local non-reentrancy;
+- callback execution before atomic ForgeOS lifecycle-state commit;
+- callback failure without lifecycle-state or completion-event commit;
+- the explicit exclusion of arbitrary callback-side-effect rollback;
+- deterministic lifecycle event identity, payload, and ordering;
+- listener-failure isolation after committed state;
+- cleanup, shutdown, restart, and non-persistence;
+- complete retained regression-suite success;
+- controlled runtime-active verification with an explicit Device Host test
+  participant;
+- production integration while correctly remaining at `REGISTRATION_OPEN`;
+  and
+- synchronized operational load-order restoration.
+
+The authoritative evidence is recorded in
+[M2.007 Runtime Verification](M2.007RuntimeVerification.md).
+
+This acceptance does not complete the overall M2 ForgeOS milestone. The next
+implementation boundary is M2.008 – Navigation Service, which has not started.
+
+### M2.007 Lifecycle Service Contract Freeze
+
+The implemented and verified M2.007 baseline is frozen for:
+
+- `FORGE.ForgeOS:openApp(deviceId, appId)`;
+- `FORGE.ForgeOS:activateApp(deviceId, appId)`;
+- `FORGE.ForgeOS:backgroundApp(deviceId, appId)`;
+- `FORGE.ForgeOS:closeApp(deviceId, appId)`;
+- lifecycle-state and active-app queries;
+- `ForgeOSPlayerId.LOCAL` resolution within the M2.007 facade;
+- runtime-active gating and controlled result precedence;
+- Lifecycle Service ownership of runtime lifecycle state, active-app mapping,
+  and bounded enabled overrides;
+- absent lifecycle records being observably closed;
+- the approved transition matrix and idempotence;
+- Presentation Resolver eligibility for entering open;
+- one-active-app enforcement and capability-driven displacement;
+- internal `AppRegistry:getLifecycleCallback(appId, callbackName)` limited to
+  the four approved lifecycle callbacks;
+- private, runtime-only executable-reference ownership;
+- callback context, timing, failure, and non-reentrancy behavior;
+- atomic ForgeOS lifecycle-state and active-app commit after callbacks;
+- the exclusion of compensation for arbitrary app-owned callback effects;
+- completed lifecycle event identity, payload, and ordering;
+- listener-failure isolation;
+- runtime cleanup, shutdown, restart, and non-persistence;
+- component, integration, regression, synchronization, load-order, and
+  runtime-evidence requirements.
+
+These contracts MUST NOT change silently. Future changes require applicable
+architecture, compatibility, test, and documentation review.
+
+### Explicit M2.007 Non-Freeze Scope
+
+The M2.007 freeze does not implement, verify, or resolve:
+
+- a production Device Host Registry or device host instance;
+- production registration freeze, runtime activation, or `STARTED`;
+- Availability Service or provider composition;
+- a public enabled-policy API or permanent policy owner;
+- Navigation Service, routes, history, or resume restoration;
+- rendering, visibility, notifications, or UI;
+- rollback callbacks, compensation, replay, or cross-service transactions;
+- general application-context capabilities;
+- stable multiplayer identity or per-player persistence;
+- later ForgeOS services or hosts; or
 - unrelated open decisions, deferred assumptions, and architecture gaps.
 
 ## Contract Freeze
@@ -1002,7 +1118,11 @@ frozen at v0.1.
 - M2.006 verification: complete
 - M2.006 acceptance: complete
 - M2.006 freeze: recorded
+- M2.007 implementation: complete
+- M2.007 verification: complete
+- M2.007 acceptance: complete
+- M2.007 freeze: recorded
 - Development Verification Bootstrap: excluded from operational load order
-- Next implementation boundary: M2.007 – Lifecycle Service
+- Next implementation boundary: M2.008 – Navigation Service
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

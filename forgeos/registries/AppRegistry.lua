@@ -36,6 +36,13 @@ local recognisedCallbacks = {
     onClose = true
 }
 
+local lifecycleCallbacks = {
+    onOpen = true,
+    onActivate = true,
+    onBackground = true,
+    onClose = true
+}
+
 local function isFiniteNumber(value)
     return value == value
         and value ~= math.huge
@@ -637,6 +644,29 @@ function Registry:getAppDefinition(appId)
     local valid, copy =
         copyPlainValue(definition, {})
     return valid and copy or nil
+end
+
+--- Returns one private lifecycle callback for internal ForgeOS use.
+-- @param appId any
+-- @param callbackName any
+-- @return function|nil callback
+function Registry:getLifecycleCallback(
+    appId,
+    callbackName
+)
+    if type(appId) ~= "string"
+        or lifecycleCallbacks[callbackName]
+            ~= true then
+        return nil
+    end
+
+    local assets = runtimeAssets[appId]
+    if assets == nil
+        or assets.callbacks == nil then
+        return nil
+    end
+
+    return assets.callbacks[callbackName]
 end
 
 function Registry:getRegisteredAppIds()

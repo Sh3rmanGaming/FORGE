@@ -364,6 +364,42 @@ Applications may request transitions but do not perform them directly.
 
 ---
 
+## M2.007 Lifecycle Service Clarification
+
+M2.007 implements the local-player application lifecycle without adding
+availability, navigation, rendering, resume restoration, or multiplayer
+identity. The Lifecycle Service exclusively owns runtime-only lifecycle state,
+the one-active-app mapping per device, and bounded enabled overrides.
+
+The public facade provides `openApp(deviceId, appId)`,
+`activateApp(deviceId, appId)`, `backgroundApp(deviceId, appId)`, and
+`closeApp(deviceId, appId)`. Queries expose the current lifecycle state and
+active app without creating records. M2.007 resolves player scope through
+`ForgeOSPlayerId.LOCAL`.
+
+Entering `OPEN` requires successful Presentation Resolver eligibility.
+Registered apps default enabled; a runtime-only internal override constrains
+open and activate but never background or close. Availability providers are
+not executed.
+
+Callbacks execute after complete validation and staging but before ForgeOS
+state commit. If every callback succeeds, all staged lifecycle state and
+active-app changes commit atomically, followed by completed events. If a
+callback fails, no ForgeOS lifecycle state or lifecycle event is committed.
+ForgeOS does not roll back arbitrary application-owned callback side effects.
+No rollback callbacks, compensation, replay, or cross-service transaction is
+part of M2.007.
+
+When activation displaces another active app, a device with
+`BACKGROUND_APPS` backgrounds it; otherwise ForgeOS closes it. The displaced
+callback and event precede the requested app callback and event. Lifecycle
+operations are service-locally non-reentrant.
+
+Production remains at `REGISTRATION_OPEN` until the Device Host Registry is
+implemented. Controlled M2.007 verification uses an explicit test participant.
+
+---
+
 # Application Availability
 
 Registration and availability are separate concepts.

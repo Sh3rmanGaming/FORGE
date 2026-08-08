@@ -803,7 +803,25 @@ onClose
 ```
 
 Enabled-policy changes are not lifecycle transitions. Callback timing and
-rollback remain provisional until lifecycle implementation.
+rollback outside the M2.007 boundary remain provisional.
+
+For M2.007, Lifecycle Service invokes `onOpen`, `onActivate`, `onBackground`,
+and `onClose` after validation and staging but before authoritative lifecycle
+commit. `onRegister` is not a Lifecycle Service callback.
+
+The App Registry retains callbacks as private runtime-owned assets and exposes
+only the internal read-only accessor
+`getLifecycleCallback(appId, callbackName)`. The accessor is usable after
+registration freeze, permits only the four M2.007 lifecycle callback names,
+and never exposes controllers, providers, action handlers, definitions, or
+mutable executable-reference storage. Executable references remain excluded
+from public snapshots, serialization, and persistence.
+
+All required callbacks must succeed before ForgeOS commits lifecycle state and
+publishes lifecycle events. A callback failure produces `CALLBACK_FAILED`, no
+ForgeOS lifecycle-state mutation, and no lifecycle completion event. ForgeOS
+does not attempt to reverse arbitrary application-owned side effects from a
+callback that already executed.
 
 ---
 
@@ -842,6 +860,10 @@ publish application event
 access owned State Store namespace
 access domain controller
 ```
+
+The broader context above remains provisional. The M2.007 lifecycle callback
+context is deliberately limited to a detached table containing `playerId`,
+`deviceId`, `appId`, `previousState`, and `requestedState`.
 
 The context must not expose:
 

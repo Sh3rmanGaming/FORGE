@@ -951,6 +951,41 @@ Examples:
 
 ---
 
+## M2.007 Lifecycle Operation Contract
+
+Public operations are `openApp(deviceId, appId)`,
+`activateApp(deviceId, appId)`, `backgroundApp(deviceId, appId)`, and
+`closeApp(deviceId, appId)`. They return one `ForgeOSResult`. Queries return
+the current lifecycle state or active app identifier and never mutate state.
+
+Validation precedence is invalid argument, runtime availability, registered
+device, registered app, presentation eligibility for `CLOSED -> OPEN`, enabled
+policy, transition validity, callbacks, state commit, and event publication.
+The applicable results are `INVALID_ARGUMENT`, `NOT_AVAILABLE`,
+`NOT_REGISTERED`, resolver-controlled eligibility failures,
+`POLICY_REJECTED`, `INVALID_TRANSITION`, `CALLBACK_FAILED`, `STATE_ERROR`,
+`INTERNAL_ERROR`, and `SUCCESS`.
+
+Idempotent success without callbacks or events applies to opening any already
+open lifecycle state, activating the already active app, backgrounding an
+already background app, and closing an already closed app. Activation does not
+implicitly open a closed app.
+
+One active app is permitted per device. Activating another app backgrounds the
+previous app when `BACKGROUND_APPS` is true and otherwise closes it. Both
+ForgeOS-owned changes commit atomically after all required callbacks succeed.
+The displaced transition is processed and published first.
+
+Lifecycle callback completion is not a transaction over arbitrary
+application-owned side effects. Callback failure prevents ForgeOS lifecycle
+state and event commit but does not compensate callback code that already ran.
+
+Lifecycle event payloads use `ForgeOSPlayerId.LOCAL`, `deviceId`, `appId`,
+`previousState`, and `currentState`. Runtime lifecycle state and enabled
+overrides clear on shutdown and are never serialized.
+
+---
+
 # Application Availability Reasons
 
 Availability checks should return both a result and an authoritative reason.

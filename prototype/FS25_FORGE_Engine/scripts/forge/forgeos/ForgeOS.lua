@@ -157,6 +157,9 @@ local function completeShutdown()
         end
     end
 
+    local lifecycleCleanupResult =
+        FORGE.AppLifecycleService:clearRuntimeState()
+
     local participantCleanupResult =
         FORGE.ForgeOSRegistrationCoordinator
             :clearRegistrationParticipants()
@@ -176,6 +179,10 @@ local function completeShutdown()
     if participantCleanupResult
         ~= Result.SUCCESS then
         return participantCleanupResult
+    end
+
+    if lifecycleCleanupResult ~= Result.SUCCESS then
+        return lifecycleCleanupResult
     end
 
     return Result.SUCCESS
@@ -433,6 +440,31 @@ function FORGE.ForgeOS:resolvePresentation(
 )
     return FORGE.PresentationResolver
         :resolvePresentation(appId, deviceId)
+end
+
+function FORGE.ForgeOS:openApp(deviceId, appId)
+    return FORGE.AppLifecycleService:openApp(deviceId, appId)
+end
+
+function FORGE.ForgeOS:activateApp(deviceId, appId)
+    return FORGE.AppLifecycleService:activateApp(deviceId, appId)
+end
+
+function FORGE.ForgeOS:backgroundApp(deviceId, appId)
+    return FORGE.AppLifecycleService:backgroundApp(deviceId, appId)
+end
+
+function FORGE.ForgeOS:closeApp(deviceId, appId)
+    return FORGE.AppLifecycleService:closeApp(deviceId, appId)
+end
+
+function FORGE.ForgeOS:getAppLifecycleState(deviceId, appId)
+    return FORGE.AppLifecycleService
+        :getAppLifecycleState(deviceId, appId)
+end
+
+function FORGE.ForgeOS:getActiveAppId(deviceId)
+    return FORGE.AppLifecycleService:getActiveAppId(deviceId)
 end
 
 --- Starts or idempotently confirms the ForgeOS lifecycle.

@@ -471,6 +471,18 @@ appStates = {
 
 This table belongs under a specific player and device scope.
 
+For M2.007, the Lifecycle Service resolves the player as `player.local`, treats
+an absent app record as `CLOSED`, and stores only runtime lifecycle state. It
+also owns the one-active-app mapping per device and bounded runtime enabled
+overrides. None of these values is serialized or restored as active runtime
+state.
+
+All staged ForgeOS lifecycle-state and active-app changes commit atomically
+only after required callbacks succeed. Callback failure leaves authoritative
+ForgeOS state unchanged and publishes no lifecycle completion event. This
+atomicity does not extend to arbitrary application-owned callback side effects.
+Shutdown clears Lifecycle Service-owned runtime values without callbacks.
+
 Example:
 
 ```text
