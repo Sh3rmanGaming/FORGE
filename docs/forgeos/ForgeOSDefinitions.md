@@ -1444,9 +1444,19 @@ Initial expectations are listed below.
     deviceId = "phone",
     appId = "forge.projects",
     previousRoute = "overview",
-    currentRoute = "projectDetails"
+    currentRoute = "projectDetails",
+    routeParameters = {
+        projectId = "project.westernRidge"
+    },
+    isBackNavigation = false
 }
 ```
+
+For M2.008, navigation operations use existing `ForgeOSResult` and
+`NAVIGATION_CHANGED` identifiers. They introduce no new definition constant.
+The event is published only after committed logical navigation and resume
+state. Parameters are detached plain data. Runtime history is bounded but its
+private capacity is not a public definition or persistence contract.
 
 ## Notification created
 

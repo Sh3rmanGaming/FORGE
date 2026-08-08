@@ -263,6 +263,12 @@ local function runDevelopmentTests()
             .runForgeOSAppLifecycleIntegrationTests
     )
 
+    runHarness(FORGE.Tests.runNavigationServiceTests)
+
+    runHarness(
+        FORGE.Tests.runForgeOSNavigationIntegrationTests
+    )
+
     if suitePassed then
         FORGE.Logger:info(
             FORGE.Definitions.LogSource.TEST,

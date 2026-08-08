@@ -464,6 +464,39 @@ Runtime-active lifecycle verification uses one explicit test participant and
 does not implement a production host, Availability Service, Navigation
 Service, resume restoration, or multiplayer identity.
 
+## M2.008 Navigation Service Clarification
+
+The Project Director and Chief Architect approved the bounded M2.008 logical
+Navigation Service contract against baseline `749ab5e`.
+
+App Registry remains authoritative for presentation-scoped route declarations;
+no Route Registry, runtime registration, or registration participant is added.
+Navigation requires runtime-active, registered app and device, active lifecycle
+state, resolved presentation, and a route declared by that presentation.
+
+Navigation Service owns current route, detached parameters, and bounded
+runtime-only history per local player, device, and app. The private capacity is
+currently 32, but the frozen external contract is only bounded deterministic
+oldest-first eviction; the literal capacity is neither a public definition nor
+compatibility contract.
+
+Successful navigation commits logical state and the navigation portion of
+plain-data resume state before `NAVIGATION_CHANGED`. Idempotent navigation
+mutates nothing and publishes no event. Back navigation searches newest-first,
+discards invalid history deterministically, and does not push the route being
+left.
+
+Route controllers, availability providers, actions, lifecycle transitions,
+modals, rendering, automatic resume, general state-service ownership, stable
+multiplayer identity, and persisted history remain deferred.
+
+The approved reusable
+[FS25 Runtime Verification Deployment](../developer/FS25RuntimeVerificationDeployment.md)
+procedure is engineering verification infrastructure. It establishes a hard
+traceability gate from reviewed source through synchronized prototype,
+forward-slash ZIP entries, exact packaged load paths, matching deployment hash,
+and preserved runtime evidence.
+
 ## Remaining Open Decisions
 
 ### Cross-component
@@ -992,6 +1025,97 @@ The M2.007 freeze does not implement, verify, or resolve:
 - later ForgeOS services or hosts; or
 - unrelated open decisions, deferred assumptions, and architecture gaps.
 
+## M2.008 Implementation, Verification, and Acceptance
+
+The Project Director accepts M2.008 – Navigation Service as complete.
+
+Maturity is:
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| Complete | Complete | Complete | Complete | Complete |
+
+Implementation and runtime evidence confirm:
+
+- the public navigate and back facade operations;
+- non-mutating current-route and detached-history queries;
+- local-player/device/app runtime navigation-state ownership;
+- runtime-active, registration, active-app, presentation, and route gates;
+- presentation-scoped route declarations without a Route Registry;
+- controlled plain-data validation and detached parameter ownership;
+- deterministic idempotence independent of table iteration order;
+- bounded runtime history, oldest-first eviction, and newest-first back
+  navigation;
+- deterministic invalid-history repair;
+- navigation resume-state updates without persisted runtime history;
+- post-commit navigation-event identity, payload, and ordering;
+- listener-failure isolation after committed state;
+- cleanup, shutdown, restart, and runtime-history non-persistence;
+- complete retained regression-suite success;
+- controlled runtime-active verification with one explicit Device Host test
+  participant;
+- production integration while correctly remaining at `REGISTRATION_OPEN`;
+- traceable source, synchronization, package, deployment, and runtime evidence;
+  and
+- restored synchronized operational load order.
+
+The authoritative evidence is recorded in
+[M2.008 Runtime Verification](M2.008RuntimeVerification.md).
+
+This acceptance does not complete the overall M2 ForgeOS milestone. The next
+implementation boundary is M2.009 – Notification Service, which has not
+started.
+
+### M2.008 Navigation Service Contract Freeze
+
+The implemented and verified M2.008 baseline is frozen for:
+
+- `FORGE.ForgeOS:navigate(deviceId, appId, routeId, routeParameters)`;
+- `FORGE.ForgeOS:goBack(deviceId, appId)`;
+- current-route and navigation-history queries;
+- `ForgeOSPlayerId.LOCAL` resolution within the M2.008 facade;
+- approved argument, phase, registration, lifecycle, presentation, and route
+  result precedence;
+- Navigation Service ownership of current route, detached parameters, and
+  bounded runtime history;
+- App Registry ownership of presentation-scoped route declarations;
+- Presentation Resolver use for every navigation request;
+- absence of implicit lifecycle transitions;
+- controlled detached plain-data route parameters;
+- deterministic deep equality and idempotent success without mutation or
+  events;
+- bounded deterministic history, oldest-first eviction, and newest-first back
+  navigation, excluding the private literal capacity from the public contract;
+- invalid-history repair and route-not-found behavior;
+- navigation resume fields and exclusion of runtime history from persistence;
+- post-commit `NAVIGATION_CHANGED` identity, payload, and ordering;
+- listener-failure isolation;
+- runtime cleanup, shutdown, restart, and non-persistence of history;
+- the exclusion of executable route assets from navigation execution; and
+- component, integration, regression, synchronization, load-order, deployment,
+  and runtime-evidence requirements.
+
+These contracts MUST NOT change silently. Future changes require applicable
+architecture, compatibility, test, and documentation review.
+
+### Explicit M2.008 Non-Freeze Scope
+
+The M2.008 freeze does not implement, verify, or resolve:
+
+- a production Device Host Registry or device host instance;
+- production registration freeze, runtime activation, or `STARTED`;
+- a Route Registry, runtime route registration, or late route mutation;
+- route-controller, availability-provider, or action execution;
+- automatic app activation, navigation, device opening, or resume restoration;
+- route-specific parameter schemas or configurable history capacity;
+- navigation/lifecycle cross-service transactions;
+- modal navigation, rendering, visibility, notifications, or UI;
+- a general ForgeOS State Service;
+- stable multiplayer identity, per-player persistence, or long-term state
+  migration;
+- later ForgeOS services or hosts; or
+- unrelated open decisions, deferred assumptions, and architecture gaps.
+
 ## Contract Freeze
 
 The ForgeOS v0.1 documentation contract remains frozen. The verified
@@ -1122,7 +1246,11 @@ frozen at v0.1.
 - M2.007 verification: complete
 - M2.007 acceptance: complete
 - M2.007 freeze: recorded
+- M2.008 implementation: complete
+- M2.008 verification: complete
+- M2.008 acceptance: complete
+- M2.008 freeze: recorded
 - Development Verification Bootstrap: excluded from operational load order
-- Next implementation boundary: M2.008 – Navigation Service
+- Next implementation boundary: M2.009 – Notification Service
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

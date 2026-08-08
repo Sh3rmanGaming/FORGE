@@ -966,6 +966,27 @@ FORGE.ForgeOS:navigate(
 
 This is conceptual only.
 
+## M2.008 Deterministic Contract
+
+Navigation Service consumes frozen detached route declarations through the App
+Registry snapshot and Presentation Resolver. It does not own route
+registration or access private executable assets.
+
+The public facade exposes `navigate`, `goBack`, `getCurrentRoute`, and
+`getNavigationHistory`. State-changing operations require the application to
+be active and validate identifiers, runtime phase, registration, lifecycle,
+presentation, route, and detached plain parameters in the approved order.
+
+Runtime history is bounded, oldest-to-newest, and non-persistent. Normal
+navigation pushes the previous destination. Back navigation searches newest
+first, discards invalid historical entries deterministically, and never pushes
+the destination being left. An idempotent request returns success without
+state, resume, history, or event changes.
+
+The service updates only the navigation portion of persistent resume state
+under `forge.os/players/player.local/devices[deviceId]/resume`. Runtime history,
+controllers, providers, actions, modals, and lifecycle state are excluded.
+
 ## Proposed Location
 
 ```text

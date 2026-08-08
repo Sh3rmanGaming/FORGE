@@ -643,6 +643,12 @@ Unsupported values:
 
 Route parameters must be validated before being stored as resume state.
 
+During M2.008, Navigation Service validates and detaches this plain-data shape
+but does not execute route-specific availability providers or controllers.
+Routes remain presentation-scoped declarations registered with their app.
+Navigation of a route from another resolved presentation is rejected even when
+the route identifier text matches.
+
 ---
 
 # Actions

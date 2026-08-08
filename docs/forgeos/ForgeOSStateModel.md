@@ -673,6 +673,30 @@ M2 does not persist:
 - temporary forms
 - incomplete user input
 
+## M2.008 Navigation State Contract
+
+Navigation Service owns runtime current route, parameters, and bounded history
+per `player.local`, device, and app. History is ordered oldest to newest,
+evicts its oldest entry deterministically when the private bound is exceeded,
+and is never persisted.
+
+After successful non-idempotent navigation, the service updates:
+
+```text
+players[player.local]
+└── devices[deviceId]
+    └── resume
+        ├── appId
+        ├── presentationId
+        ├── routeId
+        └── routeParameters
+```
+
+Failed and idempotent operations do not update resume state. Startup does not
+automatically activate or navigate an app. Runtime history clears on shutdown;
+the plain resume destination remains available to the existing persistence
+pipeline.
+
 ---
 
 # Route Validation

@@ -160,6 +160,9 @@ local function completeShutdown()
     local lifecycleCleanupResult =
         FORGE.AppLifecycleService:clearRuntimeState()
 
+    local navigationCleanupResult =
+        FORGE.NavigationService:clearRuntimeState()
+
     local participantCleanupResult =
         FORGE.ForgeOSRegistrationCoordinator
             :clearRegistrationParticipants()
@@ -183,6 +186,10 @@ local function completeShutdown()
 
     if lifecycleCleanupResult ~= Result.SUCCESS then
         return lifecycleCleanupResult
+    end
+
+    if navigationCleanupResult ~= Result.SUCCESS then
+        return navigationCleanupResult
     end
 
     return Result.SUCCESS
@@ -465,6 +472,33 @@ end
 
 function FORGE.ForgeOS:getActiveAppId(deviceId)
     return FORGE.AppLifecycleService:getActiveAppId(deviceId)
+end
+
+function FORGE.ForgeOS:navigate(
+    deviceId,
+    appId,
+    routeId,
+    routeParameters
+)
+    return FORGE.NavigationService:navigate(
+        deviceId,
+        appId,
+        routeId,
+        routeParameters
+    )
+end
+
+function FORGE.ForgeOS:goBack(deviceId, appId)
+    return FORGE.NavigationService:goBack(deviceId, appId)
+end
+
+function FORGE.ForgeOS:getCurrentRoute(deviceId, appId)
+    return FORGE.NavigationService:getCurrentRoute(deviceId, appId)
+end
+
+function FORGE.ForgeOS:getNavigationHistory(deviceId, appId)
+    return FORGE.NavigationService
+        :getNavigationHistory(deviceId, appId)
 end
 
 --- Starts or idempotently confirms the ForgeOS lifecycle.

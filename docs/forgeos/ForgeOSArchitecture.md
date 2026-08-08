@@ -712,6 +712,31 @@ Service.
 
 Device host implementations decide how navigation is presented visually.
 
+## M2.008 Navigation Service Clarification
+
+M2.008 owns logical runtime navigation for the active `player.local`
+application. App Registry remains authoritative for presentation-scoped route
+declarations; no Route Registry, late route registration, or new registration
+participant is introduced.
+
+Public `navigate(deviceId, appId, routeId, routeParameters)` and
+`goBack(deviceId, appId)` operations require `RUNTIME_ACTIVE`, registered app
+and device, an `ACTIVE` app lifecycle state, a successfully resolved
+presentation, and a route declared by that presentation. Navigation never
+performs an implicit lifecycle transition.
+
+Navigation Service owns the current route, detached parameters, and bounded
+runtime history per local player, device, and app. History is ordered oldest
+to newest, evicts the oldest entry deterministically when its private capacity
+is exceeded, and is never persisted. The private capacity is not a public
+definition or compatibility contract.
+
+Successful non-idempotent navigation atomically commits logical navigation and
+plain-data resume destination before publishing `NAVIGATION_CHANGED`.
+Idempotent navigation mutates no history or resume state and publishes no
+event. Route controllers, availability providers, actions, modals, rendering,
+and automatic resume remain deferred.
+
 ---
 
 # Notifications

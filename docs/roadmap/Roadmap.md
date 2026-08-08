@@ -317,16 +317,43 @@ explicit Device Host test participant. Production correctly remains at
 
 ---
 
-#### ⏳ M2.008 – Navigation Service
+#### ✅ M2.008 – Navigation Service
 
-- Route registration
-- Route validation
-- Route navigation
-- Resume state
-- Route parameter validation
-- Navigation history
-- Navigation events
-- Navigation test suite
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.008 is complete. It implements and verifies bounded logical navigation for
+the active local-player application without introducing a Route Registry,
+runtime route registration, route-controller execution, automatic lifecycle
+transitions, or a production Device Host Registry.
+
+Evidence:
+
+- [ForgeOS Architecture](../forgeos/ForgeOSArchitecture.md)
+- [ForgeOS Component Design](../forgeos/ForgeOSComponentDesign.md)
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [ForgeOS App Contract](../forgeos/ForgeOSAppContract.md)
+- [ForgeOS State Model](../forgeos/ForgeOSStateModel.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.008 Runtime Verification](../reviews/M2.008RuntimeVerification.md)
+
+- public navigate and back operations
+- current-route and detached-history queries
+- runtime-active and active-app gating
+- presentation-scoped route validation
+- safe detached route parameters
+- deterministic idempotence
+- bounded runtime history and deterministic oldest-first eviction
+- deterministic invalid-history repair and back navigation
+- post-commit navigation events and listener-failure isolation
+- navigation resume-state updates without persisted runtime history
+- runtime cleanup, shutdown, and restart
+- traceable packaging, deployment, regression, and FS25 runtime verification
+
+Controlled tests verify navigation at `RUNTIME_ACTIVE` using one explicit
+Device Host test participant. Production correctly remains at
+`REGISTRATION_OPEN` until the concrete Device Host Registry exists.
 
 ---
 
