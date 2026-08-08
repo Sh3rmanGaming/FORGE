@@ -238,15 +238,42 @@ Device Host Registry participant exists. Production runtime activation and
 
 ---
 
-#### ⏳ M2.006 – Presentation Resolver
+#### ✅ M2.006 – Presentation Resolver
 
-- Exact device matching
-- Capability matching
-- Priority resolution
-- Deterministic tie breaking
-- Default presentation fallback
-- Presentation validation
-- Presentation resolution test suite
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.006 is complete. It implements and verifies deterministic read-only
+presentation resolution without implementing availability execution,
+application lifecycle, navigation, rendering, persistence, or the deferred
+Device Host Registry.
+
+Evidence:
+
+- [ForgeOS Architecture](../forgeos/ForgeOSArchitecture.md)
+- [ForgeOS Component Design](../forgeos/ForgeOSComponentDesign.md)
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [ForgeOS App Contract](../forgeos/ForgeOSAppContract.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.006 Runtime Verification](../reviews/M2.006RuntimeVerification.md)
+
+- runtime-active public resolver facade
+- exact-device matching
+- capability-compatible fallback
+- declared default fallback
+- universal and presentation capability validation
+- finite numeric priority and omitted-priority handling
+- deterministic lexical tie-breaking
+- deterministic missing-capability diagnostics
+- exact, capability, and default match types
+- detached read-only results
+- component and integration regression coverage
+- synchronized prototype and FS25 runtime verification
+
+Controlled tests verify resolution at `RUNTIME_ACTIVE` using an explicit
+Device Host test participant. Production correctly remains at
+`REGISTRATION_OPEN` until the concrete Device Host Registry exists.
 
 ---
 

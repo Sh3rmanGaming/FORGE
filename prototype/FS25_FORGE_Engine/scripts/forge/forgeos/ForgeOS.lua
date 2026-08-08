@@ -422,6 +422,19 @@ function FORGE.ForgeOS:getRegisteredAppIds()
         :getRegisteredAppIds()
 end
 
+--- Resolves a detached presentation for a registered app and device.
+-- @param appId any
+-- @param deviceId any
+-- @return string result
+-- @return table|nil resolution
+function FORGE.ForgeOS:resolvePresentation(
+    appId,
+    deviceId
+)
+    return FORGE.PresentationResolver
+        :resolvePresentation(appId, deviceId)
+end
+
 --- Starts or idempotently confirms the ForgeOS lifecycle.
 -- @return string result
 function FORGE.ForgeOS:start()

@@ -1059,6 +1059,30 @@ The production participant installs after the Device Registry and before
 `REGISTRATION_OPENED`. Production remains at `REGISTRATION_OPEN` until the
 concrete Device Host Registry exists.
 
+## M2.006 Presentation Resolution Boundary
+
+`FORGE.ForgeOS:resolvePresentation(appId, deviceId)` is a read-only
+`RUNTIME_ACTIVE` query returning `result, resolution`. It reads detached
+registry definitions, publishes no event, and accesses or executes no private
+application asset.
+
+Resolution applies exact support, universal app capabilities, the exact
+presentation, eligible capability presentations, then the declared default.
+Explicit device `false` is absolute and undeclared fallback requires
+`allowCapabilityFallback = true`.
+
+Capability candidates exclude the exact and default keys and declare at least
+one presentation capability. Candidates use descending finite numeric
+priority, omitted priority zero, and lexical presentation key for ties.
+
+Universal missing capabilities are selected lexically and returned
+immediately. Candidate failures are selected lexically within deterministic
+candidate order; the first is retained while later candidates remain eligible
+to resolve.
+
+M2.006 performs no availability-provider, callback, route, action, lifecycle,
+navigation, host, rendering, ownership, or persistence behaviour.
+
 ---
 
 # Addon Compatibility

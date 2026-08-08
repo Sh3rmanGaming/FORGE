@@ -1780,6 +1780,38 @@ These rules do not resolve owner identity, select presentations, invoke
 executable references, or implement lifecycle, navigation, availability, host,
 or persistence behaviour for applications.
 
+### M2.006 Presentation Resolver results
+
+`FORGE.ForgeOS:resolvePresentation(appId, deviceId)` returns
+`result, resolution`.
+
+Result precedence is:
+
+1. invalid identifiers return `INVALID_ARGUMENT`;
+2. a phase other than `RUNTIME_ACTIVE` returns `NOT_AVAILABLE` without registry
+   lookup;
+3. a missing app or device returns `NOT_REGISTERED` with its corresponding
+   `AppAvailabilityReason`;
+4. unsupported device rules return `NOT_AVAILABLE` with
+   `DEVICE_NOT_SUPPORTED`;
+5. final capability incompatibility returns `CAPABILITY_MISSING` with
+   `MISSING_CAPABILITY`;
+6. no usable presentation returns `PRESENTATION_NOT_FOUND`; and
+7. unexpected failure returns `INTERNAL_ERROR` with `UNKNOWN`.
+
+Success returns a detached record containing `appId`, `deviceId`,
+`presentationKey`, `presentationId`, `matchType`, and `presentation`.
+
+App requirements are evaluated first in lexical order. Presentation candidates
+are deterministic and their missing requirements are lexical. The first
+candidate capability failure is retained while later candidates remain
+eligible to succeed.
+
+Every finite numeric priority is valid. Omitted priority is zero. Higher
+priority wins and lexical presentation key breaks ties. Capability candidates
+exclude the exact and default keys and require at least one presentation
+capability. Default evaluation is a distinct final stage.
+
 `defaultRoute` is not an app-level field.
 
 Each presentation owns its own default route.
@@ -2016,10 +2048,9 @@ state consumer.
 
 Capability-based presentation definitions use a numeric priority.
 
-The valid numeric range and tie-breaking details remain to be finalised by the
-Presentation Resolver design.
-
-The selected ordering must remain deterministic.
+M2.006 accepts every finite numeric priority. Omitted priority is zero. Higher
+values are preferred and lexical presentation key resolves equal values.
+Registration and Lua table iteration order do not affect selection.
 
 ## Active-device persistence
 

@@ -70,6 +70,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/forgeos/ForgeOSRegistrationCoordinator.lua"/>
         <sourceFile filename="scripts/forge/forgeos/registries/DeviceRegistry.lua"/>
         <sourceFile filename="scripts/forge/forgeos/registries/AppRegistry.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/services/PresentationResolver.lua"/>
         <sourceFile filename="scripts/forge/forgeos/ForgeOS.lua"/>
 
         <!-- Manual test harnesses -->
@@ -85,6 +86,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSRegistrationCoordinatorTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceRegistryTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/AppRegistryTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/PresentationResolverTest.lua"/>
 
         <!-- Integration test harnesses -->
         <sourceFile filename="scripts/forge/tests/integrations/SaveManagerIntegrationTest.lua"/>
@@ -92,6 +94,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSRegistrationLifecycleIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSDeviceRegistryIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSAppRegistryIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSPresentationResolverIntegrationTest.lua"/>
 
         <!-- Engine lifecycle registration must load last -->
         <sourceFile filename="scripts/forge/Engine.lua"/>

@@ -615,6 +615,47 @@ This establishes the approved application-definition authority without
 absorbing presentation selection, application execution, navigation,
 availability, ownership enforcement, or host behaviour.
 
+## M2.006 Presentation Resolver Clarification
+
+### Architectural Intent
+
+This clarification makes the Approved v0.1 presentation-resolution contract
+deterministic for M2.006. It introduces no Device Host Registry production
+behaviour, availability execution, lifecycle, navigation, rendering,
+persistence, or new definition constant.
+
+### Public Contract
+
+`FORGE.ForgeOS:resolvePresentation(appId, deviceId)` returns
+`result, resolution`. Success provides the app ID, device ID, selected
+presentation key and ID, `PresentationMatchType`, and a detached presentation.
+Controlled failures may provide an `AppAvailabilityReason` and one
+deterministic `missingCapability`.
+
+The resolver is read-only, is permitted only in `RUNTIME_ACTIVE`, and performs
+no registry lookup after a rejected runtime gate. It mutates no state,
+publishes no event, executes no callback or provider, and accesses no private
+App Registry executable-reference storage.
+
+Resolution applies the exact device declaration, validates universal app
+requirements, attempts the exact presentation, attempts eligible capability
+presentations, then attempts the default. Explicit `false` is absolute;
+undeclared fallback requires `allowCapabilityFallback = true`.
+
+A capability candidate is neither the exact device key nor the default key and
+declares at least one presentation capability. Candidates use descending
+finite numeric priority, omitted priority zero, and lexical presentation key
+for ties.
+
+Missing app requirements are selected lexically and returned immediately.
+Candidate requirements are evaluated lexically; the first failure in
+deterministic candidate order is retained while later candidates remain
+eligible to succeed. Capability failure is reported only when it is the final
+failure class.
+
+Production remains at `REGISTRATION_OPEN` while Device Host Registry is
+deferred. Runtime-active behaviour uses an explicit test participant only.
+
 ---
 
 # Navigation

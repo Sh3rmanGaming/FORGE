@@ -297,6 +297,23 @@ Authoritative ownership remains unresolved.
   Contract, M2 Architecture Review.
 - **Classification:** Clarification.
 
+### 15. M2.006 Presentation Resolver deterministic contract
+
+- **Previous contract:** ForgeOS v0.1 defined exact, capability, and default
+  resolution conceptually but left the public return shape, runtime gate,
+  capability-candidate classification, priority range, tie-breaking, and
+  failure-diagnostic precedence incomplete.
+- **Accepted contract:** M2.006 defines the read-only public resolver result,
+  runtime-active gate, exact/capability/default order, finite numeric priority
+  with lexical ties, distinct capability candidates, and deterministic
+  missing-capability precedence.
+- **Reason:** Make presentation resolution implementable and testable without
+  absorbing availability, lifecycle, navigation, host, rendering, or
+  persistence behaviour.
+- **Documents affected:** Architecture, Component Design, Definitions, App
+  Contract, M2 Architecture Review.
+- **Classification:** Clarification and open decision resolved.
+
 ## M2.005 App Registry Architecture Clarification
 
 M2.005 establishes the App Registry as the authoritative owner of application
@@ -317,6 +334,32 @@ The production App Registry installs after Device Registry and before
 `REGISTRATION_OPENED`. With Device Host Registry still deferred, production
 correctly remains at `REGISTRATION_OPEN`. This clarification does not advance
 M2.005 maturity or freeze its implementation.
+
+## M2.006 Presentation Resolver Architecture Clarification
+
+The Project Director and Chief Architect accept the bounded M2.006
+Presentation Resolver clarification.
+
+The public read-only facade is
+`FORGE.ForgeOS:resolvePresentation(appId, deviceId)`, returning
+`result, resolution`. It is gated to `RUNTIME_ACTIVE`, uses detached App and
+Device Registry definitions, and owns exact, capability, priority, tie-break,
+default, match-type, and deterministic capability-diagnostic selection only.
+
+Capability candidates exclude exact and default keys and require at least one
+presentation capability. Every finite numeric priority is accepted, omitted
+priority is zero, higher priority wins, and lexical presentation key breaks
+ties.
+
+App and candidate missing requirements are evaluated lexically. The first
+failure in deterministic candidate order is retained while later candidates
+remain eligible to succeed. Capability failure is reported only when it is the
+final relevant failure class.
+
+This introduces no production Device Host Registry, availability execution,
+lifecycle, navigation, rendering, persistence, executable-reference access,
+or new definition identifier. It does not advance M2.006 maturity or freeze
+its implementation.
 
 ## M2.004 Test-Lifecycle Reconciliation
 
@@ -748,6 +791,91 @@ The M2.005 freeze does not implement, verify, or resolve:
 - later ForgeOS services or applications; or
 - unrelated open decisions, deferred assumptions, and architecture gaps.
 
+## M2.006 Implementation, Verification, and Acceptance
+
+The Project Director accepts M2.006 – Presentation Resolver as complete.
+
+Maturity is:
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| Complete | Complete | Complete | Complete | Complete |
+
+Implementation and runtime evidence confirm:
+
+- `FORGE.ForgeOS:resolvePresentation(appId, deviceId)`;
+- the `result, resolution` public return contract;
+- argument validation before the runtime-active gate;
+- registered app and device result precedence;
+- exact support and fallback rules;
+- universal and presentation capability validation;
+- exact, capability, and default resolution order;
+- capability-candidate classification;
+- every finite numeric priority, omitted priority zero, descending priority,
+  and lexical tie-breaking;
+- deterministic missing-capability diagnostics;
+- existing result, availability-reason, and match-type mappings;
+- detached read-only resolution records;
+- no mutation, event publication, executable-reference access, or runtime-state
+  retention;
+- frozen Device and App Registry compatibility;
+- complete retained regression-suite success;
+- controlled runtime-active verification using an explicit Device Host test
+  participant;
+- production integration while correctly remaining at `REGISTRATION_OPEN`;
+  and
+- synchronization and operational load-order alignment.
+
+The authoritative runtime evidence is recorded in
+[M2.006 Runtime Verification](M2.006RuntimeVerification.md).
+
+Production does not claim registration freeze, `RUNTIME_ACTIVE`, or `STARTED`
+for M2.006 because the concrete Device Host Registry remains deferred.
+
+This acceptance does not complete the overall M2 ForgeOS milestone. The next
+implementation boundary is M2.007 – Lifecycle Service, which has not started.
+
+### M2.006 Presentation Resolver Contract Freeze
+
+The implemented and verified M2.006 baseline is frozen for:
+
+- the public resolver facade and return shape;
+- runtime-active gating and controlled result precedence;
+- registered app and device lookup order;
+- exact device support, absolute rejection, and fallback opt-in rules;
+- universal app and additive presentation capability requirements;
+- exact, capability, and default candidate order;
+- capability candidates excluding exact and default keys and requiring at
+  least one presentation capability;
+- every finite numeric priority, omitted priority zero, descending priority,
+  and lexical presentation-key tie-breaking;
+- deterministic app and candidate missing-capability diagnostics;
+- existing `ForgeOSResult`, `AppAvailabilityReason`, and
+  `PresentationMatchType` mappings;
+- detached resolution records;
+- read-only behaviour without events, executable access, or retained state;
+- component and integration coverage; and
+- synchronization, load-order, and runtime-evidence requirements.
+
+These implemented contracts MUST NOT change silently. Future changes require
+the applicable architecture, compatibility, test, and documentation review.
+
+### Explicit M2.006 Non-Freeze Scope
+
+The M2.006 freeze does not implement, verify, or resolve:
+
+- a production Device Host Registry;
+- production registration freeze, runtime activation, or `STARTED`;
+- Availability Service, provider execution, or policy composition;
+- Lifecycle Service or callback execution;
+- Navigation Service, route execution, or action execution;
+- rendering or UI;
+- owner authority;
+- presentation or application runtime persistence;
+- multiplayer-specific presentation-resolution behaviour;
+- later ForgeOS services or applications; or
+- unrelated open decisions, deferred assumptions, and architecture gaps.
+
 ## Contract Freeze
 
 The ForgeOS v0.1 documentation contract remains frozen. The verified
@@ -870,7 +998,11 @@ frozen at v0.1.
 - M2.005 verification: complete
 - M2.005 acceptance: complete
 - M2.005 freeze: recorded
+- M2.006 implementation: complete
+- M2.006 verification: complete
+- M2.006 acceptance: complete
+- M2.006 freeze: recorded
 - Development Verification Bootstrap: excluded from operational load order
-- Next implementation boundary: M2.006 – Presentation Resolver
+- Next implementation boundary: M2.007 – Lifecycle Service
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

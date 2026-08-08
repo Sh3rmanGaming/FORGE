@@ -660,10 +660,38 @@ presentation, route, action, device, and capability declarations only as
 definition structure; it does not select presentations or execute lifecycle,
 navigation, availability, or host behaviour.
 
+## M2.006 Presentation Resolver
+
+The Presentation Resolver is a read-only service using detached App Registry
+and Device Registry definitions plus the Core runtime gate.
+
+`FORGE.ForgeOS:resolvePresentation(appId, deviceId)` returns one
+`ForgeOSResult` followed by a detached resolution record. The service owns
+exact-device matching, structural capability comparison, priority, lexical
+tie-breaking, default fallback, match-type assignment, and deterministic
+missing-capability diagnostics.
+
+Capability candidates exclude the exact and default keys and must declare at
+least one capability. Higher finite numeric priority wins, omitted priority is
+zero, and equal priority uses lexical presentation-key order.
+
+App missing requirements are evaluated lexically. Candidate failures are
+evaluated lexically within deterministic candidate order; the first is retained
+while later candidates remain eligible to resolve.
+
+The service owns no registration, availability policy, executable invocation,
+lifecycle, navigation, rendering, persistence, or runtime state.
+
 ## Proposed Location
 
 ```text
 forgeos/registries/AppRegistry.lua
+```
+
+The resolver location is:
+
+```text
+forgeos/services/PresentationResolver.lua
 ```
 
 ---
