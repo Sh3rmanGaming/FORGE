@@ -497,6 +497,53 @@ traceability gate from reviewed source through synchronized prototype,
 forward-slash ZIP entries, exact packaged load paths, matching deployment hash,
 and preserved runtime evidence.
 
+## M2.009 Notification Foundation Clarification
+
+The Project Director and Chief Architect approved the bounded M2.009
+Notification Foundation against baseline `f7c2471`.
+
+That approval occurred before the current uncommitted implementation work and
+includes two refinements: every successful creation, including transient,
+consumes a monotonic identifier while failed creation consumes none; and every
+member of a restored duplicate-identifier or duplicate-created-order conflict
+group is discarded. The missing committed approval record was a documentation
+provenance gap, not an absence of architecture approval.
+
+At the time it was recorded, this entry represented architecture clarification
+approval only and did not claim implementation completion, runtime
+verification, milestone acceptance, or contract freeze. Those later lifecycle
+outcomes are recorded separately below.
+
+Notification Service owns local-player delivery records rather than the
+originating gameplay facts. It owns generated identifiers, read and dismissed
+state, deterministic ordering, persistence-policy handling, bounded retention,
+restoration repair, and completed notification events. Public creation, read,
+dismissal, single-record, and device-filtered list operations are permitted
+only at runtime-active as defined by their operation/query contracts.
+
+Every successful transient, session, or savegame creation consumes one
+monotonic `notification.<decimal sequence>` identifier. The persisted next
+sequence continues across transient gaps and must not be reconstructed solely
+from retained records when valid. Failed creation consumes no identifier.
+
+Transient notifications are event-only, session records are runtime-only, and
+savegame records persist in `forge.os`. Retained storage is bounded with oldest
+dismissed then oldest read reclamation; unread undismissed records are never
+silently evicted. The literal capacity is private.
+
+Restoration discards malformed and unsafe records. Every member of a duplicate
+identifier or duplicate positive creation-order conflict group is discarded,
+so no winner depends on Lua iteration. Repair preserves unrelated state,
+advances sequence only as required, exposes no partial repair, and publishes no
+notification event.
+
+Targets and optional routes are declarative only. The clarification introduces
+no rendering, host delivery, route execution, navigation, gameplay authority,
+stable multiplayer identity, per-player persistence, expiry system, external
+identifier, or general ForgeOS State Service. Production remains at
+`REGISTRATION_OPEN`; controlled verification uses one explicit Device Host
+participant.
+
 ## Remaining Open Decisions
 
 ### Cross-component
@@ -506,7 +553,7 @@ and preserved runtime evidence.
 - availability-provider composition, precedence, conflict handling, and
   diagnostics;
 - navigation/lifecycle staging and rollback;
-- notification authority boundaries;
+- multiplayer notification authority and host delivery acknowledgement;
 - whether `ForgeOSStateService` is required and which invariants it owns;
 - stable multiplayer player identity and persistence policy;
 - active-device persistence; and
@@ -534,7 +581,7 @@ and preserved runtime evidence.
 - app-state repair logging level;
 - state migration process;
 - route-level availability policies;
-- notification retention and expiry;
+- time-based notification expiry and long-term retention policy;
 - preference schema registration; and
 - per-app session-state interface.
 
@@ -558,7 +605,8 @@ contracts.
 - Stable multiplayer identity and per-player persistence are not defined.
 - The authoritative visibility owner is not defined.
 - State migration and long-term compatibility policy remain incomplete.
-- Notification authority and retention boundaries remain incomplete.
+- Multiplayer notification authority, host delivery acknowledgement, and
+  time-based expiry remain incomplete.
 
 ## M2.002 Implementation and Verification
 
@@ -1062,9 +1110,9 @@ Implementation and runtime evidence confirm:
 The authoritative evidence is recorded in
 [M2.008 Runtime Verification](M2.008RuntimeVerification.md).
 
-This acceptance does not complete the overall M2 ForgeOS milestone. The next
-implementation boundary is M2.009 – Notification Service, which has not
-started.
+This acceptance does not complete the overall M2 ForgeOS milestone. M2.009 –
+Notification Service is now separately implemented, verified, accepted, and
+frozen below.
 
 ### M2.008 Navigation Service Contract Freeze
 
@@ -1114,6 +1162,106 @@ The M2.008 freeze does not implement, verify, or resolve:
 - stable multiplayer identity, per-player persistence, or long-term state
   migration;
 - later ForgeOS services or hosts; or
+- unrelated open decisions, deferred assumptions, and architecture gaps.
+
+## M2.009 Implementation, Verification, and Acceptance
+
+The Project Director accepts the bounded M2.009 Notification Foundation. The
+Chief Architect accepts its technical alignment and bounded contract freeze.
+
+Maturity is:
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| Complete | Complete | Complete | Complete | Complete |
+
+Implementation and runtime evidence confirm:
+
+- the frozen public creation, read, dismissal, single-record, and list-query
+  facade;
+- intentional primitive `nil` and empty-array query failure behavior;
+- local `ForgeOSPlayerId.LOCAL` scope without a public player argument;
+- deterministic validation and operation-result precedence;
+- detached controlled plain-data definitions, records, queries, events, and
+  persistence;
+- transient, session, and savegame notification lifetimes;
+- unpadded monotonic identifiers consumed by every successful creation and by
+  no failed creation;
+- sequence continuity across transient gaps and savegame restoration;
+- idempotent read and dismissal state with post-commit completed events;
+- registered declarative device targets and non-executing optional routes;
+- bounded retention with oldest dismissed then oldest read reclamation and
+  `STATE_ERROR` when safe reclamation is impossible;
+- deterministic restoration, complete duplicate identifier and
+  `createdOrder` conflict-group rejection, and no partial repaired state;
+- preservation of unrelated `forge.os` state and compatibility with older
+  state lacking notification fields;
+- shutdown, restart, hard-restart persistence restoration, and listener-failure
+  isolation;
+- complete retained M2.003–M2.008 regression-suite success;
+- controlled runtime-active verification with one explicit Device Host test
+  participant;
+- production integration while correctly remaining at `REGISTRATION_OPEN`;
+- traceable source, synchronization, package, deployment, and two-cycle runtime
+  evidence; and
+- restored synchronized operational load order.
+
+The authoritative evidence is recorded in
+[M2.009 Runtime Verification](M2.009RuntimeVerification.md).
+
+This acceptance does not complete the overall M2 ForgeOS milestone. The next
+implementation boundary is M2.010 – Phone Host.
+
+### M2.009 Notification Service Contract Freeze
+
+The implemented and verified M2.009 baseline is frozen for:
+
+- `FORGE.ForgeOS:createNotification(definition)` and its result/identifier
+  contract;
+- `FORGE.ForgeOS:markNotificationRead(notificationId)`;
+- `FORGE.ForgeOS:dismissNotification(notificationId)`;
+- `FORGE.ForgeOS:getNotification(notificationId)`;
+- `FORGE.ForgeOS:getNotifications(deviceId, includeDismissed)`;
+- `ForgeOSPlayerId.LOCAL` resolution without a public player argument;
+- the approved notification definition schema and validation precedence;
+- controlled plain-data, detachment, and unknown-top-level-field behavior;
+- unpadded `notification.<decimal sequence>` generation and allocation rules;
+- Notification Service ownership of delivery records, identifiers, ordering,
+  read/dismiss state, persistence policy, retention, repair, and completed
+  notification events;
+- originating-domain ownership of represented gameplay facts;
+- transient, session, and savegame lifetime semantics;
+- the persisted `players[player.local].notifications` map and
+  `notificationNextSequence` compatibility subtree;
+- bounded deterministic reclamation and private literal capacity;
+- restoration validation, complete conflict-group rejection, sequence repair,
+  unrelated-state preservation, and repair atomicity;
+- event identity, detached payloads, post-commit timing, idempotence, and
+  listener-failure isolation;
+- absence of rendering, host delivery, route execution, navigation, gameplay
+  authority, or expiry behavior; and
+- component, integration, regression, synchronization, packaging, deployment,
+  hard-restart restoration, and runtime-evidence requirements.
+
+These contracts MUST NOT change silently. Public changes require architecture
+and compatibility review. Persistence-facing changes require schema/version
+compatibility review, migration or explicit compatibility handling,
+persistence tests, runtime restoration evidence, and documentation review.
+
+### Explicit M2.009 Non-Freeze Scope
+
+The M2.009 freeze does not implement, verify, or resolve:
+
+- stable multiplayer identity or true per-player persistence;
+- multiplayer notification authority or host delivery acknowledgement;
+- notification rendering, host presentation, or cross-device delivery state;
+- notification actions or notification-driven navigation;
+- time-based expiry or caller-controlled removal;
+- external stable notification identifiers;
+- gameplay-fact lifetime or authority beyond the recorded ownership boundary;
+- preference schema registration;
+- a general `ForgeOSStateService` or long-term ForgeOS migration architecture;
+- Phone Host, Laptop Host, or later ForgeOS integration milestones; or
 - unrelated open decisions, deferred assumptions, and architecture gaps.
 
 ## Contract Freeze
@@ -1250,7 +1398,11 @@ frozen at v0.1.
 - M2.008 verification: complete
 - M2.008 acceptance: complete
 - M2.008 freeze: recorded
+- M2.009 implementation: complete
+- M2.009 verification: complete
+- M2.009 acceptance: complete
+- M2.009 freeze: recorded
 - Development Verification Bootstrap: excluded from operational load order
-- Next implementation boundary: M2.009 – Notification Service
+- Next implementation boundary: M2.010 – Phone Host
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above

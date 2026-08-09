@@ -357,7 +357,25 @@ Device Host test participant. Production correctly remains at
 
 ---
 
-#### ⏳ M2.009 – Notification Service
+#### ✅ M2.009 – Notification Service
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.009 is implemented, synchronized, runtime verified, accepted, and frozen
+within its bounded Notification Foundation scope. Two FS25 cycles using one
+unchanged package verify hard-restart savegame restoration, session absence,
+read/dismiss state, and monotonic sequence continuity.
+
+Evidence:
+
+- [ForgeOS Architecture](../forgeos/ForgeOSArchitecture.md)
+- [ForgeOS Component Design](../forgeos/ForgeOSComponentDesign.md)
+- [ForgeOS Definitions](../forgeos/ForgeOSDefinitions.md)
+- [ForgeOS State Model](../forgeos/ForgeOSStateModel.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.009 Runtime Verification](../reviews/M2.009RuntimeVerification.md)
 
 - Notification creation
 - Notification dismissal

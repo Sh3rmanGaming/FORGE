@@ -1154,7 +1154,7 @@ determine the result.
 
 Notifications require an explicit persistence policy.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.NotificationPersistence = {
@@ -1219,7 +1219,7 @@ Only plain persistable notification data may use this policy.
 
 ForgeOS notifications should use consistent severity identifiers.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.NotificationSeverity = {
@@ -1463,11 +1463,42 @@ private capacity is not a public definition or persistence contract.
 ```lua
 {
     playerId = "player.local",
-    notificationId = "notification.000001",
+    notificationId = "notification.1",
     source = "forge.projects",
-    persistence = "savegame"
+    persistence = "savegame",
+    notification = detachedNotification
 }
 ```
+
+For M2.009, every successful creation allocates an identifier in the form
+`notification.<unpadded decimal sequence>`. Successful transient creation
+advances the persisted sequence even though it retains no record. Failed
+creation consumes no identifier, and gaps caused by transient records are
+valid.
+
+`NOTIFICATION_READ` payload:
+
+```lua
+{
+    playerId = "player.local",
+    notificationId = "notification.1",
+    read = true
+}
+```
+
+`NOTIFICATION_DISMISSED` payload:
+
+```lua
+{
+    playerId = "player.local",
+    notificationId = "notification.1",
+    dismissed = true
+}
+```
+
+Notification events announce only completed non-idempotent changes. Payloads
+are detached. Listener failure does not roll back committed state or alter the
+operation result.
 
 Events announce completed changes.
 
@@ -1625,16 +1656,16 @@ Route identifiers must:
 Notification identifiers must be unique within the relevant ForgeOS state
 scope.
 
-Proposed initial format:
+Implemented M2.009 format:
 
 ```text
-notification.<numericId>
+notification.<unpadded decimal sequence>
 ```
 
 Example:
 
 ```text
-notification.000001
+notification.1
 ```
 
 The Notification Service should own identifier generation.

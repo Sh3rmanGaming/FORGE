@@ -371,16 +371,19 @@ M2.005 – App Registry
 M2.006 – Presentation Resolver
 M2.007 – Lifecycle Service
 M2.008 – Navigation Service
+M2.009 – Notification Service
 ```
 
 Next implementation stage:
 
 ```text
-M2.009 – Notification Service
+M2.010 – Phone Host
 ```
 
-M2.008 is implemented, synchronized, accepted, and runtime verified. M2.009
-has not started. The overall M2 ForgeOS milestone remains in progress.
+M2.009 – Notification Foundation is implemented, synchronized, runtime
+verified, accepted, and frozen within its bounded scope. M2.010 – Phone Host is
+the next implementation boundary. The overall M2 ForgeOS milestone remains in
+progress.
 
 ---
 

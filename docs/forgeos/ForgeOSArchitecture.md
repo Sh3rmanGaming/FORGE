@@ -763,7 +763,65 @@ Company Reputation Increased
 ```
 
 Notification state belongs to the Notification Service rather than individual
-applications. Notification authority boundaries remain an open decision.
+applications. M2.009 resolves the delivery-record/gameplay-fact boundary;
+multiplayer authority and host delivery acknowledgement remain open.
+
+## M2.009 Notification Foundation Clarification
+
+M2.009 makes the player-facing delivery-record boundary deterministic for the
+isolated `player.local` scope. Originating domains remain authoritative for
+gameplay facts; Notification Service exclusively owns generated notification
+identifiers, detached delivery records, read and dismissed state, ordering,
+persistence-policy handling, and completed notification events.
+
+The public facade provides `createNotification(definition)`,
+`markNotificationRead(notificationId)`, and
+`dismissNotification(notificationId)`. Read-only queries expose one detached
+record or an oldest-to-newest detached list optionally filtered by registered
+target device and dismissed state. Operations require `RUNTIME_ACTIVE`.
+
+The M2.009 public facade is frozen for implementation as:
+
+```text
+createNotification(definition) -> ForgeOSResult, notificationId | nil
+markNotificationRead(notificationId) -> ForgeOSResult
+dismissNotification(notificationId) -> ForgeOSResult
+getNotification(notificationId) -> detachedNotification | nil
+getNotifications(deviceId, includeDismissed) -> detachedNotifications
+```
+
+No public player identifier is accepted. M2.009 resolves every operation to
+`ForgeOSPlayerId.LOCAL`. The read-only queries intentionally use primitive
+results: `nil` or an empty array means no readable query result and does not
+classify absence, invalid input, runtime unavailability, or internal failure.
+Unexpected query and restoration failures produce one controlled internal
+diagnostic without exposing partial notification state.
+
+Every successful creation receives a monotonic unpadded
+`notification.<decimal sequence>` identifier. This includes transient
+notifications, which advance the persisted sequence but retain no record.
+Session records remain runtime-only. Savegame records and the next sequence
+use the existing `forge.os` namespace. Failed creation consumes no identifier.
+
+Targets declare possible future host presentation only. They do not establish
+delivery, visibility, app availability, or gameplay authority. Optional routes
+are executable-free declarative destinations and are not resolved or navigated
+during notification creation.
+
+Retained storage is bounded. Deterministic reclamation removes the oldest
+dismissed record first, otherwise the oldest read record. Unread and
+undismissed records are never silently evicted. The initial private capacity is
+not a public definition or compatibility contract.
+
+Restoration rejects malformed or unsafe records. Every member of a duplicate
+identifier or duplicate creation-order conflict group is discarded; no winner
+depends on Lua iteration. Repair preserves unrelated ForgeOS state, honours a
+valid persisted next sequence, advances it where required, and publishes no
+notification event.
+
+M2.009 introduces no rendering, notification action, navigation, host
+behaviour, gameplay authority, stable multiplayer identity, per-player
+persistence, time-based expiry, or general ForgeOS State Service.
 
 ---
 
@@ -897,7 +955,7 @@ Future devices may include:
 8. Device capabilities MUST be data-driven.
 9. Navigation state and invariants MUST belong to the Navigation Service.
 10. Notification state and invariants MUST belong to the Notification Service;
-    notification authority boundaries remain unresolved.
+    multiplayer authority and host delivery acknowledgement remain unresolved.
 11. Persistence MUST use State Store and Save Manager.
 12. Public application identifiers MUST remain stable.
 13. Campaign authors SHOULD interact through the Campaign SDK rather than

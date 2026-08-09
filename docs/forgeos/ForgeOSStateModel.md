@@ -832,7 +832,7 @@ Conceptual structure:
 
 ```lua
 notifications = {
-    ["notification.000001"] = {
+    ["notification.1"] = {
         source = "forge.projects",
         title = "New Project Available",
         body = "Western Ridge Expansion",
@@ -868,6 +868,76 @@ SAVEGAME
 Only plain notification data may be persisted.
 
 Visual animation state remains host-local and transient.
+
+## M2.009 Notification State Contract
+
+Notification Service uses the existing local-player structure:
+
+```text
+players[player.local]
+    notifications
+    notificationNextSequence
+```
+
+The M2.009 persisted compatibility shape is a map keyed by notification
+identifier:
+
+```lua
+players["player.local"].notifications = {
+    ["notification.1"] = {
+        id = "notification.1",
+        playerId = "player.local",
+        source = "forge.projects",
+        title = "New Project Available",
+        body = "Western Ridge Expansion",
+        severity = "info",
+        persistence = "savegame",
+        targetDevices = { phone = true },
+        route = nil,
+        metadata = nil,
+        createdOrder = 1,
+        read = false,
+        dismissed = false
+    }
+}
+players["player.local"].notificationNextSequence = 2
+```
+
+The map key MUST equal the record `id`. `createdOrder` is the positive integer
+creation sequence used for deterministic oldest-to-newest ordering. `read` and
+`dismissed` are explicit booleans. Persisted records MUST use `savegame`;
+session and transient records are never valid in this subtree.
+
+The next sequence is persisted independently of retained records. Every
+successful transient, session, or savegame creation advances it; failed
+creation does not. Therefore gaps in retained identifiers are valid and must
+not be repaired away.
+
+Transient notifications retain no state. Session records are owned in runtime
+memory and clear on shutdown. Savegame records are controlled plain data in
+`forge.os`; read and dismissed state persists with them. The service preserves
+unrelated player, device, resume, and preference state whenever it commits or
+repairs notification state.
+
+Retained state is bounded. Oldest dismissed records are reclaimed first,
+otherwise oldest read records. An unread undismissed record is never silently
+evicted. The literal private capacity is not a persistence contract.
+
+Restoration discards malformed, unsafe, and non-savegame records. If restored
+records share an identifier or positive creation-order value, every member of
+that conflict group is discarded. Survivors are ordered by creation order.
+Repair respects a valid persisted next sequence and raises it above surviving
+identifiers and orders where necessary. No notification event publishes during
+repair, and failed repair exposes no partially repaired service state.
+
+Older state with either notification field absent is valid. It is interpreted
+as no retained notifications and next sequence `1`, then normalized without
+disturbing unrelated `forge.os` state. Once M2.009 is accepted and frozen,
+previously valid savegame notification records form an implementation
+compatibility contract. A breaking representation change requires schema and
+version review, migration or explicit compatibility handling, persistence
+tests, runtime restoration evidence, and documentation review. General
+long-term ForgeOS migration architecture remains deferred.
 
 ---
 

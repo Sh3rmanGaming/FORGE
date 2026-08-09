@@ -1019,7 +1019,7 @@ It tracks:
 
 ```lua
 {
-    id = "notification.000001",
+    id = "notification.1",
     source = "forge.projects",
     title = "New Project Available",
     body = "Western Ridge Expansion is available for review.",
@@ -1048,7 +1048,76 @@ Notifications must distinguish between:
 
 The notification record may be authoritative while its animation remains local.
 
-## Proposed Location
+## M2.009 Deterministic Contract
+
+Notification Service records delivery state; the originating domain retains
+authority over the represented gameplay fact. The service accepts detached
+definitions containing source, title, body, severity, persistence policy,
+registered device targets, and optional declarative route and metadata.
+
+Every successful transient, session, or savegame creation allocates one
+monotonic generated identifier and commits the next sequence before publishing
+`NOTIFICATION_CREATED`. Transient records are event-only, session records are
+runtime-only, and savegame records are retained under `forge.os`. Read and
+dismiss operations are idempotent and publish their completed event only after
+commit.
+
+Runtime retained storage is bounded. The service reclaims the oldest dismissed
+record, otherwise the oldest read record, and refuses creation rather than
+silently evicting an unread undismissed record. The capacity is private.
+
+Lazy restoration builds a complete staged repaired set before State Store
+replacement. All records in duplicate identifier or creation-order conflict
+groups are discarded. Repair retains no arbitrary winner, preserves unrelated
+state, and emits no notification event.
+
+The component does not render, invoke hosts, execute routes, mutate lifecycle
+or navigation, or own the gameplay condition described by a record.
+
+### Public operations and queries
+
+State-changing operations return `ForgeOSResult`. Creation additionally
+returns the generated identifier on success. Read and dismiss validate the
+identifier, require `RUNTIME_ACTIVE`, require a retained record, treat an
+already-completed change as idempotent success, commit, and only then publish
+the completed event.
+
+Creation applies this precedence:
+
+1. outer argument shape;
+2. scalar schema, severity, and persistence;
+3. target structure;
+4. route and metadata controlled-data validation;
+5. `RUNTIME_ACTIVE`;
+6. registered target devices;
+7. retained-capacity availability;
+8. identifier allocation and staged mutation;
+9. State Store replacement and authoritative commit; and
+10. `NOTIFICATION_CREATED` publication.
+
+`getNotification(notificationId)` returns a detached record or `nil`.
+`getNotifications(deviceId, includeDismissed)` returns a detached,
+oldest-to-newest array and excludes dismissed records unless explicitly
+requested. Invalid input, runtime unavailability, absence, and internal repair
+failure deliberately collapse to `nil` or `{}`. Unexpected internal or repair
+failure emits one controlled diagnostic.
+
+### Notification definition
+
+Required fields are `source`, `title`, `body`, `severity`, `persistence`, and
+`targetDevices`. Optional fields are declarative `route` and controlled
+plain-data `metadata`. Source, device, app, and route identifiers use the
+existing non-empty, no-whitespace identifier rule. Title and body are strings;
+body may be empty. Every target value is exactly `true`, at least one target is
+required, and every target device must be registered before commit.
+
+Route existence is not validated during creation. Route parameters and
+metadata reject functions, userdata, threads, non-finite numbers, cycles,
+shared-reference graphs, metatables, non-string keys, and executable or
+runtime objects. Unknown top-level definition fields are ignored and are not
+retained; they do not extend the approved schema.
+
+## Location
 
 ```text
 forgeos/services/NotificationService.lua
@@ -1560,8 +1629,9 @@ and re-entrancy behaviour remain unresolved.
 
 ## Notification authority boundaries
 
-The boundary between authoritative gameplay facts, ForgeOS notification
-records, and player-local delivery state remains unresolved.
+M2.009 assigns gameplay facts to their originating domains and player-facing
+delivery records to Notification Service. Multiplayer authority and host
+delivery acknowledgement remain unresolved.
 
 ## ForgeOSStateService
 

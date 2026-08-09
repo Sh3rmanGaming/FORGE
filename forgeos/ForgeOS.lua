@@ -163,6 +163,9 @@ local function completeShutdown()
     local navigationCleanupResult =
         FORGE.NavigationService:clearRuntimeState()
 
+    local notificationCleanupResult =
+        FORGE.NotificationService:clearRuntimeState()
+
     local participantCleanupResult =
         FORGE.ForgeOSRegistrationCoordinator
             :clearRegistrationParticipants()
@@ -190,6 +193,10 @@ local function completeShutdown()
 
     if navigationCleanupResult ~= Result.SUCCESS then
         return navigationCleanupResult
+    end
+
+    if notificationCleanupResult ~= Result.SUCCESS then
+        return notificationCleanupResult
     end
 
     return Result.SUCCESS
@@ -499,6 +506,31 @@ end
 function FORGE.ForgeOS:getNavigationHistory(deviceId, appId)
     return FORGE.NavigationService
         :getNavigationHistory(deviceId, appId)
+end
+
+function FORGE.ForgeOS:createNotification(definition)
+    return FORGE.NotificationService:createNotification(definition)
+end
+
+function FORGE.ForgeOS:markNotificationRead(notificationId)
+    return FORGE.NotificationService
+        :markNotificationRead(notificationId)
+end
+
+function FORGE.ForgeOS:dismissNotification(notificationId)
+    return FORGE.NotificationService
+        :dismissNotification(notificationId)
+end
+
+function FORGE.ForgeOS:getNotification(notificationId)
+    return FORGE.NotificationService:getNotification(notificationId)
+end
+
+function FORGE.ForgeOS:getNotifications(deviceId, includeDismissed)
+    return FORGE.NotificationService:getNotifications(
+        deviceId,
+        includeDismissed
+    )
 end
 
 --- Starts or idempotently confirms the ForgeOS lifecycle.

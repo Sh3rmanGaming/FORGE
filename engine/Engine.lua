@@ -269,6 +269,12 @@ local function runDevelopmentTests()
         FORGE.Tests.runForgeOSNavigationIntegrationTests
     )
 
+    runHarness(FORGE.Tests.runNotificationServiceTests)
+
+    runHarness(
+        FORGE.Tests.runForgeOSNotificationIntegrationTests
+    )
+
     if suitePassed then
         FORGE.Logger:info(
             FORGE.Definitions.LogSource.TEST,
