@@ -266,7 +266,23 @@ Each device definition/profile may expose capabilities such as:
 - windowed applications
 - multitasking
 
-ForgeOS MUST never hardcode phone or laptop behaviour.
+General ForgeOS services MUST never hardcode phone or laptop presentation
+behaviour. Approved bootstrap code may register built-in device profiles and
+Host implementations; their presentation behavior remains inside each Host.
+
+## M2.010 Production Host Ownership
+
+The production Device Host Registry owns immutable Host definitions and
+device-to-Host validation. ForgeOS bootstrap owns the one local runtime
+PhoneHost instance. A runtime-only Device State Service owns visibility.
+PhoneHost requests state changes through ForgeOS and never mutates State Store,
+registries, persistence, or other service internals.
+
+Production registration is completed once during the first eligible Engine
+update after `loadMap()` and persistence restoration finish. Successful
+completion enters `RUNTIME_ACTIVE` and publishes `STARTED`; PhoneHost is created
+and initialized afterward. `STARTED` therefore proves ForgeOS runtime
+activation, not later Host readiness.
 
 ---
 
@@ -641,9 +657,10 @@ and before `REGISTRATION_OPENED` observers are invited to register.
 Installation failure follows the existing partial-startup rollback contract.
 Cleanup clears definitions, private runtime assets, and frozen state.
 
-Production ForgeOS remains at `REGISTRATION_OPEN` until the concrete Device
-Host Registry participant exists. Explicit tests may represent that deferred
-role in development verification only.
+Before M2.010, production ForgeOS remained at `REGISTRATION_OPEN` because no
+concrete Device Host Registry participant existed. M2.010 supplies the real
+participant; production now completes registration on the first eligible
+post-load Engine update without a placeholder participant.
 
 ### Rationale
 
@@ -1028,6 +1045,21 @@ including Projects, Banking, Companies, Communications, and the Campaign SDK,
 will be built.
 
 ---
+
+## Provisional FS25 Cross-Mod Acquisition Adapter
+
+M2.010 introduces `FORGE.ForgeOSExportBridge` as a narrow FS25 adapter carried
+by the local process's `g_messageCenter`. A dependent mod publishes one
+version-1 request on `forge.crossMod.forgeOS.request.v1`; a single active FORGE
+provider may return only the existing `FORGE.ForgeOS` facade through the
+caller-owned response table. Dependency ordering does not place FORGE globals
+inside another mod's custom Lua environment.
+
+The bridge is local-process only. It provides no RPC, network authority, state
+access, registration storage, or access to the surrounding FORGE namespace.
+Its exact message-center protocol remains provisional until real cross-mod
+runtime verification succeeds. [ADR-004](../adr/ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md)
+records the approved implementation boundary and evidence requirement.
 
 # Related Documentation
 

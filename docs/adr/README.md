@@ -59,6 +59,8 @@ Additional sections may be added where appropriate if they improve clarity.
 |-----|-------|--------|
 | [ADR-001](ADR-001-Definitions.md) | Use Dedicated Definition Tables | Accepted |
 | [ADR-002](docs/ADR/ADR-002-Separate-Persistence-Reader-and-Writer.md) | Separate Persistence Reading and Writing | Accepted |
+| [ADR-003](ADR-003-Device-Host-Lifecycle-and-Visibility.md) | Device Host Lifecycle and Visibility Ownership | Accepted |
+| [ADR-004](ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md) | FS25 Cross-Mod ForgeOS Export Bridge | Accepted |
 
 As new ADRs are created, update this table to provide a quick index of the project's architectural history.
 

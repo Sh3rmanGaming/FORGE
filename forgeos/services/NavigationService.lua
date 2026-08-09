@@ -379,6 +379,99 @@ function Service:getNavigationHistory(deviceId, appId)
     return history
 end
 
+--- Returns one detached, registry-validated persisted resume destination.
+-- Invalid saved destinations are discarded through the existing namespace
+-- replacement path and never exposed to a runtime Host.
+-- @param deviceId any
+-- @return string result
+-- @return table|nil resume
+function Service:getValidatedResumeDestination(deviceId)
+    if not isIdentifier(deviceId) then
+        return Result.INVALID_ARGUMENT, nil
+    end
+
+    if FORGE.ForgeOSCore:getPhase() ~= Phase.RUNTIME_ACTIVE then
+        return Result.NOT_AVAILABLE, nil
+    end
+
+    if not FORGE.DeviceRegistry:isDeviceRegistered(deviceId) then
+        return Result.NOT_REGISTERED, nil
+    end
+
+    local callSucceeded, operationResult, resume = pcall(function()
+        local state, found = FORGE.StateStore:snapshot(Namespace)
+
+        if not found or type(state.players) ~= "table" then
+            return Result.STATE_ERROR, nil
+        end
+
+        local player = state.players[PlayerId]
+        local device = type(player) == "table"
+            and type(player.devices) == "table"
+            and player.devices[deviceId]
+            or nil
+        local stored = type(device) == "table"
+            and device.resume
+            or nil
+
+        if stored == nil then
+            return Result.SUCCESS, nil
+        end
+
+        local validParameters, parameters =
+            copyParameters(stored.routeParameters)
+        local resolutionResult, resolution =
+            FORGE.PresentationResolver:resolvePresentation(
+                stored.appId,
+                deviceId
+            )
+        local valid = isIdentifier(stored.appId)
+            and isIdentifier(stored.presentationId)
+            and isIdentifier(stored.routeId)
+            and validParameters
+            and resolutionResult == Result.SUCCESS
+            and resolution.presentationId == stored.presentationId
+            and resolution.presentation.routes[stored.routeId] ~= nil
+
+        if valid then
+            return Result.SUCCESS, {
+                appId = stored.appId,
+                presentationId = stored.presentationId,
+                routeId = stored.routeId,
+                routeParameters = parameters
+            }
+        end
+
+        device.resume = nil
+
+        if not FORGE.StateStore:replaceNamespace(Namespace, state) then
+            return Result.STATE_ERROR, nil
+        end
+
+        FORGE.Logger:warning(
+            FORGE.Definitions.LogSource.NAVIGATION,
+            "Discarded invalid Phone navigation resume destination"
+        )
+
+        return Result.SUCCESS, nil
+    end)
+
+    if not callSucceeded then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.NAVIGATION,
+            "Unexpected navigation resume validation failure: %s",
+            FORGE.Logger:safeToString(
+                operationResult,
+                "<unprintable error>"
+            )
+        )
+
+        return Result.INTERNAL_ERROR, nil
+    end
+
+    return operationResult, resume
+end
+
 function Service:clearRuntimeState()
     records = {}
     return Result.SUCCESS

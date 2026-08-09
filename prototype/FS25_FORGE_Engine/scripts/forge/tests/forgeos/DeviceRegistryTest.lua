@@ -142,7 +142,7 @@ function FORGE.Tests.runDeviceRegistryTests()
             end
 
             if #FORGE.ForgeOS
-                :getRegisteredDeviceIds() ~= 0
+                :getRegisteredDeviceIds() ~= 1
                 or observed.count ~= 0 then
                 error("Rejected registration retained state or published an event")
             end
@@ -161,8 +161,8 @@ function FORGE.Tests.runDeviceRegistryTests()
             ] = true
 
             local phone = {
-                id = "phone",
-                displayName = "Phone",
+                id = "test.phone",
+                displayName = "Test Phone",
                 hostId = "forge.phoneHost",
                 capabilities = allCapabilities,
                 policy = {
@@ -179,9 +179,9 @@ function FORGE.Tests.runDeviceRegistryTests()
             if FORGE.ForgeOS:registerDevice(phone)
                     ~= Result.SUCCESS
                 or observed.count ~= 1
-                or observed.lastDeviceId ~= "phone"
+                or observed.lastDeviceId ~= "test.phone"
                 or not FORGE.ForgeOS
-                    :isDeviceRegistered("phone") then
+                    :isDeviceRegistered("test.phone") then
                 error("Valid device definition did not commit")
             end
 
@@ -193,9 +193,9 @@ function FORGE.Tests.runDeviceRegistryTests()
 
             local stored =
                 FORGE.ForgeOS
-                    :getDeviceDefinition("phone")
+                    :getDeviceDefinition("test.phone")
 
-            if stored.displayName ~= "Phone"
+            if stored.displayName ~= "Test Phone"
                 or stored.capabilities[
                     Capability.TOUCH_INPUT
                 ] ~= true
@@ -208,8 +208,8 @@ function FORGE.Tests.runDeviceRegistryTests()
             stored.displayName = "Query mutation"
 
             if FORGE.ForgeOS
-                    :getDeviceDefinition("phone")
-                    .displayName ~= "Phone" then
+                    :getDeviceDefinition("test.phone")
+                    .displayName ~= "Test Phone" then
                 error("Query result exposed authoritative storage")
             end
 
@@ -248,7 +248,8 @@ function FORGE.Tests.runDeviceRegistryTests()
 
             if identifiers[1] ~= "laptop"
                 or identifiers[2] ~= "phone"
-                or identifiers[3] ~= nil then
+                or identifiers[3] ~= "test.phone"
+                or identifiers[4] ~= nil then
                 error("Device identifiers are not lexically ordered")
             end
 

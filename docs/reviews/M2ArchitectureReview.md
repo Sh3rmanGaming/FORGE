@@ -78,9 +78,9 @@ instances are not registrations.
 
 ### Device Host Registry boundary
 
-The Device Host Registry registers device host implementations. Runtime host
-instance creation, tracking, and ownership remain subject to the future host
-lifecycle design.
+The Device Host Registry registers device host implementations. ADR-003 assigns
+private instance construction to the registry and ownership of returned runtime
+instances to ForgeOS bootstrap for M2.010 and M2.011.
 
 ### Presentation fallback
 
@@ -119,7 +119,7 @@ state.
 
 Device host implementations may request visibility changes through the public
 ForgeOS API but may not mutate authoritative visibility state directly.
-Authoritative ownership remains unresolved.
+ADR-003 assigns M2.010 runtime visibility to the bounded Device State Service.
 
 ## Architecture Change Log
 
@@ -576,7 +576,7 @@ participant.
 
 ### State model
 
-- authoritative visibility owner and exact visibility API;
+- long-term visibility ownership beyond the bounded M2.010 runtime service;
 - exact persistence mechanism for presentation preferences;
 - app-state repair logging level;
 - state migration process;
@@ -591,7 +591,8 @@ participant.
 - Current persistence remains savegame-global.
 - True per-player multiplayer persistence is not implemented.
 - M2 assumes one active application per device type.
-- Device host instance ownership is not assigned.
+- General multi-instance Host ownership is not assigned; ADR-003 assigns the
+  single local PhoneHost instance to ForgeOS bootstrap.
 - Atomicity staging, rollback, callback timing, and re-entrancy are not selected.
 
 These assumptions are constraints or deferrals, not resolved long-term
@@ -599,11 +600,11 @@ contracts.
 
 ## Remaining Architecture Gaps
 
-- Presentation Resolver ownership and component boundaries are not yet
-  explicitly defined in the Component Design.
-- The device host instance lifecycle and owner are not defined.
+- General multiple-host-instance lifecycle remains deferred; M2.010 assigns the
+  single local runtime PhoneHost instance to ForgeOS bootstrap.
 - Stable multiplayer identity and per-player persistence are not defined.
-- The authoritative visibility owner is not defined.
+- Long-term visibility ownership beyond the bounded runtime Device State
+  Service remains subject to later architecture.
 - State migration and long-term compatibility policy remain incomplete.
 - Multiplayer notification authority, host delivery acknowledgement, and
   time-based expiry remain incomplete.
@@ -706,7 +707,7 @@ Lifecycle and Registration Coordinator foundations. Parent maturity is:
 | Complete | Complete | Complete | Complete | Complete |
 
 This acceptance does not complete the overall M2 ForgeOS milestone. The next
-implementation boundary is M2.004 – Device Registry, which has not started.
+implementation boundary was M2.004 – Device Registry, now accepted and frozen.
 
 ## M2.004 Implementation, Verification, and Acceptance
 
@@ -739,7 +740,7 @@ The authoritative runtime evidence is recorded in
 [M2.004 Runtime Verification](M2.004RuntimeVerification.md).
 
 This acceptance does not complete the overall M2 ForgeOS milestone. The next
-implementation boundary is M2.005 – App Registry, which has not started.
+implementation boundary was M2.005 – App Registry, now accepted and frozen.
 
 ### M2.004 Contract Freeze
 
@@ -1023,7 +1024,7 @@ The authoritative evidence is recorded in
 [M2.007 Runtime Verification](M2.007RuntimeVerification.md).
 
 This acceptance does not complete the overall M2 ForgeOS milestone. The next
-implementation boundary is M2.008 – Navigation Service, which has not started.
+implementation boundary was M2.008 – Navigation Service, now accepted and frozen.
 
 ### M2.007 Lifecycle Service Contract Freeze
 
@@ -1402,7 +1403,89 @@ frozen at v0.1.
 - M2.009 verification: complete
 - M2.009 acceptance: complete
 - M2.009 freeze: recorded
+- M2.010 implementation: complete
+- M2.010 verification: complete
+- M2.010 acceptance: complete
+- M2.010 freeze: recorded
 - Development Verification Bootstrap: excluded from operational load order
-- Next implementation boundary: M2.010 – Phone Host
+- Next implementation boundary: M2.011 – Laptop Host (not started)
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above
+
+## M2.010 Cross-Mod ForgeOS Export Bridge Clarification
+
+The Project Director and Chief Architect approved ADR-004 for implementation
+and runtime proof during M2.010. Real FS25 evidence established that dependency
+ordering loads FORGE first but does not expose its globals in the dependent
+mod's custom environment, and that the attempted `ClassUtil.getClassObject`
+resolver is unavailable there.
+
+The approved correction is the local-process `FORGE.ForgeOSExportBridge`, using
+`g_messageCenter` solely as the FS25 carrier and returning only the existing
+public `FORGE.ForgeOS` facade. Bridge runtime proof and M2.010 verification
+subsequently completed in two controlled cycles. The exact version-1 protocol
+is included in the bounded acceptance freeze recorded below.
+
+## M2.010 Milestone Acceptance and Bounded Freeze
+
+M2.010 is authored, architecture-reviewed, approved, implemented, and verified.
+The authoritative record is
+[M2.010 Runtime Verification](M2.010RuntimeVerification.md). Both cycles used
+the reviewed deployed packages, and Cycle 2 crossed a real process restart and
+save boundary. Production ForgeOS reached `RUNTIME_ACTIVE` for the first time
+with its first concrete Device Host, while a real external companion registered
+during the preceding `REGISTRATION_OPEN` window.
+
+The bounded freeze covers:
+
+- the production Device Registry, Device Host Registry, and App Registry
+  topology; authoritative Host-definition ownership, validation, uniqueness,
+  freeze and cleanup; private factory retention; bounded construction without
+  runtime-instance ownership; and no public third-party Host registration API;
+- one ForgeOS-owned local PhoneHost per lifecycle, constructed only after
+  successful `RUNTIME_ACTIVE`, with deterministic destruction and no retained
+  partial instance after startup failure;
+- deferred one-shot completion on the first eligible Engine update, without
+  timers, frame delays, sleeps, or retries; `STARTED` continues to mean entry
+  into `RUNTIME_ACTIVE` and occurs before PhoneHost readiness;
+- Device State Service authority over runtime-only visibility, initially
+  hidden Phone state, idempotent result-bearing show/hide, read-only visibility
+  query, change-only events, listener isolation, and same-runtime app/navigation
+  preservation without `activeDeviceId` persistence;
+- the minimal Phone shell, Home surface, active app/presentation/route display,
+  notification count and tray, existing notification read/dismiss operations,
+  deterministic update/draw and bounded input, without direct registry,
+  persistence, or State Store mutation and without arbitrary controller
+  execution;
+- `FORGE_TOGGLE_PHONE` with F7 as its current default, normal FS25 remapping,
+  Engine-owned callback/input integration, and no physical-key hard-coding in
+  PhoneHost. F7 supersedes Left Alt+P because the modifier chord proved
+  unreliable during FS25 integration;
+- internal detached validated Phone resume through existing `openApp()`,
+  `activateApp()`, and `navigate()` operations, including hard-restart restore,
+  without raw Navigation persistence access, `activeDeviceId` persistence, or
+  a general cross-service transaction; and
+- the local-process version-1 `FORGE.ForgeOSExportBridge` carried by
+  `g_messageCenter` on `forge.crossMod.forgeOS.request.v1`: synchronous
+  caller-owned response mutation, exactly one responder, duplicate rejection,
+  version validation, `FORGE.ForgeOS`-only export, no consumer retention,
+  deterministic cleanup, and no serialization or surrounding namespace export.
+
+[ADR-003](../adr/ADR-003-Device-Host-Lifecycle-and-Visibility.md) and
+[ADR-004](../adr/ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md) remain the
+accepted governing decisions. The
+[ForgeOS Addon Integration guide](../developer/ForgeOSAddonIntegration.md) and
+`verification/FS25_FORGE_M2010_Verifier/` are respectively the first verified
+integration guidance and non-production companion reference. The verifier
+remains excluded from production synchronization, packaging, and load order.
+
+This freeze does not cover Laptop Host, multiple Host instances, multiplayer
+Host ownership, stable multiplayer identity, dedicated-server Phone or bridge
+behaviour, remote facade access, third-party Host namespace governance, public
+Host registration, `activeDeviceId` persistence, generalized visibility,
+general app/controller rendering, notification actions/navigation, general
+cursor/focus ownership, general multi-service transactions, or a general State
+Service. Dedicated-server behaviour is explicitly unverified.
+
+M2.011 – Laptop Host is the next implementation boundary and has not started.
+Overall M2 remains In Progress.

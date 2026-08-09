@@ -22,34 +22,11 @@ function FORGE.Tests.runAppLifecycleServiceTests()
     local Result = FORGE.Definitions.ForgeOSResult
     local State = FORGE.Definitions.AppLifecycleState
     local Capability = FORGE.Definitions.DeviceCapability
-    local Role = FORGE.ForgeOSRegistrationCoordinator.Role
     local calls = {}
     local lifecycleEventCount = 0
     local lifecycleEvents = {}
     local failRequested = false
     local reentrantResult = nil
-
-    local function host()
-        local value = { frozen = false }
-        function value:getRegistrationRole()
-            return Role.DEVICE_HOST_REGISTRY
-        end
-        function value:validateRegistrationSet()
-            return Result.SUCCESS
-        end
-        function value:freezeRegistrationSet()
-            self.frozen = true
-            return Result.SUCCESS
-        end
-        function value:clearRegistrationSet()
-            self.frozen = false
-            return Result.SUCCESS
-        end
-        function value:isRegistrationSetFrozen()
-            return self.frozen
-        end
-        return value
-    end
 
     local function app(appId)
         local function record(name)
@@ -116,13 +93,6 @@ function FORGE.Tests.runAppLifecycleServiceTests()
         end
 
         if FORGE.ForgeOS:registerDevice({
-            id = "phone",
-            displayName = "Phone",
-            capabilities = {
-                [Capability.BACKGROUND_APPS] = true
-            }
-        }) ~= Result.SUCCESS
-            or FORGE.ForgeOS:registerDevice({
                 id = "terminal",
                 displayName = "Terminal",
                 capabilities = {}
@@ -157,9 +127,7 @@ function FORGE.Tests.runAppLifecycleServiceTests()
             error("Lifecycle callback leaked into public snapshot")
         end
 
-        if FORGE.ForgeOSRegistrationCoordinator
-                :installParticipant(host()) ~= Result.SUCCESS
-            or FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS
+        if FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS
             or FORGE.AppRegistry:getLifecycleCallback(
                 "forge.first", "onOpen"
             ) == nil then

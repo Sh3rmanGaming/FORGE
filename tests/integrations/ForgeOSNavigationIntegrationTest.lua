@@ -6,7 +6,7 @@
 --- Responsibilities:
 ---     • Verify public lifecycle-to-navigation integration.
 ---     • Verify route, back, resume, event, cleanup, and restart behavior.
----     • Verify production remains registration-open without a Host registry.
+---     • Verify Navigation with the production Device Host Registry.
 ---
 --- This manual harness is invoked only by the Engine development test runner.
 ---=============================================================================
@@ -20,24 +20,7 @@ function FORGE.Tests.runForgeOSNavigationIntegrationTests()
     )
     local Result = FORGE.Definitions.ForgeOSResult
     local Phase = FORGE.Definitions.ForgeOSPhase
-    local Role = FORGE.ForgeOSRegistrationCoordinator.Role
     local eventCount = 0
-
-    local function host()
-        local value = { frozen = false }
-        function value:getRegistrationRole() return Role.DEVICE_HOST_REGISTRY end
-        function value:validateRegistrationSet() return Result.SUCCESS end
-        function value:freezeRegistrationSet()
-            self.frozen = true
-            return Result.SUCCESS
-        end
-        function value:clearRegistrationSet()
-            self.frozen = false
-            return Result.SUCCESS
-        end
-        function value:isRegistrationSetFrozen() return self.frozen end
-        return value
-    end
 
     local function cleanup()
         FORGE.ForgeOS:shutdown()
@@ -54,10 +37,7 @@ function FORGE.Tests.runForgeOSNavigationIntegrationTests()
                 ~= Result.NOT_AVAILABLE then
             error("Production Navigation gate failed")
         end
-        if FORGE.ForgeOS:registerDevice({
-            id = "phone", displayName = "Phone", capabilities = {}
-        }) ~= Result.SUCCESS
-            or FORGE.ForgeOS:registerApp({
+        if FORGE.ForgeOS:registerApp({
                 id = "forge.nav",
                 apiVersion = FORGE.Definitions.ForgeOSVersion.APP_API,
                 displayName = "Navigation",
@@ -70,8 +50,6 @@ function FORGE.Tests.runForgeOSNavigationIntegrationTests()
                     }
                 }
             }) ~= Result.SUCCESS
-            or FORGE.ForgeOSRegistrationCoordinator
-                :installParticipant(host()) ~= Result.SUCCESS
             or FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS
             or FORGE.ForgeOS:openApp("phone", "forge.nav")
                 ~= Result.SUCCESS

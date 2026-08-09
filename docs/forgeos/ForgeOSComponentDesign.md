@@ -140,7 +140,7 @@ The bootstrap must not own:
 - gameplay state
 - UI rendering
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/ForgeOS.lua
@@ -191,7 +191,7 @@ ForgeOS Core must not directly own:
 
 The Core coordinates specialised ForgeOS components.
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/ForgeOSCore.lua
@@ -352,7 +352,7 @@ consult this gate before committing registration state.
 The coordinator does not itself accept device, host, or application
 definitions.
 
-### Proposed Location
+### Location
 
 ```text
 forgeos/ForgeOSRegistrationCoordinator.lua
@@ -486,10 +486,11 @@ uniqueness only. It does not validate that `hostId` resolves, interpret
 `policy` or `metadata`, or resolve third-party namespace and ownership rules.
 
 One production Device Registry participant is installed after entry into
-`REGISTRATION_OPEN` and before `REGISTRATION_OPENED` publication. Device Host
-Registry and App Registry production participants remain deferred.
+`REGISTRATION_OPEN` and before `REGISTRATION_OPENED` publication. M2.010 also
+installs the production Device Host Registry and existing App Registry before
+that event.
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/registries/DeviceRegistry.lua
@@ -507,9 +508,9 @@ them with device definitions/profiles.
 A device definition/profile describes capabilities and policy.
 
 A device host implementation provides presentation code. A device host instance
-is its runtime object and does not participate in registration. The registry MAY
-create, locate, or track instances under the future host lifecycle design, but
-ownership of runtime instances is not yet approved.
+is its runtime object and does not participate in registration. The registry
+constructs instances through private factories; ForgeOS bootstrap owns every
+instance returned by the registry.
 
 Example:
 
@@ -518,7 +519,7 @@ Device Definition
 phone
     ↓
 Host Binding
-forge.phoneHost
+phoneHost
     ↓
 PhoneHost runtime object
 ```
@@ -563,14 +564,15 @@ ForgeOS has one registration lifecycle:
 Public content registration MUST NOT occur during `INITIALISING`. Internal
 service creation and persistence setup are not public registration.
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/registries/DeviceHostRegistry.lua
 ```
 
-This component may be deferred until the first host implementation if it proves
-unnecessary during the headless foundation.
+M2.010 installs this component as the production Device Host Registry. It owns
+immutable Host definitions, binding validation, registration freeze and
+cleanup, but never runtime instances or visibility.
 
 ---
 
@@ -682,7 +684,7 @@ while later candidates remain eligible to resolve.
 The service owns no registration, availability policy, executable invocation,
 lifecycle, navigation, rendering, persistence, or runtime state.
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/registries/AppRegistry.lua
@@ -866,7 +868,7 @@ Example:
 - Laptop may allow multiple open apps.
 - A device without background support closes or suspends the previous app.
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/services/AppLifecycleService.lua
@@ -987,7 +989,7 @@ The service updates only the navigation portion of persistent resume state
 under `forge.os/players/player.local/devices[deviceId]/resume`. Runtime history,
 controllers, providers, actions, modals, and lifecycle state are excluded.
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/services/NavigationService.lua
@@ -1208,6 +1210,23 @@ Its necessity should be decided during implementation design.
 
 ---
 
+# Device State Service
+
+## Responsibility
+
+`DeviceStateService` owns only runtime device visibility for M2.010. It starts
+the local Phone at `HIDDEN`, validates show/hide requests, commits idempotent
+visibility transitions, publishes completed visibility events, and clears its
+state at shutdown. It does not persist visibility or write `activeDeviceId`.
+
+## Location
+
+```text
+forgeos/services/DeviceStateService.lua
+```
+
+---
+
 # Phone Host
 
 ## Responsibility
@@ -1251,11 +1270,17 @@ ForgeOS event
 Phone Host rerenders
 ```
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/hosts/PhoneHost.lua
 ```
+
+M2.010 implements one local PhoneHost instance owned by ForgeOS. It renders a
+minimal Phone shell and declarative app/presentation/route identity plus a
+retained-notification tray. Application-controller rendering remains deferred.
+Engine owns FS25 callbacks and delegates bounded work to this instance only
+while ForgeOS is runtime-active.
 
 ---
 
@@ -1713,6 +1738,23 @@ implementation, including:
 - ForgeOS log source identifiers
 
 ---
+
+## ForgeOS Export Bridge (Provisional M2.010 Adapter)
+
+`FORGE.ForgeOSExportBridge` owns the `g_messageCenter` subscription lifecycle
+for the provisional version-1 cross-mod acquisition protocol. It subscribes
+after `ForgeOS:start()` opens registration and before FORGE's `loadMap` returns.
+It accepts only a strictly valid caller-owned request container, increments its
+`responderCount`, and writes only `bridgeVersion` and the exact
+`FORGE.ForgeOS` facade reference. It stores no consumer reference after the
+handler returns.
+
+Shutdown first disables responses, then removes all subscriptions owned by the
+bridge target, releases its carrier reference, and clears lifecycle state
+before normal ForgeOS shutdown. Malformed requests are ignored and unexpected
+handler failures are contained and diagnosed without mutating ForgeOS state.
+The protocol remains provisional pending the runtime proof required by
+[ADR-004](../adr/ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md).
 
 # Related Documentation
 

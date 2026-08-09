@@ -6,6 +6,22 @@
 
 ---
 
+## M2.010 Phone Host Presentation Boundary
+
+The production Phone Host presents only detached declarative application data:
+application identity/display name, resolved presentation identity, and current
+route identity. It does not execute application or route controllers and gains
+no direct access to registry, lifecycle, navigation, notification, State Store,
+or persistence internals.
+
+Phone visibility does not change application lifecycle. Hiding the Phone leaves
+the current lifecycle and navigation state intact. When runtime state is absent,
+the Host may request one validated persisted resume destination internally and
+orchestrate the existing `openApp()`, `activateApp()`, and `navigate()` public
+operations. Each operation retains its own frozen atomicity contract.
+
+---
+
 # Purpose
 
 This document defines the contract used by applications that register with

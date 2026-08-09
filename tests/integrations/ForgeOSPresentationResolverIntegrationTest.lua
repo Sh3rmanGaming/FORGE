@@ -5,9 +5,9 @@
 ---
 --- Responsibilities:
 ---     • Verify production Device and App Registry integration.
----     • Verify explicit Host participation enables runtime resolution.
+---     • Verify the production Host Registry enables runtime resolution.
 ---     • Verify exact, capability, and default public facade results.
----     • Verify production still awaits the deferred Device Host Registry.
+---     • Verify the production registration set freezes together.
 ---
 --- This manual harness is invoked only by the Engine development test runner.
 ---=============================================================================
@@ -31,32 +31,6 @@ function FORGE.Tests
                 FORGE.Definitions.DeviceCapability
             local Phase =
                 FORGE.Definitions.ForgeOSPhase
-            local Coordinator =
-                FORGE.ForgeOSRegistrationCoordinator
-            local Role = Coordinator.Role
-
-            local function host()
-                local value = { frozen = false }
-                function value:getRegistrationRole()
-                    return Role.DEVICE_HOST_REGISTRY
-                end
-                function value:validateRegistrationSet()
-                    return Result.SUCCESS
-                end
-                function value:freezeRegistrationSet()
-                    self.frozen = true
-                    return Result.SUCCESS
-                end
-                function value:clearRegistrationSet()
-                    self.frozen = false
-                    return Result.SUCCESS
-                end
-                function value:isRegistrationSetFrozen()
-                    return self.frozen
-                end
-                return value
-            end
-
             local function presentation(id, requirements)
                 return {
                     id = id,
@@ -87,11 +61,6 @@ function FORGE.Tests
                 [Capability.TOUCH_INPUT] = true
             }
             if FORGE.ForgeOS:registerDevice({
-                id = "phone",
-                displayName = "Phone",
-                capabilities = touch
-            }) ~= Result.SUCCESS
-                or FORGE.ForgeOS:registerDevice({
                     id = "tablet",
                     displayName = "Tablet",
                     capabilities = touch
@@ -148,9 +117,7 @@ function FORGE.Tests
                 end
             end
 
-            if Coordinator:installParticipant(host())
-                    ~= Result.SUCCESS
-                or FORGE.ForgeOS:completeStartup()
+            if FORGE.ForgeOS:completeStartup()
                     ~= Result.SUCCESS
                 or FORGE.ForgeOS:getPhase()
                     ~= Phase.RUNTIME_ACTIVE

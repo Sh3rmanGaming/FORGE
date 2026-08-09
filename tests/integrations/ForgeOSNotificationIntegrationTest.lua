@@ -6,7 +6,7 @@
 --- Responsibilities:
 ---     • Verify the public notification facade at runtime-active.
 ---     • Verify session/savegame state, events, shutdown, and restart.
----     • Verify production remains registration-open without a Host registry.
+---     • Verify Notifications with the production Device Host Registry.
 ---
 --- This manual harness is invoked only by the Engine development test runner.
 ---=============================================================================
@@ -20,30 +20,11 @@ function FORGE.Tests.runForgeOSNotificationIntegrationTests()
     )
     local Result = FORGE.Definitions.ForgeOSResult
     local Phase = FORGE.Definitions.ForgeOSPhase
-    local Role = FORGE.ForgeOSRegistrationCoordinator.Role
     local Persist = FORGE.Definitions.NotificationPersistence
     local Severity = FORGE.Definitions.NotificationSeverity
     local PlayerId = FORGE.Definitions.ForgeOSPlayerId.LOCAL
     local Namespace = FORGE.Definitions.ForgeOSNamespace.OS
     local created = 0
-
-    local function host()
-        local value = { frozen = false }
-        function value:getRegistrationRole()
-            return Role.DEVICE_HOST_REGISTRY
-        end
-        function value:validateRegistrationSet() return Result.SUCCESS end
-        function value:freezeRegistrationSet()
-            self.frozen = true
-            return Result.SUCCESS
-        end
-        function value:clearRegistrationSet()
-            self.frozen = false
-            return Result.SUCCESS
-        end
-        function value:isRegistrationSetFrozen() return self.frozen end
-        return value
-    end
 
     local function cleanup()
         FORGE.ForgeOS:shutdown()
@@ -61,12 +42,7 @@ function FORGE.Tests.runForgeOSNotificationIntegrationTests()
             or FORGE.ForgeOS:getPhase() ~= Phase.REGISTRATION_OPEN then
             error("Production Notification gate failed")
         end
-        if FORGE.ForgeOS:registerDevice({
-            id = "phone", displayName = "Phone", capabilities = {}
-        }) ~= Result.SUCCESS
-            or FORGE.ForgeOSRegistrationCoordinator
-                :installParticipant(host()) ~= Result.SUCCESS
-            or FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS then
+        if FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS then
             error("Notification integration setup failed")
         end
 

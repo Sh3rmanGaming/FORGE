@@ -38,21 +38,24 @@ Once the player loads or creates a savegame, Farming Simulator begins the missio
 6. The Event Bus is brought online.
 7. The Save Manager loads FORGE save data.
 8. The State Store is populated.
-9. The Phone OS is initialised.
-10. Phone applications register themselves.
-11. Campaigns are discovered and loaded.
-12. The Engine publishes a `forge.engine.ready` event.
-13. FORGE is now ready to process gameplay.
+9. ForgeOS opens registration and installs its production Device, Device Host,
+   and App Registry participants plus the built-in Phone profile and Host.
+10. Other participating mods may register while `loadMap()` processing remains
+    in progress.
+11. The first eligible Engine update completes registration exactly once.
+12. ForgeOS enters `RUNTIME_ACTIVE` and publishes `STARTED`.
+13. ForgeOS constructs and initializes the production PhoneHost.
 
 ## Phase 3 — Gameplay Runtime
 
-After FORGE publishes the `forge.engine.ready` event, normal gameplay processing begins.
+After mission loading, normal gameplay processing begins.
 
 1. FS25 calls `update(dt)` every frame.
 2. `Engine.lua` forwards update processing to active FORGE managers and systems.
 3. FS25 calls `draw()` every frame.
-4. `Engine.lua` forwards drawing to the Phone OS and any active overlays.
-5. Keyboard and mouse events are forwarded to the Input Manager.
+4. `Engine.lua` delegates drawing to a valid runtime PhoneHost while ForgeOS is
+   runtime-active.
+5. Engine owns input callbacks and delegates only bounded Phone interactions.
 6. Managers and systems communicate through the Event Bus where practical.
 7. Shared multiplayer state remains server authoritative.
 8. Clients display synced state and submit requests to the server.

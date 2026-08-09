@@ -25,9 +25,6 @@ function FORGE.Tests.runForgeOSDeviceRegistryIntegrationTests()
             local Coordinator =
                 FORGE.ForgeOSRegistrationCoordinator
 
-            local Role =
-                Coordinator.Role
-
             local Result =
                 FORGE.Definitions.ForgeOSResult
 
@@ -36,39 +33,6 @@ function FORGE.Tests.runForgeOSDeviceRegistryIntegrationTests()
 
             local Event =
                 FORGE.Definitions.ForgeOSEvent
-
-            local function createParticipant(role)
-                local participant = {
-                    role = role,
-                    frozen = false
-                }
-
-                function participant:getRegistrationRole()
-                    return self.role
-                end
-
-                function participant:validateRegistrationSet()
-                    return Result.SUCCESS
-                end
-
-                function participant:freezeRegistrationSet()
-                    self.frozen = true
-
-                    return Result.SUCCESS
-                end
-
-                function participant:clearRegistrationSet()
-                    self.frozen = false
-
-                    return Result.SUCCESS
-                end
-
-                function participant:isRegistrationSetFrozen()
-                    return self.frozen
-                end
-
-                return participant
-            end
 
             local observer = {
                 opened = 0,
@@ -80,9 +44,10 @@ function FORGE.Tests.runForgeOSDeviceRegistryIntegrationTests()
 
                 self.registryInstalledAtOpen =
                     Coordinator:installParticipant(
-                        createParticipant(
-                            Role.DEVICE_REGISTRY
-                        )
+                        FORGE.DeviceRegistry
+                    ) == Result.ALREADY_REGISTERED
+                    and Coordinator:installParticipant(
+                        FORGE.DeviceHostRegistry
                     ) == Result.ALREADY_REGISTERED
             end
 
@@ -111,21 +76,6 @@ function FORGE.Tests.runForgeOSDeviceRegistryIntegrationTests()
                 capabilities = {}
             }) ~= Result.SUCCESS then
                 error("Public Device Registry facade did not register")
-            end
-
-            if FORGE.ForgeOS:completeStartup()
-                    ~= Result.NOT_AVAILABLE
-                or FORGE.ForgeOS:getPhase()
-                    ~= Phase.REGISTRATION_OPEN then
-                error("Production startup did not await deferred participants")
-            end
-
-            if Coordinator:installParticipant(
-                    createParticipant(
-                        Role.DEVICE_HOST_REGISTRY
-                    )
-                ) ~= Result.SUCCESS then
-                error("Explicit Device Host participant was not installed")
             end
 
             if FORGE.ForgeOS:completeStartup()

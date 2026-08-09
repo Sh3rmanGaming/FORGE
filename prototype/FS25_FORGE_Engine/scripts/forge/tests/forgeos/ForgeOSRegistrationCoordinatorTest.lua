@@ -189,6 +189,17 @@ function FORGE.Tests.runForgeOSRegistrationCoordinatorTests()
                     ~= Result.SUCCESS then
                     error("Unable to start test lifecycle")
                 end
+
+                Coordinator:clearRegistrationParticipants()
+
+                if Coordinator:installParticipant(
+                        createParticipant(Role.DEVICE_REGISTRY)
+                    ) ~= Result.SUCCESS
+                    or Coordinator:installParticipant(
+                        createParticipant(Role.APP_REGISTRY)
+                    ) ~= Result.SUCCESS then
+                    error("Unable to install isolated coordinator fixtures")
+                end
             end
 
             startLifecycle()

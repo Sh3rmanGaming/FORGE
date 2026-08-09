@@ -109,7 +109,7 @@ Definitions are rebuilt through registration during startup.
 ForgeOS uses separate version identifiers for separate compatibility
 boundaries.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.ForgeOSVersion = {
@@ -155,7 +155,7 @@ A change to one version must not silently imply a change to the others.
 
 ForgeOS uses an explicit operating and registration lifecycle.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.ForgeOSPhase = {
@@ -629,7 +629,7 @@ The phone and laptop identifiers are public ForgeOS identifiers.
 
 Capabilities describe features supported by a logical device.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.DeviceCapability = {
@@ -811,7 +811,7 @@ Laptop windowing and multiple simultaneous applications are deferred.
 Device visibility describes whether a device host instance is currently
 presented to a player.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.DeviceVisibility = {
@@ -837,6 +837,20 @@ Phone hidden
 Phone visible again
     ForgeOS restores the last valid app and route
 ```
+
+M2.010 visibility operations are:
+
+```lua
+FORGE.ForgeOS:showDevice(deviceId) -> ForgeOSResult
+FORGE.ForgeOS:hideDevice(deviceId) -> ForgeOSResult
+FORGE.ForgeOS:getDeviceVisibility(deviceId) -> DeviceVisibility | nil
+```
+
+Mutation precedence is invalid identifier, runtime-active gate, registered
+device, usable runtime Host binding, authoritative state commit, then event.
+Visibility starts `HIDDEN`, is runtime-only, and idempotent calls publish no
+event. A completed change publishes `DEVICE_VISIBILITY_CHANGED` with local
+player, device, previous visibility, and current visibility identifiers.
 
 Device visibility is initially player-local runtime state.
 
@@ -990,7 +1004,7 @@ overrides clear on shutdown and are never serialized.
 
 Availability checks should return both a result and an authoritative reason.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.AppAvailabilityReason = {
@@ -1251,7 +1265,7 @@ The notification record remains presentation-independent.
 
 ForgeOS logical navigation uses defined layer types.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.NavigationLayer = {
@@ -1292,7 +1306,7 @@ A temporary navigation layer displayed above the current route.
 
 ForgeOS events must use stable authoritative identifiers.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.ForgeOSEvent = {
@@ -1511,7 +1525,7 @@ They must not replace direct API results or synchronous validation.
 ForgeOS operations should return a boolean where appropriate and may also
 return an authoritative result code.
 
-Proposed definitions:
+Implemented definitions:
 
 ```lua
 FORGE.Definitions.ForgeOSResult = {
@@ -2231,6 +2245,20 @@ M2.002 – ForgeOS Definitions is complete when:
 20. The documentation, App Contract, and State Model use the same vocabulary.
 
 ---
+
+## Provisional Cross-Mod Bridge Values
+
+The M2.010 FS25 adapter uses bridge protocol version `1` and the provisional
+message topic `forge.crossMod.forgeOS.request.v1`. These are adapter protocol
+values, not ForgeOS definition constants, engine versions, App API versions,
+or persistence versions. A consumer must independently require bridge version
+1 and `forgeOS:supportsAppApiVersion(1) == true`.
+
+The request container begins with `requestedBridgeVersion = 1` and
+`responderCount = 0`. A recognized provider may modify only
+`responderCount`, `bridgeVersion`, and `forgeOS`. Consumers accept exactly one
+responder and reject zero or multiple responders. The exact protocol is not
+frozen until its real cross-mod behaviour is verified.
 
 # Related Documentation
 

@@ -29,6 +29,8 @@ local ENGINE_NAMESPACE =
     "forge.engine"
 
 local saveHookInstalled = false
+local forgeOSCompletionPending = false
+local phoneActionRegistered = false
 
 -----------------------------------------------------------------------------
 -- Private Helpers
@@ -275,6 +277,14 @@ local function runDevelopmentTests()
         FORGE.Tests.runForgeOSNotificationIntegrationTests
     )
 
+    runHarness(FORGE.Tests.runDeviceHostRegistryTests)
+    runHarness(FORGE.Tests.runDeviceStateServiceTests)
+    runHarness(FORGE.Tests.runPhoneHostTests)
+    runHarness(FORGE.Tests.runForgeOSExportBridgeTests)
+    runHarness(FORGE.Tests.runForgeOSPhoneHostIntegrationTests)
+    runHarness(FORGE.Tests.runForgeOSCrossModBridgeIntegrationTests)
+    runHarness(FORGE.Tests.runForgeOSProductionStartupIntegrationTests)
+
     if suitePassed then
         FORGE.Logger:info(
             FORGE.Definitions.LogSource.TEST,
@@ -286,6 +296,52 @@ local function runDevelopmentTests()
             "FORGE development test suite completed with one or more reported failures"
         )
     end
+end
+
+local function registerPhoneAction()
+    if phoneActionRegistered then
+        return true
+    end
+
+    if g_inputBinding == nil
+        or type(g_inputBinding.registerActionEvent) ~= "function"
+        or InputAction == nil
+        or InputAction.FORGE_TOGGLE_PHONE == nil then
+        return false
+    end
+
+    local callSucceeded, registered, actionEventId = pcall(
+        g_inputBinding.registerActionEvent,
+        g_inputBinding,
+        InputAction.FORGE_TOGGLE_PHONE,
+        FORGE.Engine,
+        FORGE.Engine.onTogglePhone,
+        false,
+        true,
+        false,
+        true
+    )
+
+    phoneActionRegistered = callSucceeded
+        and registered == true
+        and actionEventId ~= nil
+
+    return phoneActionRegistered
+end
+
+local function unregisterPhoneAction()
+    if phoneActionRegistered
+        and g_inputBinding ~= nil
+        and type(g_inputBinding.removeActionEventsByTarget)
+            == "function" then
+        pcall(
+            g_inputBinding.removeActionEventsByTarget,
+            g_inputBinding,
+            FORGE.Engine
+        )
+    end
+
+    phoneActionRegistered = false
 end
 
 --- Loads FORGE persistence for the active authoritative mission.
@@ -512,6 +568,7 @@ end
 function FORGE.Engine:loadMap(mapName)
     self.isMissionLoaded = false
     self.mapName = mapName
+    forgeOSCompletionPending = false
 
     FORGE.Logger:info(
         FORGE.Definitions.LogSource.ENGINE,
@@ -541,6 +598,11 @@ function FORGE.Engine:loadMap(mapName)
         FORGE.Logger:error(
             FORGE.Definitions.LogSource.ENGINE,
             "FORGE startup could not initialise ForgeOS"
+        )
+    elseif not FORGE.ForgeOSExportBridge:start(g_messageCenter) then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.ENGINE,
+            "FORGE startup could not activate the ForgeOS export bridge"
         )
     end
 
@@ -593,6 +655,17 @@ function FORGE.Engine:loadMap(mapName)
     end
 
     self.isMissionLoaded = true
+
+    if forgeOSStarted then
+        forgeOSCompletionPending = true
+    end
+
+    if not registerPhoneAction() then
+        FORGE.Logger:warning(
+            FORGE.Definitions.LogSource.ENGINE,
+            "FORGE Phone input action is not available"
+        )
+    end
 
     FORGE.Logger:info(
         FORGE.Definitions.LogSource.ENGINE,
@@ -665,6 +738,15 @@ end
 function FORGE.Engine:deleteMap()
     self.isMissionLoaded = false
     self.mapName = nil
+    forgeOSCompletionPending = false
+    unregisterPhoneAction()
+
+    if not FORGE.ForgeOSExportBridge:shutdown() then
+        FORGE.Logger:error(
+            FORGE.Definitions.LogSource.ENGINE,
+            "ForgeOS export bridge shutdown failed"
+        )
+    end
 
     local forgeOSShutdownResult =
         FORGE.ForgeOS:shutdown()
@@ -702,11 +784,43 @@ end
 -----------------------------------------------------------------------------
 
 function FORGE.Engine:update(dt)
+    if forgeOSCompletionPending then
+        forgeOSCompletionPending = false
 
+        local completionResult =
+            FORGE.ForgeOS:completeStartup()
+
+        if completionResult
+            ~= FORGE.Definitions.ForgeOSResult.SUCCESS then
+            FORGE.Logger:error(
+                FORGE.Definitions.LogSource.ENGINE,
+                "Deferred ForgeOS startup completion failed with result '%s'",
+                FORGE.Logger:safeToString(
+                    completionResult,
+                    "<unknown>"
+                )
+            )
+        end
+    end
+
+    FORGE.ForgeOS:updateRuntimeHost(dt)
 end
 
 function FORGE.Engine:draw()
+    FORGE.ForgeOS:drawRuntimeHost()
+end
 
+function FORGE.Engine.onTogglePhone(
+    target,
+    actionName,
+    inputValue,
+    callbackState,
+    isAnalog
+)
+    return FORGE.ForgeOS:dispatchHostInput(
+        "FORGE_TOGGLE_PHONE",
+        inputValue
+    )
 end
 
 function FORGE.Engine:keyEvent(
@@ -715,7 +829,15 @@ function FORGE.Engine:keyEvent(
     modifier,
     isDown
 )
-
+    return FORGE.ForgeOS:dispatchHostInput(
+        "KEY_EVENT",
+        isDown and 1 or 0,
+        {
+            unicode = unicode,
+            sym = sym,
+            modifier = modifier
+        }
+    )
 end
 
 function FORGE.Engine:mouseEvent(
@@ -725,7 +847,13 @@ function FORGE.Engine:mouseEvent(
     isUp,
     button
 )
-
+    return FORGE.ForgeOS:dispatchHostPointer(
+        posX,
+        posY,
+        isDown,
+        isUp,
+        button
+    )
 end
 
 addModEventListener(FORGE.Engine)

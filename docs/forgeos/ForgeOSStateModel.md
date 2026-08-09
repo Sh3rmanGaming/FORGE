@@ -1044,8 +1044,9 @@ Device host implementation
 
 A device host implementation MAY request a visibility change through the public
 ForgeOS API. It MUST NOT mutate authoritative visibility state directly. Device
-hosts and apps MUST NOT edit State Store tables directly. The final visibility
-API and authoritative state owner remain unresolved.
+hosts and apps MUST NOT edit State Store tables directly. M2.010 assigns
+runtime visibility to `DeviceStateService`; `showDevice()`, `hideDevice()`, and
+`getDeviceVisibility()` form its bounded public façade.
 
 ---
 
@@ -1302,13 +1303,12 @@ Device host instance
     transient presentation state
 ```
 
-Logical device visibility requires an authoritative state owner. Candidate
-ownership remains unresolved between a dedicated state service, a device-state
-service, or another explicitly approved ForgeOS service.
+Logical device visibility is owned authoritatively by the bounded
+`DeviceStateService` during M2.010.
 
 A device host implementation MAY request visibility changes through the public
 ForgeOS API but MUST NOT mutate authoritative visibility state directly. The
-final API remains unresolved.
+approved visibility API is exposed through ForgeOS.
 
 ---
 
@@ -1370,7 +1370,6 @@ The canonical cross-component open decisions are recorded in
 `ForgeOSComponentDesign.md`. The following state-model-specific details also
 remain unresolved:
 
-- authoritative device visibility owner and exact visibility API
 - stable multiplayer player identity and persistence policy
 - active-device persistence
 - exact persistence mechanism for presentation preferences

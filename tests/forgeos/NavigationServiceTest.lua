@@ -20,27 +20,10 @@ function FORGE.Tests.runNavigationServiceTests()
     )
 
     local Result = FORGE.Definitions.ForgeOSResult
-    local Role = FORGE.ForgeOSRegistrationCoordinator.Role
     local originalResolve = FORGE.PresentationResolver.resolvePresentation
     local providerCalls = 0
     local eventCount = 0
     local lastEvent = nil
-
-    local function host()
-        local value = { frozen = false }
-        function value:getRegistrationRole() return Role.DEVICE_HOST_REGISTRY end
-        function value:validateRegistrationSet() return Result.SUCCESS end
-        function value:freezeRegistrationSet()
-            self.frozen = true
-            return Result.SUCCESS
-        end
-        function value:clearRegistrationSet()
-            self.frozen = false
-            return Result.SUCCESS
-        end
-        function value:isRegistrationSetFrozen() return self.frozen end
-        return value
-    end
 
     local function app()
         local routes = {}
@@ -106,12 +89,7 @@ function FORGE.Tests.runNavigationServiceTests()
         end
 
         if FORGE.ForgeOS:start() ~= Result.SUCCESS
-            or FORGE.ForgeOS:registerDevice({
-                id = "phone", displayName = "Phone", capabilities = {}
-            }) ~= Result.SUCCESS
             or FORGE.ForgeOS:registerApp(app()) ~= Result.SUCCESS
-            or FORGE.ForgeOSRegistrationCoordinator
-                :installParticipant(host()) ~= Result.SUCCESS
             or FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS then
             error("Navigation runtime setup failed")
         end
@@ -254,6 +232,21 @@ function FORGE.Tests.runNavigationServiceTests()
             or resume.routeId ~= "route03"
             or providerCalls ~= 0 then
             error("Navigation resume or executable isolation failed")
+        end
+
+        local resumeResult, validatedResume =
+            FORGE.NavigationService
+                :getValidatedResumeDestination("phone")
+        if resumeResult ~= Result.SUCCESS
+            or validatedResume == nil
+            or validatedResume.routeId ~= "route03" then
+            error("Validated resume destination was not returned")
+        end
+        validatedResume.routeParameters.mutated = true
+        local _, secondResume = FORGE.NavigationService
+            :getValidatedResumeDestination("phone")
+        if secondResume.routeParameters.mutated ~= nil then
+            error("Validated resume destination was not detached")
         end
 
         if FORGE.ForgeOS:shutdown() ~= Result.SUCCESS

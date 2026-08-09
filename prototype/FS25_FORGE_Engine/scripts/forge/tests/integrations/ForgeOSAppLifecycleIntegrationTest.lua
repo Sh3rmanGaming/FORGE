@@ -21,29 +21,10 @@ function FORGE.Tests.runForgeOSAppLifecycleIntegrationTests()
 
     local Result = FORGE.Definitions.ForgeOSResult
     local Phase = FORGE.Definitions.ForgeOSPhase
-    local Role = FORGE.ForgeOSRegistrationCoordinator.Role
     local callbackCount = 0
     local eventCount = 0
     local failCallback = false
     local reentrantResult = nil
-
-    local function host()
-        local value = { frozen = false }
-        function value:getRegistrationRole()
-            return Role.DEVICE_HOST_REGISTRY
-        end
-        function value:validateRegistrationSet() return Result.SUCCESS end
-        function value:freezeRegistrationSet()
-            self.frozen = true
-            return Result.SUCCESS
-        end
-        function value:clearRegistrationSet()
-            self.frozen = false
-            return Result.SUCCESS
-        end
-        function value:isRegistrationSetFrozen() return self.frozen end
-        return value
-    end
 
     local function cleanup()
         FORGE.ForgeOS:shutdown()
@@ -60,10 +41,7 @@ function FORGE.Tests.runForgeOSAppLifecycleIntegrationTests()
                 ~= Result.NOT_AVAILABLE then
             error("Production lifecycle gate failed")
         end
-        if FORGE.ForgeOS:registerDevice({
-            id = "phone", displayName = "Phone", capabilities = {}
-        }) ~= Result.SUCCESS
-            or FORGE.ForgeOS:registerApp({
+        if FORGE.ForgeOS:registerApp({
                 id = "forge.lifecycle",
                 apiVersion = FORGE.Definitions.ForgeOSVersion.APP_API,
                 displayName = "Lifecycle",
@@ -100,8 +78,6 @@ function FORGE.Tests.runForgeOSAppLifecycleIntegrationTests()
                     end
                 }
             }) ~= Result.SUCCESS
-            or FORGE.ForgeOSRegistrationCoordinator
-                :installParticipant(host()) ~= Result.SUCCESS
             or FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS then
             error("Lifecycle integration setup failed")
         end
@@ -163,7 +139,7 @@ function FORGE.Tests.runForgeOSAppLifecycleIntegrationTests()
                 ~= "forge.lifecycleSecond"
             or FORGE.ForgeOS:getAppLifecycleState(
                 "phone", "forge.lifecycle"
-            ) ~= FORGE.Definitions.AppLifecycleState.CLOSED
+            ) ~= FORGE.Definitions.AppLifecycleState.BACKGROUND
             or FORGE.ForgeOS:backgroundApp(
                 "phone", "forge.lifecycleSecond"
             ) ~= Result.SUCCESS

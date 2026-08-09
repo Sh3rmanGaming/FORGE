@@ -30,31 +30,6 @@ function FORGE.Tests.runPresentationResolverTests()
         FORGE.Definitions.ForgeOSEvent
     local Capability =
         FORGE.Definitions.DeviceCapability
-    local Role =
-        FORGE.ForgeOSRegistrationCoordinator.Role
-
-    local function createHost()
-        local host = { frozen = false }
-        function host:getRegistrationRole()
-            return Role.DEVICE_HOST_REGISTRY
-        end
-        function host:validateRegistrationSet()
-            return Result.SUCCESS
-        end
-        function host:freezeRegistrationSet()
-            self.frozen = true
-            return Result.SUCCESS
-        end
-        function host:clearRegistrationSet()
-            self.frozen = false
-            return Result.SUCCESS
-        end
-        function host:isRegistrationSetFrozen()
-            return self.frozen
-        end
-        return host
-    end
-
     local function presentation(
         id,
         requirements,
@@ -121,7 +96,8 @@ function FORGE.Tests.runPresentationResolverTests()
             error("Resolver lifecycle did not start")
         end
         for _, definition in ipairs(devices) do
-            if FORGE.ForgeOS
+            if definition.id ~= "phone"
+                and FORGE.ForgeOS
                 :registerDevice(definition)
                     ~= Result.SUCCESS then
                 error("Resolver device setup failed")
@@ -134,10 +110,7 @@ function FORGE.Tests.runPresentationResolverTests()
                 error("Resolver app setup failed")
             end
         end
-        if FORGE.ForgeOSRegistrationCoordinator
-                :installParticipant(createHost())
-                ~= Result.SUCCESS
-            or FORGE.ForgeOS:completeStartup()
+        if FORGE.ForgeOS:completeStartup()
                 ~= Result.SUCCESS then
             error("Resolver runtime setup failed")
         end
@@ -308,7 +281,7 @@ function FORGE.Tests.runPresentationResolverTests()
                                 "fallback.phone",
                                 {
                                     [Capability
-                                        .KEYBOARD_INPUT] =
+                                        .WINDOWED_APPS] =
                                             true
                                 }
                             ),
@@ -585,7 +558,7 @@ function FORGE.Tests.runPresentationResolverTests()
                 or #FORGE.ForgeOS
                     :getRegisteredAppIds() ~= 3
                 or #FORGE.ForgeOS
-                    :getRegisteredDeviceIds() ~= 1 then
+                    :getRegisteredDeviceIds() ~= 2 then
                 error("Resolver was not detached or read-only")
             end
             if eventObserver.count ~= 0 then

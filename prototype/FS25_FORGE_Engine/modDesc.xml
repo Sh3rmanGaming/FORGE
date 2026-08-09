@@ -26,6 +26,22 @@ This development build adds the first XML-driven campaign and live Projects app 
     <iconFilename>icon_forge.dds</iconFilename>
     <multiplayer supported="true"/>
 
+    <l10n>
+        <text name="input_FORGE_TOGGLE_PHONE">
+            <en>Toggle FORGE Phone</en>
+        </text>
+    </l10n>
+
+    <actions>
+        <action name="FORGE_TOGGLE_PHONE"/>
+    </actions>
+
+    <inputBinding>
+        <actionBinding action="FORGE_TOGGLE_PHONE">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_f7"/>
+        </actionBinding>
+    </inputBinding>
+
     <extraSourceFiles>
         <!-- FORGE root namespace -->
         <sourceFile filename="scripts/forge/FORGE.lua"/>
@@ -69,12 +85,16 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/forgeos/ForgeOSCore.lua"/>
         <sourceFile filename="scripts/forge/forgeos/ForgeOSRegistrationCoordinator.lua"/>
         <sourceFile filename="scripts/forge/forgeos/registries/DeviceRegistry.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/registries/DeviceHostRegistry.lua"/>
         <sourceFile filename="scripts/forge/forgeos/registries/AppRegistry.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/PresentationResolver.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/AppLifecycleService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/NavigationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/NotificationService.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/services/DeviceStateService.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/hosts/PhoneHost.lua"/>
         <sourceFile filename="scripts/forge/forgeos/ForgeOS.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/integration/ForgeOSExportBridge.lua"/>
 
         <!-- Manual test harnesses -->
         <sourceFile filename="scripts/forge/tests/services/LoggerTest.lua"/>
@@ -93,6 +113,10 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/forgeos/AppLifecycleServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/NavigationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/NotificationServiceTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/DeviceHostRegistryTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/DeviceStateServiceTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/PhoneHostTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSExportBridgeTest.lua"/>
 
         <!-- Integration test harnesses -->
         <sourceFile filename="scripts/forge/tests/integrations/SaveManagerIntegrationTest.lua"/>
@@ -104,6 +128,9 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSAppLifecycleIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSNavigationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSNotificationIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSPhoneHostIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSCrossModBridgeIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSProductionStartupIntegrationTest.lua"/>
 
         <!-- Engine lifecycle registration must load last -->
         <sourceFile filename="scripts/forge/Engine.lua"/>

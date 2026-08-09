@@ -4,9 +4,8 @@
 --- Manual integration harness for the M2.005 production registry boundary.
 ---
 --- Responsibilities:
----     • Verify Device and App participants install before registration opens.
----     • Verify production waits for the deferred Device Host Registry.
----     • Verify explicit Host participation enables startup completion.
+---     • Verify all production participants install before registration opens.
+---     • Verify the real Device Host Registry enables startup completion.
 ---     • Verify registry freeze, cleanup, shutdown, and restart.
 ---
 --- This manual harness is invoked only by the Engine development test runner.
@@ -23,35 +22,12 @@ function FORGE.Tests.runForgeOSAppRegistryIntegrationTests()
     local success, errorMessage = pcall(function()
         local Coordinator =
             FORGE.ForgeOSRegistrationCoordinator
-        local Role = Coordinator.Role
         local Result =
             FORGE.Definitions.ForgeOSResult
         local Phase =
             FORGE.Definitions.ForgeOSPhase
         local Event =
             FORGE.Definitions.ForgeOSEvent
-
-        local function createHost()
-            local host = { frozen = false }
-            function host:getRegistrationRole()
-                return Role.DEVICE_HOST_REGISTRY
-            end
-            function host:validateRegistrationSet()
-                return Result.SUCCESS
-            end
-            function host:freezeRegistrationSet()
-                self.frozen = true
-                return Result.SUCCESS
-            end
-            function host:clearRegistrationSet()
-                self.frozen = false
-                return Result.SUCCESS
-            end
-            function host:isRegistrationSetFrozen()
-                return self.frozen
-            end
-            return host
-        end
 
         local observer = {
             opened = 0,
@@ -62,6 +38,9 @@ function FORGE.Tests.runForgeOSAppRegistryIntegrationTests()
             self.registriesInstalled =
                 Coordinator:installParticipant(
                     FORGE.DeviceRegistry
+                ) == Result.ALREADY_REGISTERED
+                and Coordinator:installParticipant(
+                    FORGE.DeviceHostRegistry
                 ) == Result.ALREADY_REGISTERED
                 and Coordinator:installParticipant(
                     FORGE.AppRegistry
@@ -82,23 +61,19 @@ function FORGE.Tests.runForgeOSAppRegistryIntegrationTests()
                 ~= Result.SUCCESS
             or observer.opened ~= 1
             or not observer.registriesInstalled
-            or FORGE.ForgeOS:completeStartup()
-                ~= Result.NOT_AVAILABLE
-            or FORGE.ForgeOS:getPhase()
-                ~= Phase.REGISTRATION_OPEN then
+            then
             error("Production registry installation boundary failed")
         end
 
-        if Coordinator:installParticipant(
-            createHost()
-        ) ~= Result.SUCCESS
-            or FORGE.ForgeOS:completeStartup()
+        if FORGE.ForgeOS:completeStartup()
                 ~= Result.SUCCESS
             or FORGE.ForgeOS:getPhase()
                 ~= Phase.RUNTIME_ACTIVE
             or not FORGE.DeviceRegistry
                 :isRegistrationSetFrozen()
             or not FORGE.AppRegistry
+                :isRegistrationSetFrozen()
+            or not FORGE.DeviceHostRegistry
                 :isRegistrationSetFrozen() then
             error("App Registry startup completion failed")
         end

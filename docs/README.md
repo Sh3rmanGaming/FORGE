@@ -189,6 +189,7 @@ Subsystem documentation should contain the complete design.
 
 - [Development Environment](developer/DevelopmentEnvironment.md)
 - [FS25 Runtime Verification Deployment](developer/FS25RuntimeVerificationDeployment.md)
+- [ForgeOS Addon Integration](developer/ForgeOSAddonIntegration.md)
 
 The runtime-verification deployment procedure is the authoritative packaging,
 archive-validation, deployment-hash, evidence-preservation, and operational-
@@ -224,6 +225,11 @@ Current records:
 - [M2.006 Runtime Verification](reviews/M2.006RuntimeVerification.md)
 - [M2.007 Runtime Verification](reviews/M2.007RuntimeVerification.md)
 - [M2.008 Runtime Verification](reviews/M2.008RuntimeVerification.md)
+- [M2.009 Runtime Verification](reviews/M2.009RuntimeVerification.md)
+- [M2.010 Runtime Verification](reviews/M2.010RuntimeVerification.md)
+- [ADR-003 - Device Host Lifecycle and Visibility](adr/ADR-003-Device-Host-Lifecycle-and-Visibility.md)
+- [ADR-004 - FS25 Cross-Mod ForgeOS Export Bridge](adr/ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md)
+- [Verified M2.010 companion reference](../verification/FS25_FORGE_M2010_Verifier/README.md)
 - [M2 Architecture Review](reviews/M2ArchitectureReview.md)
 - [Repository Baseline Audit 001](reviews/RepositoryBaselineAudit-001.md)
 
@@ -372,18 +378,20 @@ M2.006 – Presentation Resolver
 M2.007 – Lifecycle Service
 M2.008 – Navigation Service
 M2.009 – Notification Service
+M2.010 – Phone Host
 ```
 
 Next implementation stage:
 
 ```text
-M2.010 – Phone Host
+M2.011 – Laptop Host
 ```
 
-M2.009 – Notification Foundation is implemented, synchronized, runtime
-verified, accepted, and frozen within its bounded scope. M2.010 – Phone Host is
-the next implementation boundary. The overall M2 ForgeOS milestone remains in
-progress.
+M2.010 – Phone Host is implemented, synchronized, runtime verified, accepted,
+and frozen within its bounded scope. Production ForgeOS reaches
+`RUNTIME_ACTIVE` with its first concrete Phone Host, and the external companion
+bridge is runtime proven. M2.011 – Laptop Host is the next implementation
+boundary and has not started. Overall M2 remains In Progress.
 
 ---
 

@@ -387,19 +387,45 @@ Evidence:
 
 ---
 
-#### ⏳ M2.010 – Phone Host
+#### ✅ M2.010 – Phone Host
 
-- Phone device registration
-- Phone presentation host
-- Phone lifecycle integration
-- Phone navigation integration
-- Phone notification integration
-- Phone resume support
-- Phone host test suite
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.010 is implemented, synchronized, runtime verified, accepted, and frozen
+within its bounded Phone Host and local cross-mod integration scope. Production
+ForgeOS now reaches `RUNTIME_ACTIVE` with its first concrete Device Host after
+deferred first-update registration completion. A real dependent companion mod
+registered during `REGISTRATION_OPEN`, and the same reviewed package pair
+proved Phone resume and retained notification state across a hard restart.
+
+Evidence and governing records:
+
+- [ADR-003 - Device Host Lifecycle and Visibility](../adr/ADR-003-Device-Host-Lifecycle-and-Visibility.md)
+- [ADR-004 - FS25 Cross-Mod ForgeOS Export Bridge](../adr/ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.010 Runtime Verification](../reviews/M2.010RuntimeVerification.md)
+- [ForgeOS Addon Integration](../developer/ForgeOSAddonIntegration.md)
+
+Accepted capability includes the production Device Host Registry topology,
+built-in Phone and `phoneHost`, one ForgeOS-owned local PhoneHost, Device State
+visibility, F7 `FORGE_TOGGLE_PHONE` input, minimal Phone presentation,
+notification read/dismiss integration, same-runtime state preservation,
+hard-restart navigation resume, clean shutdown, and the complete retained
+regression suite.
+
+Dedicated-server bridge and Phone behaviour, multiplayer Host ownership,
+multiple runtime Hosts, Laptop Host, third-party Host registration, general app
+rendering, and general cursor/focus ownership remain unverified and unfrozen.
+
+Overall M2 remains In Progress.
 
 ---
 
 #### ⏳ M2.011 – Laptop Host
+
+M2.011 is the next implementation boundary and has not started.
 
 - Laptop device registration
 - Laptop presentation host
