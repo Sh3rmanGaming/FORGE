@@ -49,8 +49,8 @@ function FORGE.Tests.runPhoneHostTests()
             or host:onInput("FORGE_TOGGLE_PHONE", 1) ~= true
             or hides ~= 1
             or host:onPointer(0.71, 0.13, true, false, 1) ~= false
-            or host:onInput("KEY_EVENT", 1, { sym = 118 }) ~= true
-            or shows ~= 2
+            or host:onInput("KEY_EVENT", 1, { sym = 118 }) ~= false
+            or shows ~= 1
             or host:onInput("KEY_EVENT", 0, { sym = 118 }) ~= false
             or host:shutdown() ~= Result.SUCCESS
             or host:isOperational() then

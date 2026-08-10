@@ -44,7 +44,7 @@ Once the player loads or creates a savegame, Farming Simulator begins the missio
     in progress.
 11. The first eligible Engine update completes registration exactly once.
 12. ForgeOS enters `RUNTIME_ACTIVE` and publishes `STARTED`.
-13. ForgeOS constructs and initializes the production PhoneHost.
+13. ForgeOS atomically constructs and initializes PhoneHost then LaptopHost.
 
 ## Phase 3 — Gameplay Runtime
 
@@ -53,7 +53,8 @@ After mission loading, normal gameplay processing begins.
 1. FS25 calls `update(dt)` every frame.
 2. `Engine.lua` forwards update processing to active FORGE managers and systems.
 3. FS25 calls `draw()` every frame.
-4. `Engine.lua` delegates drawing to a valid runtime PhoneHost while ForgeOS is
+4. `Engine.lua` delegates drawing and normalized input to visible operational
+   runtime Hosts in fixed Phone-then-Laptop order while ForgeOS is
    runtime-active.
 5. Engine owns input callbacks and delegates only bounded Phone interactions.
 6. Managers and systems communicate through the Event Bus where practical.

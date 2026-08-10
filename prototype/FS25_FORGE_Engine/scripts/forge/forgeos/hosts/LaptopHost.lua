@@ -1,15 +1,14 @@
 ---=============================================================================
---- FORGE ForgeOS Phone Host
+--- FORGE ForgeOS Laptop Host
 ---
---- Presents the bounded M2.010 Phone shell. It owns transient presentation and
---- input state only and receives no mutable ForgeOS internals.
+--- Presents the bounded M2.011 Laptop shell. It owns transient presentation
+--- and input state only and remains independent of its activation source.
 ---=============================================================================
 
-FORGE.PhoneHost = {}
+FORGE.LaptopHost = {}
 
-local PhoneHost = FORGE.PhoneHost
+local LaptopHost = FORGE.LaptopHost
 local Result = FORGE.Definitions.ForgeOSResult
-local DeviceId = FORGE.Definitions.DeviceId
 local Visibility = FORGE.Definitions.DeviceVisibility
 
 local function safeText(value, fallback)
@@ -19,7 +18,7 @@ local function safeText(value, fallback)
     return fallback
 end
 
-function PhoneHost.create(context)
+function LaptopHost.create(context)
     if type(context) ~= "table" then
         return nil
     end
@@ -27,18 +26,17 @@ function PhoneHost.create(context)
     local instance = {
         context = context,
         initialized = false,
-        bounds = { x = 0.70, y = 0.12, width = 0.27, height = 0.76 }
+        bounds = { x = 0.08, y = 0.12, width = 0.54, height = 0.72 }
     }
 
     function instance:initialize()
         if self.initialized then
             return Result.SUCCESS
         end
-
         self.initialized = true
         FORGE.Logger:info(
-            FORGE.Definitions.LogSource.PHONE_HOST,
-            "Phone Host initialized"
+            FORGE.Definitions.LogSource.LAPTOP_HOST,
+            "Laptop Host initialized"
         )
         return Result.SUCCESS
     end
@@ -70,77 +68,64 @@ function PhoneHost.create(context)
 
     function instance:draw()
         if not self.initialized
-            or self.context.getVisibility()
-                ~= Visibility.VISIBLE then
+            or self.context.getVisibility() ~= Visibility.VISIBLE then
             return
         end
 
         local bounds = self.bounds
         if type(drawFilledRect) == "function" then
-            drawFilledRect(
-                bounds.x,
-                bounds.y,
-                bounds.width,
-                bounds.height,
-                0.035,
-                0.045,
-                0.06,
-                0.94
-            )
-            drawFilledRect(
-                bounds.x + 0.008,
-                bounds.y + 0.012,
-                bounds.width - 0.016,
-                bounds.height - 0.024,
-                0.09,
-                0.11,
-                0.14,
-                0.98
-            )
+            drawFilledRect(bounds.x, bounds.y, bounds.width, bounds.height,
+                0.025, 0.035, 0.055, 0.96)
+            drawFilledRect(bounds.x + 0.01, bounds.y + 0.02,
+                bounds.width - 0.02, bounds.height - 0.04,
+                0.10, 0.12, 0.16, 0.98)
         end
 
-        local x = bounds.x + 0.02
-        local y = bounds.y + bounds.height - 0.055
         if type(setTextColor) == "function" then
             setTextColor(1, 1, 1, 1)
         end
-        drawLabel("FORGE Phone", x, y, 0.025)
+
+        local x = bounds.x + 0.025
+        local y = bounds.y + bounds.height - 0.055
+        drawLabel("FORGE Laptop", x, y, 0.026)
+        y = y - 0.05
+        drawLabel("Home / Desktop", x, y, 0.019)
 
         local appId = self.context.getActiveAppId()
+        local appLabel = "Home"
         local presentationId = nil
         local routeId = nil
-        local appLabel = "Home"
-
         if appId ~= nil then
             local app = self.context.getAppDefinition(appId)
-            appLabel = safeText(
-                app ~= nil and app.displayName or nil,
-                appId
-            )
-            local _, resolution =
-                self.context.resolvePresentation(appId)
+            appLabel = safeText(app ~= nil and app.displayName or nil, appId)
+            local _, resolution = self.context.resolvePresentation(appId)
             presentationId = resolution ~= nil
-                and resolution.presentationId
-                or nil
+                and resolution.presentationId or nil
             routeId = self.context.getCurrentRoute(appId)
         end
 
-        y = y - 0.06
-        drawLabel("Surface: " .. appLabel, x, y, 0.018)
-        y = y - 0.035
-        drawLabel(
-            "Presentation: " .. safeText(presentationId, "home"),
-            x,
-            y,
-            0.015
-        )
-        y = y - 0.03
-        drawLabel(
-            "Route: " .. safeText(routeId, "none"),
-            x,
-            y,
-            0.015
-        )
+        y = y - 0.05
+        drawLabel("Application: " .. appLabel, x, y, 0.017)
+        y = y - 0.032
+        drawLabel("Presentation: " .. safeText(presentationId, "home"), x, y, 0.014)
+        y = y - 0.028
+        drawLabel("Route: " .. safeText(routeId, "none"), x, y, 0.014)
+
+        local launcherX = bounds.x + bounds.width * 0.56
+        local launcherY = bounds.y + bounds.height - 0.105
+        drawLabel("Applications", launcherX, launcherY, 0.017)
+        local shownApps = 0
+        for _, registeredAppId in ipairs(self.context.getRegisteredAppIds()) do
+            local app = self.context.getAppDefinition(registeredAppId)
+            if app ~= nil
+                and type(app.supportedDevices) == "table"
+                and app.supportedDevices.laptop == true
+                and shownApps < 6 then
+                shownApps = shownApps + 1
+                launcherY = launcherY - 0.035
+                drawLabel(safeText(app.displayName, registeredAppId), launcherX, launcherY, 0.014)
+            end
+        end
 
         local notifications = self.context.getNotifications()
         local unread = 0
@@ -149,27 +134,15 @@ function PhoneHost.create(context)
                 unread = unread + 1
             end
         end
-
-        if type(setTextColor) == "function" then
-            setTextColor(1, 1, 1, 1)
-        end
-
         y = y - 0.055
-        drawLabel("Notifications (" .. unread .. ")", x, y, 0.018)
-
+        drawLabel("Notifications (" .. unread .. ")", x, y, 0.017)
         local shown = 0
         for _, notification in ipairs(notifications) do
-            if not notification.dismissed and shown < 4 then
+            if not notification.dismissed and shown < 5 then
                 shown = shown + 1
-                y = y - 0.04
-                local marker = notification.read and "" or "* "
-                drawLabel(
-                    marker .. safeText(notification.title, notification.id)
-                        .. " [" .. safeText(notification.severity, "") .. "]",
-                    x,
-                    y,
-                    0.014
-                )
+                y = y - 0.034
+                drawLabel((notification.read and "" or "* ")
+                    .. safeText(notification.title, notification.id), x, y, 0.014)
             end
         end
     end
@@ -178,50 +151,37 @@ function PhoneHost.create(context)
         if self.context.getActiveAppId() ~= nil then
             return Result.SUCCESS
         end
-
         local resumeResult, destination =
             self.context.getValidatedResumeDestination()
-
         if resumeResult ~= Result.SUCCESS then
             return resumeResult
         end
-
         if destination == nil then
             return Result.SUCCESS
         end
-
         local result = self.context.openApp(destination.appId)
         if result == Result.SUCCESS then
             result = self.context.activateApp(destination.appId)
         end
         if result == Result.SUCCESS then
-            result = self.context.navigate(
-                destination.appId,
-                destination.routeId,
-                destination.routeParameters
-            )
+            result = self.context.navigate(destination.appId,
+                destination.routeId, destination.routeParameters)
         end
-
         if result ~= Result.SUCCESS then
             self.context.closeApp(destination.appId)
             FORGE.Logger:warning(
-                FORGE.Definitions.LogSource.PHONE_HOST,
-                "Phone resume failed; displaying Home surface"
+                FORGE.Definitions.LogSource.LAPTOP_HOST,
+                "Laptop resume failed; displaying Home surface"
             )
         end
-
         return Result.SUCCESS
     end
 
-    function instance:onInput(action, value, ...)
+    function instance:onInput(action, value, payload)
         if not self.initialized or self.context.isUiBlocked() then
             return false
         end
-
-        local toggleRequested =
-            action == "FORGE_TOGGLE_PHONE" and value ~= 0
-
-        if toggleRequested then
+        if action == "FORGE_TOGGLE_LAPTOP" and value ~= 0 then
             if self.context.getVisibility() == Visibility.VISIBLE then
                 self.context.hide()
             else
@@ -229,37 +189,26 @@ function PhoneHost.create(context)
             end
             return true
         end
-
         if self.context.getVisibility() ~= Visibility.VISIBLE then
             return false
         end
-
-        local payload = select(1, ...)
-        if action == "PHONE_MARK_READ"
-            and type(payload) == "string" then
+        if action == "LAPTOP_MARK_READ" and type(payload) == "string" then
             self.context.markNotificationRead(payload)
             return true
         end
-        if action == "PHONE_DISMISS"
-            and type(payload) == "string" then
+        if action == "LAPTOP_DISMISS" and type(payload) == "string" then
             self.context.dismissNotification(payload)
             return true
         end
-
-        return false
+        return action == "KEY_EVENT" and value ~= 0
     end
 
     function instance:onPointer(posX, posY, isDown, isUp, button)
-        if not self.initialized
-            or self.context.isUiBlocked()
-            or self.context.getVisibility() ~= Visibility.VISIBLE then
+        if not self.initialized or self.context.isUiBlocked()
+            or self.context.getVisibility() ~= Visibility.VISIBLE
+            or not self:containsPoint(posX, posY) then
             return false
         end
-
-        if not self:containsPoint(posX, posY) then
-            return false
-        end
-
         if isDown then
             local notifications = self.context.getNotifications()
             if button == 1 then
@@ -278,15 +227,14 @@ function PhoneHost.create(context)
                 end
             end
         end
-
         return true
     end
 
     function instance:shutdown()
         self.initialized = false
         FORGE.Logger:info(
-            FORGE.Definitions.LogSource.PHONE_HOST,
-            "Phone Host shut down"
+            FORGE.Definitions.LogSource.LAPTOP_HOST,
+            "Laptop Host shut down"
         )
         return Result.SUCCESS
     end

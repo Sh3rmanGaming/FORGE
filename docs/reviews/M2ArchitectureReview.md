@@ -1408,7 +1408,11 @@ frozen at v0.1.
 - M2.010 acceptance: complete
 - M2.010 freeze: recorded
 - Development Verification Bootstrap: excluded from operational load order
-- Next implementation boundary: M2.011 – Laptop Host (not started)
+- M2.011 implementation: complete
+- M2.011 verification: complete
+- M2.011 acceptance: complete
+- M2.011 freeze: recorded
+- Current implementation boundary: M2.012 – End-to-End Integration (not started)
 - Remaining ForgeOS implementation and verification: outstanding
 - Remaining open decisions: recorded above
 
@@ -1487,5 +1491,71 @@ general app/controller rendering, notification actions/navigation, general
 cursor/focus ownership, general multi-service transactions, or a general State
 Service. Dedicated-server behaviour is explicitly unverified.
 
-M2.011 – Laptop Host is the next implementation boundary and has not started.
+M2.011 – Laptop Host is accepted and frozen within the bounded scope recorded
+below. M2.012 – End-to-End Integration is the next implementation boundary and
+has not started.
 Overall M2 remains In Progress.
+
+## M2.011 Laptop Host Architecture Approval
+
+The Project Director and Chief Architect approve the bounded M2.011 extension
+to one ForgeOS-owned PhoneHost and one ForgeOS-owned LaptopHost. Fixed
+Phone-then-Laptop construction, update, draw, and eligible keyboard order;
+reverse shutdown; atomic Host startup; independent simultaneous visibility;
+bounds-based pointer routing; independent device state and resume; and the
+approved non-windowed Laptop capability profile govern implementation.
+
+Engine owns the narrow FS25 cursor adapter using documented InputBinding cursor
+visibility and GIANTS GUI-priority facilities. `FORGE_TOGGLE_LAPTOP` with F8 is
+a remappable development/fallback adapter only. LaptopHost remains activation-
+source independent, and the intended physical in-world Laptop entry point is
+deferred without a placeholder object. M2.011 is approved for implementation
+and was subsequently implemented and runtime verified as recorded below.
+
+## M2.011 Milestone Acceptance and Bounded Freeze
+
+M2.011 is authored, architecture-reviewed, approved, implemented, and verified.
+The authoritative evidence is
+[M2.011 Runtime Verification](M2.011RuntimeVerification.md). Its two definitive
+cycles used the unchanged FORGE and companion packages across a real process
+restart and save boundary.
+
+The bounded freeze covers:
+
+- one private ForgeOS-owned runtime Host collection containing exactly Phone
+  then Laptop for construction, initialization, update, draw, and eligible
+  keyboard dispatch, with reverse Laptop-then-Phone shutdown;
+- atomic two-Host startup, reverse cleanup, Device State cleanup, no retained
+  partial Host collection, and transition to `STOPPED` on startup failure;
+- independent runtime-only Phone and Laptop visibility, including simultaneous
+  visibility, idempotence, no implicit mutual exclusion, and no
+  `activeDeviceId` mutation or visibility persistence;
+- deterministic consumed-event keyboard routing and bounds-based pointer
+  routing, without Host access to Engine-global pointer ownership;
+- Engine-owned FS25 action/context integration, F8 as the remappable
+  development/fallback Laptop adapter, and activation-source independence;
+- F6 `FORGE_TOGGLE_CURSOR_MODE`, supported player-context action registration,
+  `GAMEPLAY`/`FORGE_POINTER` modes, cursor exposure, local-player input locking,
+  camera restoration, final-device release, GUI priority, and deterministic
+  shutdown/failure cleanup as verified;
+- the bounded non-windowed Laptop shell, Home/Desktop, detached public launcher,
+  one active presentation region, app/presentation/route display, retained
+  notification tray, existing read/dismiss operations, pointer-aware controls,
+  keyboard containment, and visibility-aware update/draw; and
+- independent Phone/Laptop app, route, history, resume, visibility, and
+  notification targeting, including hard-restart resume through existing
+  public lifecycle/navigation operations.
+
+F8 is not frozen as the permanent Laptop interaction model. The future normal
+entry path remains a physical in-world Laptop object through a bounded adapter
+and `showDevice(laptop)`; no world object is part of M2.011.
+
+This freeze does not cover dedicated-server Host/UI behaviour, multiplayer
+Host ownership, physical Laptop placement or interaction, window management,
+multi-app rendering, arbitrary application or route controller execution,
+general cursor/focus ownership, text entry, drag-and-drop, notification
+actions, or other deferred Host/UI capability. Dedicated-server behaviour is
+explicitly unverified and unfrozen.
+
+M2.012 – End-to-End Integration is the next implementation boundary and has
+not started. Overall M2 remains In Progress.

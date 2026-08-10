@@ -344,6 +344,10 @@ player.local
 
 The phone and laptop may remember different apps and routes.
 
+M2.011 implements this separation for the bounded PhoneHost and LaptopHost.
+Visibility remains runtime-only and independent; `activeDeviceId` examples in
+this document remain future model material and are not written by M2.011.
+
 Example:
 
 ```text

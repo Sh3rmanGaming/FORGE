@@ -766,7 +766,7 @@ It queries those sources through controlled interfaces.
 Presentation-level capability requirements MUST NOT weaken or override
 app-level requirements.
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/services/AppAvailabilityService.lua
@@ -1317,11 +1317,23 @@ A minimal host may provide:
 
 True multi-window behaviour may be a later enhancement.
 
-## Proposed Location
+## Location
 
 ```text
 forgeos/hosts/LaptopHost.lua
 ```
+
+M2.011 implements one local LaptopHost alongside PhoneHost. ForgeOS owns both
+instances in a private device-keyed collection. The Laptop shell provides a
+Home/Desktop surface, bounded detached launcher, one active presentation
+region, route identity, retained notifications, pointer controls, keyboard
+containment, and validated Navigation resume. Windowing, multi-app rendering,
+controller execution, text entry, drag-and-drop, and application-owned custom
+UI remain deferred.
+
+F8 is the current remappable development/fallback visibility adapter. The Host
+does not depend on F8 or any activation source; a future physical Laptop object
+is expected to request the same public Laptop visibility operation.
 
 ---
 
@@ -1331,7 +1343,8 @@ forgeos/hosts/LaptopHost.lua
 
 Every application must implement a predictable contract.
 
-The final contract remains to be defined, but may include:
+The implemented App API contract is defined in ForgeOS App Contract. The
+following structure is illustrative presentation material:
 
 ```lua
 {
@@ -1678,6 +1691,14 @@ Whether active device selection is persisted remains unresolved.
 M2 assumes one active application per device type. The contract implications
 of multiple active applications, windows, and device host instances remain
 unresolved.
+
+## M2.011 Bounded Multi-Host and Cursor Contract
+
+M2.011 resolves only the two-Host production case: Phone then Laptop processing,
+reverse shutdown, atomic startup, independent simultaneous visibility, and
+bounds-based pointer dispatch. Engine owns the documented FS25 cursor adapter;
+higher-priority GIANTS GUI state wins. General focus, window management,
+cross-mod cursor ownership, and arbitrary Host collections remain unresolved.
 
 ---
 

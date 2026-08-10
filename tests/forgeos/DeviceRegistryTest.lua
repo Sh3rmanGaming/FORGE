@@ -142,7 +142,7 @@ function FORGE.Tests.runDeviceRegistryTests()
             end
 
             if #FORGE.ForgeOS
-                :getRegisteredDeviceIds() ~= 1
+                :getRegisteredDeviceIds() ~= 2
                 or observed.count ~= 0 then
                 error("Rejected registration retained state or published an event")
             end
@@ -232,12 +232,12 @@ function FORGE.Tests.runDeviceRegistryTests()
             )
 
             if FORGE.ForgeOS:registerDevice({
-                id = "laptop",
-                displayName = "Laptop",
+                id = "test.laptop",
+                displayName = "Test Laptop",
                 capabilities = {}
             }) ~= Result.SUCCESS
                 or not FORGE.ForgeOS
-                    :isDeviceRegistered("laptop")
+                    :isDeviceRegistered("test.laptop")
                 or observed.count ~= 2 then
                 error("Listener failure changed a committed registration")
             end
@@ -248,8 +248,9 @@ function FORGE.Tests.runDeviceRegistryTests()
 
             if identifiers[1] ~= "laptop"
                 or identifiers[2] ~= "phone"
-                or identifiers[3] ~= "test.phone"
-                or identifiers[4] ~= nil then
+                or identifiers[3] ~= "test.laptop"
+                or identifiers[4] ~= "test.phone"
+                or identifiers[5] ~= nil then
                 error("Device identifiers are not lexically ordered")
             end
 

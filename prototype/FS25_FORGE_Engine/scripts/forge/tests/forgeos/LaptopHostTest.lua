@@ -1,0 +1,51 @@
+---=============================================================================
+--- FORGE Laptop Host Tests
+---=============================================================================
+
+FORGE.Tests = FORGE.Tests or {}
+
+function FORGE.Tests.runLaptopHostTests()
+    local Result = FORGE.Definitions.ForgeOSResult
+    local Visibility = FORGE.Definitions.DeviceVisibility
+    local visibility = Visibility.HIDDEN
+    local reads, dismissals = 0, 0
+    local context = {
+        getVisibility = function() return visibility end,
+        show = function() visibility = Visibility.VISIBLE; return Result.SUCCESS end,
+        hide = function() visibility = Visibility.HIDDEN; return Result.SUCCESS end,
+        getActiveAppId = function() return nil end,
+        getRegisteredAppIds = function() return { "forge.test" } end,
+        getAppDefinition = function() return { id = "forge.test", displayName = "Test", supportedDevices = { laptop = true } } end,
+        resolvePresentation = function() return Result.SUCCESS, { presentationId = "test.laptop" } end,
+        getCurrentRoute = function() return nil end,
+        getValidatedResumeDestination = function() return Result.SUCCESS, nil end,
+        openApp = function() return Result.SUCCESS end,
+        activateApp = function() return Result.SUCCESS end,
+        navigate = function() return Result.SUCCESS end,
+        closeApp = function() return Result.SUCCESS end,
+        getNotifications = function() return {{ id = "notification.1", title = "Test", read = false, dismissed = false }} end,
+        markNotificationRead = function() reads = reads + 1; return Result.SUCCESS end,
+        dismissNotification = function() dismissals = dismissals + 1; return Result.SUCCESS end,
+        isUiBlocked = function() return false end
+    }
+    local success, errorMessage = pcall(function()
+        local host = FORGE.LaptopHost.create(context)
+        if host == nil or host:initialize() ~= Result.SUCCESS
+            or not host:isOperational()
+            or host:onInput("FORGE_TOGGLE_LAPTOP", 1) ~= true
+            or visibility ~= Visibility.VISIBLE
+            or not host:containsPoint(0.20, 0.20)
+            or host:containsPoint(0.90, 0.90)
+            or host:onPointer(0.20, 0.20, true, false, 1) ~= true
+            or reads ~= 1
+            or host:onPointer(0.20, 0.20, true, false, 3) ~= true
+            or dismissals ~= 1
+            or host:onPointer(0.90, 0.90, true, false, 1) ~= false
+            or host:shutdown() ~= Result.SUCCESS
+            or host:isOperational() then
+            error("Laptop Host bounded shell contract failed")
+        end
+    end)
+    if not success then return false, errorMessage end
+    return true
+end

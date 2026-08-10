@@ -423,9 +423,28 @@ Overall M2 remains In Progress.
 
 ---
 
-#### ⏳ M2.011 – Laptop Host
+#### ✅ M2.011 – Laptop Host
 
-M2.011 is the next implementation boundary and has not started.
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.011 is implemented, synchronized, runtime verified, accepted, and frozen
+within its bounded Laptop Host and two-Host orchestration scope. The unchanged
+FORGE/verifier package pair passed two FS25 cycles across a hard restart.
+
+Evidence and governing records:
+
+- [ADR-003 - Device Host Lifecycle and Visibility](../adr/ADR-003-Device-Host-Lifecycle-and-Visibility.md)
+- [M2 Architecture Review](../reviews/M2ArchitectureReview.md)
+- [M2.011 Runtime Verification](../reviews/M2.011RuntimeVerification.md)
+
+Accepted capability includes one ForgeOS-owned PhoneHost and LaptopHost,
+deterministic Phone-then-Laptop processing, reverse shutdown, atomic Host
+startup, independent simultaneous visibility, the bounded Laptop shell and
+launcher, notification interaction, independent resume, F8 as the
+development/fallback Laptop adapter, and the verified F6 pointer-mode boundary.
+The future physical in-world Laptop interaction remains deferred.
 
 - Laptop device registration
 - Laptop presentation host
@@ -434,6 +453,13 @@ M2.011 is the next implementation boundary and has not started.
 - Laptop notification integration
 - Laptop resume support
 - Laptop host test suite
+
+Dedicated-server Host/UI behaviour remains unverified and unfrozen. Window
+management, multi-app rendering, physical world-object interaction, general
+focus ownership, controller execution, and other deferred capabilities are not
+included in this freeze.
+
+Overall M2 remains In Progress.
 
 ---
 

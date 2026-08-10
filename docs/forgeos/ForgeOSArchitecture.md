@@ -270,19 +270,27 @@ General ForgeOS services MUST never hardcode phone or laptop presentation
 behaviour. Approved bootstrap code may register built-in device profiles and
 Host implementations; their presentation behavior remains inside each Host.
 
-## M2.010 Production Host Ownership
+## M2.010–M2.011 Production Host Ownership
 
 The production Device Host Registry owns immutable Host definitions and
-device-to-Host validation. ForgeOS bootstrap owns the one local runtime
-PhoneHost instance. A runtime-only Device State Service owns visibility.
-PhoneHost requests state changes through ForgeOS and never mutates State Store,
+device-to-Host validation. ForgeOS bootstrap owns a private bounded runtime Host
+collection containing one PhoneHost and one LaptopHost. A runtime-only Device
+State Service owns their independent visibility. Hosts request state changes
+through ForgeOS and never mutate State Store,
 registries, persistence, or other service internals.
 
 Production registration is completed once during the first eligible Engine
 update after `loadMap()` and persistence restoration finish. Successful
-completion enters `RUNTIME_ACTIVE` and publishes `STARTED`; PhoneHost is created
-and initialized afterward. `STARTED` therefore proves ForgeOS runtime
-activation, not later Host readiness.
+completion enters `RUNTIME_ACTIVE` and publishes `STARTED`; the atomic Host set
+is created and initialized afterward in Phone-then-Laptop order. `STARTED`
+therefore proves ForgeOS runtime activation, not later Host readiness. Shutdown
+uses reverse order. Both Hosts may be visible; neither visibility nor
+`activeDeviceId` is persisted.
+
+Engine owns the narrow FS25 cursor and input adapter. F8 is a remappable
+development/fallback Laptop visibility trigger. The future normal Laptop entry
+point is expected to be a physical world object calling the same visibility
+facade through a separate adapter; no such object is implemented in M2.011.
 
 ---
 

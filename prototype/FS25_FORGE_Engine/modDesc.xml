@@ -30,15 +30,29 @@ This development build adds the first XML-driven campaign and live Projects app 
         <text name="input_FORGE_TOGGLE_PHONE">
             <en>Toggle FORGE Phone</en>
         </text>
+        <text name="input_FORGE_TOGGLE_LAPTOP">
+            <en>Toggle FORGE Laptop (Development)</en>
+        </text>
+        <text name="input_FORGE_TOGGLE_CURSOR_MODE">
+            <en>Toggle FORGE Pointer Mode</en>
+        </text>
     </l10n>
 
     <actions>
         <action name="FORGE_TOGGLE_PHONE"/>
+        <action name="FORGE_TOGGLE_LAPTOP"/>
+        <action name="FORGE_TOGGLE_CURSOR_MODE"/>
     </actions>
 
     <inputBinding>
         <actionBinding action="FORGE_TOGGLE_PHONE">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_f7"/>
+        </actionBinding>
+        <actionBinding action="FORGE_TOGGLE_LAPTOP">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_f8"/>
+        </actionBinding>
+        <actionBinding action="FORGE_TOGGLE_CURSOR_MODE">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_f6"/>
         </actionBinding>
     </inputBinding>
 
@@ -93,6 +107,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/forgeos/services/NotificationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/DeviceStateService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/hosts/PhoneHost.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/hosts/LaptopHost.lua"/>
         <sourceFile filename="scripts/forge/forgeos/ForgeOS.lua"/>
         <sourceFile filename="scripts/forge/forgeos/integration/ForgeOSExportBridge.lua"/>
 
@@ -116,6 +131,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceHostRegistryTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceStateServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/PhoneHostTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/LaptopHostTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSExportBridgeTest.lua"/>
 
         <!-- Integration test harnesses -->
@@ -129,6 +145,9 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSNavigationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSNotificationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSPhoneHostIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSLaptopHostIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSMultiHostIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSEngineInputIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSCrossModBridgeIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSProductionStartupIntegrationTest.lua"/>
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<modDesc descVersion="111">
+    <author>FORGE Project</author>
+    <version>0.2.0.0</version>
+    <title><en>FORGE M2.011 Runtime Verifier</en></title>
+    <description><en><![CDATA[
+Temporary external-consumer fixture for controlled M2.011 runtime verification.
+    ]]></en></description>
+    <multiplayer supported="false"/>
+    <dependencies><dependency>FS25_FORGE_Engine</dependency></dependencies>
+    <extraSourceFiles>
+        <sourceFile filename="scripts/M2011Verifier.lua"/>
+    </extraSourceFiles>
+</modDesc>

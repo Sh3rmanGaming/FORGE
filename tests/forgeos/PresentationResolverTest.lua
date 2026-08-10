@@ -558,7 +558,7 @@ function FORGE.Tests.runPresentationResolverTests()
                 or #FORGE.ForgeOS
                     :getRegisteredAppIds() ~= 3
                 or #FORGE.ForgeOS
-                    :getRegisteredDeviceIds() ~= 2 then
+                    :getRegisteredDeviceIds() ~= 3 then
                 error("Resolver was not detached or read-only")
             end
             if eventObserver.count ~= 0 then

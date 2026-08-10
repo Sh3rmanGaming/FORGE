@@ -20,6 +20,10 @@ the Host may request one validated persisted resume destination internally and
 orchestrate the existing `openApp()`, `activateApp()`, and `navigate()` public
 operations. Each operation retains its own frozen atomicity contract.
 
+M2.011 applies the same boundary independently to Laptop. Phone and Laptop may
+be visible simultaneously and retain separate active app, route, history, and
+resume state. No global active-device or focus owner is introduced.
+
 ---
 
 # Purpose

@@ -47,6 +47,15 @@ function PhoneHost.create(context)
         return self.initialized
     end
 
+    function instance:containsPoint(posX, posY)
+        local bounds = self.bounds
+        return type(posX) == "number" and type(posY) == "number"
+            and posX >= bounds.x
+            and posX <= bounds.x + bounds.width
+            and posY >= bounds.y
+            and posY <= bounds.y + bounds.height
+    end
+
     function instance:update(dt)
         if not self.initialized or type(dt) ~= "number" then
             return
@@ -212,13 +221,6 @@ function PhoneHost.create(context)
         local toggleRequested =
             action == "FORGE_TOGGLE_PHONE" and value ~= 0
 
-        if action == "KEY_EVENT" and value ~= 0 then
-            local keyEvent = select(1, ...)
-            local f7 = Input ~= nil and Input.KEY_f7 or nil
-            toggleRequested = type(keyEvent) == "table"
-                and (keyEvent.sym == f7 or keyEvent.sym == 118)
-        end
-
         if toggleRequested then
             if self.context.getVisibility() == Visibility.VISIBLE then
                 self.context.hide()
@@ -254,13 +256,7 @@ function PhoneHost.create(context)
             return false
         end
 
-        local bounds = self.bounds
-        local inside = posX >= bounds.x
-            and posX <= bounds.x + bounds.width
-            and posY >= bounds.y
-            and posY <= bounds.y + bounds.height
-
-        if not inside then
+        if not self:containsPoint(posX, posY) then
             return false
         end
 

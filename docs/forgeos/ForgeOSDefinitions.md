@@ -838,7 +838,7 @@ Phone visible again
     ForgeOS restores the last valid app and route
 ```
 
-M2.010 visibility operations are:
+Implemented device visibility operations are:
 
 ```lua
 FORGE.ForgeOS:showDevice(deviceId) -> ForgeOSResult
@@ -854,8 +854,8 @@ player, device, previous visibility, and current visibility identifiers.
 
 Device visibility is initially player-local runtime state.
 
-Whether visibility itself should ever be persisted remains an implementation
-decision. The last valid app and route are persisted independently.
+Visibility is runtime-only for the bounded Phone and Laptop Hosts. The last
+valid app and route are persisted independently.
 
 ---
 

@@ -30,7 +30,10 @@ local ENGINE_NAMESPACE =
 
 local saveHookInstalled = false
 local forgeOSCompletionPending = false
-local phoneActionRegistered = false
+local hostActionsRegistered = false
+local hostActionEventIds = {}
+local cursorMode = "GAMEPLAY"
+local cursorLockedInputComponent = nil
 
 -----------------------------------------------------------------------------
 -- Private Helpers
@@ -178,12 +181,20 @@ local function runDevelopmentTests()
             return
         end
 
-        local callSucceeded, harnessResult =
+        local callSucceeded, harnessResult, harnessDetail =
             pcall(operation)
 
         if not callSucceeded
             or harnessResult == false then
             suitePassed = false
+            FORGE.Logger:error(
+                FORGE.Definitions.LogSource.TEST,
+                "Development test harness failed: %s",
+                FORGE.Logger:safeToString(
+                    callSucceeded and harnessDetail or harnessResult,
+                    "<no failure detail>"
+                )
+            )
         end
     end
 
@@ -280,8 +291,12 @@ local function runDevelopmentTests()
     runHarness(FORGE.Tests.runDeviceHostRegistryTests)
     runHarness(FORGE.Tests.runDeviceStateServiceTests)
     runHarness(FORGE.Tests.runPhoneHostTests)
+    runHarness(FORGE.Tests.runLaptopHostTests)
     runHarness(FORGE.Tests.runForgeOSExportBridgeTests)
     runHarness(FORGE.Tests.runForgeOSPhoneHostIntegrationTests)
+    runHarness(FORGE.Tests.runForgeOSLaptopHostIntegrationTests)
+    runHarness(FORGE.Tests.runForgeOSMultiHostIntegrationTests)
+    runHarness(FORGE.Tests.runForgeOSEngineInputIntegrationTests)
     runHarness(FORGE.Tests.runForgeOSCrossModBridgeIntegrationTests)
     runHarness(FORGE.Tests.runForgeOSProductionStartupIntegrationTests)
 
@@ -298,50 +313,179 @@ local function runDevelopmentTests()
     end
 end
 
-local function registerPhoneAction()
-    if phoneActionRegistered then
+local function setCursorMode(requestedMode)
+    local pointerRequested = requestedMode == "FORGE_POINTER"
+    if pointerRequested and (g_gui ~= nil and g_gui:getIsGuiVisible()
+        or not FORGE.ForgeOS:hasVisibleRuntimeHost()) then
+        return false
+    end
+    if pointerRequested then
+        local inputComponent = g_localPlayer ~= nil
+            and g_localPlayer.inputComponent or nil
+        if g_inputBinding == nil
+            or type(g_inputBinding.setShowMouseCursor) ~= "function"
+            or inputComponent == nil
+            or type(inputComponent.lock) ~= "function" then
+            return false
+        end
+        local cursorShown = pcall(
+            g_inputBinding.setShowMouseCursor,
+            g_inputBinding,
+            true
+        )
+        local inputLocked = cursorShown and pcall(
+            inputComponent.lock,
+            inputComponent
+        )
+        if not inputLocked then
+            pcall(
+                g_inputBinding.setShowMouseCursor,
+                g_inputBinding,
+                false
+            )
+            return false
+        end
+        cursorLockedInputComponent = inputComponent
+        cursorMode = "FORGE_POINTER"
+        return true
+    end
+
+    local cursorReleased = g_inputBinding ~= nil
+        and type(g_inputBinding.setShowMouseCursor) == "function"
+        and pcall(
+            g_inputBinding.setShowMouseCursor,
+            g_inputBinding,
+            false
+        )
+    local inputReleased = true
+    if cursorLockedInputComponent ~= nil then
+        inputReleased = type(cursorLockedInputComponent.unlock) == "function"
+            and pcall(
+                cursorLockedInputComponent.unlock,
+                cursorLockedInputComponent
+            )
+    end
+    cursorLockedInputComponent = nil
+    cursorMode = "GAMEPLAY"
+    return cursorReleased and inputReleased
+end
+
+local function registerHostActions()
+    if hostActionsRegistered then
         return true
     end
 
     if g_inputBinding == nil
         or type(g_inputBinding.registerActionEvent) ~= "function"
+        or type(g_inputBinding.beginActionEventsModification) ~= "function"
+        or type(g_inputBinding.endActionEventsModification) ~= "function"
+        or type(g_inputBinding.setActionEventActive) ~= "function"
+        or PlayerInputComponent == nil
+        or PlayerInputComponent.INPUT_CONTEXT_NAME == nil
         or InputAction == nil
-        or InputAction.FORGE_TOGGLE_PHONE == nil then
+        or InputAction.FORGE_TOGGLE_PHONE == nil
+        or InputAction.FORGE_TOGGLE_LAPTOP == nil
+        or InputAction.FORGE_TOGGLE_CURSOR_MODE == nil then
         return false
     end
 
-    local callSucceeded, registered, actionEventId = pcall(
-        g_inputBinding.registerActionEvent,
+    local contextOpened = pcall(
+        g_inputBinding.beginActionEventsModification,
         g_inputBinding,
-        InputAction.FORGE_TOGGLE_PHONE,
-        FORGE.Engine,
-        FORGE.Engine.onTogglePhone,
-        false,
-        true,
-        false,
-        true
+        PlayerInputComponent.INPUT_CONTEXT_NAME
     )
+    if not contextOpened then
+        return false
+    end
 
-    phoneActionRegistered = callSucceeded
-        and registered == true
-        and actionEventId ~= nil
-
-    return phoneActionRegistered
+    local definitions = {
+        { InputAction.FORGE_TOGGLE_PHONE, FORGE.Engine.onTogglePhone },
+        { InputAction.FORGE_TOGGLE_LAPTOP, FORGE.Engine.onToggleLaptop },
+        { InputAction.FORGE_TOGGLE_CURSOR_MODE, FORGE.Engine.onToggleCursorMode }
+    }
+    for _, definition in ipairs(definitions) do
+        local succeeded, registered, eventId = pcall(
+            g_inputBinding.registerActionEvent, g_inputBinding,
+            definition[1], FORGE.Engine, definition[2],
+            false, true, false, true)
+        if not succeeded or registered ~= true or eventId == nil then
+            g_inputBinding:removeActionEventsByTarget(FORGE.Engine)
+            hostActionEventIds = {}
+            pcall(
+                g_inputBinding.endActionEventsModification,
+                g_inputBinding
+            )
+            return false
+        end
+        local activated = pcall(
+            g_inputBinding.setActionEventActive,
+            g_inputBinding,
+            eventId,
+            true
+        )
+        if not activated then
+            g_inputBinding:removeActionEventsByTarget(FORGE.Engine)
+            hostActionEventIds = {}
+            pcall(
+                g_inputBinding.endActionEventsModification,
+                g_inputBinding
+            )
+            return false
+        end
+        hostActionEventIds[definition[1]] = eventId
+        FORGE.Logger:info(
+            FORGE.Definitions.LogSource.ENGINE,
+            "Registered Host input action '%s' with event id '%s'",
+            FORGE.Logger:safeToString(definition[1], "<unknown>"),
+            FORGE.Logger:safeToString(eventId, "<unknown>")
+        )
+    end
+    local contextClosed = pcall(
+        g_inputBinding.endActionEventsModification,
+        g_inputBinding
+    )
+    if not contextClosed then
+        g_inputBinding:removeActionEventsByTarget(FORGE.Engine)
+        hostActionEventIds = {}
+        return false
+    end
+    hostActionsRegistered = true
+    return true
 end
 
-local function unregisterPhoneAction()
-    if phoneActionRegistered
+local function unregisterHostActions()
+    setCursorMode("GAMEPLAY")
+    if hostActionsRegistered
         and g_inputBinding ~= nil
         and type(g_inputBinding.removeActionEventsByTarget)
             == "function" then
+        local contextOpened = false
+        if type(g_inputBinding.beginActionEventsModification) == "function"
+            and PlayerInputComponent ~= nil
+            and PlayerInputComponent.INPUT_CONTEXT_NAME ~= nil then
+            contextOpened = pcall(
+                g_inputBinding.beginActionEventsModification,
+                g_inputBinding,
+                PlayerInputComponent.INPUT_CONTEXT_NAME
+            )
+        end
         pcall(
             g_inputBinding.removeActionEventsByTarget,
             g_inputBinding,
             FORGE.Engine
         )
+        if contextOpened
+            and type(g_inputBinding.endActionEventsModification)
+                == "function" then
+            pcall(
+                g_inputBinding.endActionEventsModification,
+                g_inputBinding
+            )
+        end
     end
 
-    phoneActionRegistered = false
+    hostActionsRegistered = false
+    hostActionEventIds = {}
 end
 
 --- Loads FORGE persistence for the active authoritative mission.
@@ -660,10 +804,10 @@ function FORGE.Engine:loadMap(mapName)
         forgeOSCompletionPending = true
     end
 
-    if not registerPhoneAction() then
+    if not registerHostActions() then
         FORGE.Logger:warning(
             FORGE.Definitions.LogSource.ENGINE,
-            "FORGE Phone input action is not available"
+            "FORGE Host input actions are not available"
         )
     end
 
@@ -739,7 +883,7 @@ function FORGE.Engine:deleteMap()
     self.isMissionLoaded = false
     self.mapName = nil
     forgeOSCompletionPending = false
-    unregisterPhoneAction()
+    unregisterHostActions()
 
     if not FORGE.ForgeOSExportBridge:shutdown() then
         FORGE.Logger:error(
@@ -803,6 +947,12 @@ function FORGE.Engine:update(dt)
         end
     end
 
+    if cursorMode == "FORGE_POINTER"
+        and (not FORGE.ForgeOS:hasVisibleRuntimeHost()
+            or g_gui ~= nil and g_gui:getIsGuiVisible()) then
+        setCursorMode("GAMEPLAY")
+    end
+
     FORGE.ForgeOS:updateRuntimeHost(dt)
 end
 
@@ -817,10 +967,51 @@ function FORGE.Engine.onTogglePhone(
     callbackState,
     isAnalog
 )
-    return FORGE.ForgeOS:dispatchHostInput(
+    local consumed = FORGE.ForgeOS:dispatchHostInput(
         "FORGE_TOGGLE_PHONE",
         inputValue
     )
+    FORGE.Logger:info(
+        FORGE.Definitions.LogSource.ENGINE,
+        "Phone input callback value='%s' phase='%s' consumed='%s'",
+        FORGE.Logger:safeToString(inputValue, "<nil>"),
+        FORGE.Logger:safeToString(FORGE.ForgeOS:getPhase(), "<nil>"),
+        FORGE.Logger:safeToString(consumed, "<nil>")
+    )
+    return consumed
+end
+
+function FORGE.Engine.onToggleLaptop(target, actionName, inputValue)
+    local consumed = FORGE.ForgeOS:dispatchHostInput(
+        "FORGE_TOGGLE_LAPTOP", inputValue)
+    FORGE.Logger:info(
+        FORGE.Definitions.LogSource.ENGINE,
+        "Laptop input callback value='%s' phase='%s' consumed='%s'",
+        FORGE.Logger:safeToString(inputValue, "<nil>"),
+        FORGE.Logger:safeToString(FORGE.ForgeOS:getPhase(), "<nil>"),
+        FORGE.Logger:safeToString(consumed, "<nil>")
+    )
+    return consumed
+end
+
+function FORGE.Engine.onToggleCursorMode(target, actionName, inputValue)
+    if inputValue == 0 then
+        FORGE.Logger:info(
+            FORGE.Definitions.LogSource.ENGINE,
+            "Cursor input callback release ignored"
+        )
+        return false
+    end
+    local changed = setCursorMode(cursorMode == "GAMEPLAY"
+        and "FORGE_POINTER" or "GAMEPLAY")
+    FORGE.Logger:info(
+        FORGE.Definitions.LogSource.ENGINE,
+        "Cursor input callback value='%s' mode='%s' changed='%s'",
+        FORGE.Logger:safeToString(inputValue, "<nil>"),
+        cursorMode,
+        FORGE.Logger:safeToString(changed, "<nil>")
+    )
+    return changed
 end
 
 function FORGE.Engine:keyEvent(
@@ -847,6 +1038,10 @@ function FORGE.Engine:mouseEvent(
     isUp,
     button
 )
+    if cursorMode ~= "FORGE_POINTER"
+        or g_gui ~= nil and g_gui:getIsGuiVisible() then
+        return false
+    end
     return FORGE.ForgeOS:dispatchHostPointer(
         posX,
         posY,

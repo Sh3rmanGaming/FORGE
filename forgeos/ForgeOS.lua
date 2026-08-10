@@ -29,8 +29,13 @@ local Namespace =
 
 local DeviceId = FORGE.Definitions.DeviceId
 local Capability = FORGE.Definitions.DeviceCapability
-local phoneHostInstance = nil
-local phoneHostFaultReported = false
+local HOST_ORDER = { DeviceId.PHONE, DeviceId.LAPTOP }
+local HOST_ID_BY_DEVICE = {
+    [DeviceId.PHONE] = "phoneHost",
+    [DeviceId.LAPTOP] = "laptopHost"
+}
+local runtimeHosts = {}
+local runtimeHostFaultReported = {}
 
 local function createDefaultState()
     return {
@@ -155,10 +160,40 @@ local function installProductionRegistries()
         return phoneResult
     end
 
-    return FORGE.DeviceHostRegistry:registerHost({
+    local phoneHostResult = FORGE.DeviceHostRegistry:registerHost({
         id = "phoneHost",
         deviceId = DeviceId.PHONE,
         createInstance = FORGE.PhoneHost.create
+    })
+    if phoneHostResult ~= Result.SUCCESS then
+        return phoneHostResult
+    end
+
+    local laptopResult = FORGE.DeviceRegistry:registerDevice({
+        id = DeviceId.LAPTOP,
+        displayName = "Laptop",
+        hostId = "laptopHost",
+        capabilities = {
+            [Capability.FULL_SCREEN_APPS] = true,
+            [Capability.WINDOWED_APPS] = false,
+            [Capability.TOUCH_INPUT] = false,
+            [Capability.POINTER_INPUT] = true,
+            [Capability.KEYBOARD_INPUT] = true,
+            [Capability.NOTIFICATIONS] = true,
+            [Capability.BACKGROUND_APPS] = true,
+            [Capability.MULTI_APP] = false,
+            [Capability.MODALS] = true,
+            [Capability.NAVIGATION_HISTORY] = true
+        }
+    })
+    if laptopResult ~= Result.SUCCESS then
+        return laptopResult
+    end
+
+    return FORGE.DeviceHostRegistry:registerHost({
+        id = "laptopHost",
+        deviceId = DeviceId.LAPTOP,
+        createInstance = FORGE.LaptopHost.create
     })
 end
 
@@ -167,25 +202,27 @@ local function isHigherPriorityUiActive()
 end
 
 local function hasUsableHost(deviceId)
-    return deviceId == DeviceId.PHONE
-        and phoneHostInstance ~= nil
-        and phoneHostInstance:isOperational()
+    local instance = runtimeHosts[deviceId]
+    return instance ~= nil and instance:isOperational()
 end
 
-local function createPhoneHostContext()
+local function createHostContext(deviceId)
     return {
         getVisibility = function()
             return FORGE.DeviceStateService
-                :getDeviceVisibility(DeviceId.PHONE)
+                :getDeviceVisibility(deviceId)
         end,
         show = function()
-            return FORGE.ForgeOS:showDevice(DeviceId.PHONE)
+            return FORGE.ForgeOS:showDevice(deviceId)
         end,
         hide = function()
-            return FORGE.ForgeOS:hideDevice(DeviceId.PHONE)
+            return FORGE.ForgeOS:hideDevice(deviceId)
         end,
         getActiveAppId = function()
-            return FORGE.ForgeOS:getActiveAppId(DeviceId.PHONE)
+            return FORGE.ForgeOS:getActiveAppId(deviceId)
+        end,
+        getRegisteredAppIds = function()
+            return FORGE.ForgeOS:getRegisteredAppIds()
         end,
         getAppDefinition = function(appId)
             return FORGE.ForgeOS:getAppDefinition(appId)
@@ -193,39 +230,39 @@ local function createPhoneHostContext()
         resolvePresentation = function(appId)
             return FORGE.ForgeOS:resolvePresentation(
                 appId,
-                DeviceId.PHONE
+                deviceId
             )
         end,
         getCurrentRoute = function(appId)
             return FORGE.ForgeOS:getCurrentRoute(
-                DeviceId.PHONE,
+                deviceId,
                 appId
             )
         end,
         getValidatedResumeDestination = function()
             return FORGE.NavigationService
-                :getValidatedResumeDestination(DeviceId.PHONE)
+                :getValidatedResumeDestination(deviceId)
         end,
         openApp = function(appId)
-            return FORGE.ForgeOS:openApp(DeviceId.PHONE, appId)
+            return FORGE.ForgeOS:openApp(deviceId, appId)
         end,
         activateApp = function(appId)
-            return FORGE.ForgeOS:activateApp(DeviceId.PHONE, appId)
+            return FORGE.ForgeOS:activateApp(deviceId, appId)
         end,
         navigate = function(appId, routeId, parameters)
             return FORGE.ForgeOS:navigate(
-                DeviceId.PHONE,
+                deviceId,
                 appId,
                 routeId,
                 parameters
             )
         end,
         closeApp = function(appId)
-            return FORGE.ForgeOS:closeApp(DeviceId.PHONE, appId)
+            return FORGE.ForgeOS:closeApp(deviceId, appId)
         end,
         getNotifications = function()
             return FORGE.ForgeOS:getNotifications(
-                DeviceId.PHONE,
+                deviceId,
                 false
             )
         end,
@@ -240,54 +277,58 @@ local function createPhoneHostContext()
     }
 end
 
-local function initialisePhoneHost()
-    local createResult, instance =
-        FORGE.DeviceHostRegistry:createHostInstance(
-            "phoneHost",
-            createPhoneHostContext()
-        )
-
-    if createResult ~= Result.SUCCESS then
-        return createResult
-    end
-
-    local callSucceeded, initializeResult =
-        pcall(instance.initialize, instance)
-
-    if not callSucceeded or initializeResult ~= Result.SUCCESS then
-        if type(instance.shutdown) == "function" then
+local function shutdownStagedHosts(stagedHosts)
+    for index = #HOST_ORDER, 1, -1 do
+        local instance = stagedHosts[HOST_ORDER[index]]
+        if instance ~= nil and type(instance.shutdown) == "function" then
             pcall(instance.shutdown, instance)
         end
-        if callSucceeded
-            and type(initializeResult) == "string" then
-            return initializeResult
+    end
+end
+
+local function initialiseRuntimeHosts()
+    local stagedHosts = {}
+    for _, deviceId in ipairs(HOST_ORDER) do
+        local createResult, instance =
+            FORGE.DeviceHostRegistry:createHostInstance(
+                HOST_ID_BY_DEVICE[deviceId], createHostContext(deviceId))
+        if createResult ~= Result.SUCCESS then
+            shutdownStagedHosts(stagedHosts)
+            FORGE.DeviceStateService:clearRuntimeState()
+            return createResult
         end
-
-        return Result.INTERNAL_ERROR
+        stagedHosts[deviceId] = instance
+        local callSucceeded, initializeResult =
+            pcall(instance.initialize, instance)
+        if not callSucceeded or initializeResult ~= Result.SUCCESS then
+            shutdownStagedHosts(stagedHosts)
+            FORGE.DeviceStateService:clearRuntimeState()
+            return callSucceeded and type(initializeResult) == "string"
+                and initializeResult or Result.INTERNAL_ERROR
+        end
+        local stateResult = FORGE.DeviceStateService:initialiseDevice(deviceId)
+        if stateResult ~= Result.SUCCESS then
+            shutdownStagedHosts(stagedHosts)
+            FORGE.DeviceStateService:clearRuntimeState()
+            return stateResult
+        end
     end
-
-    local stateResult =
-        FORGE.DeviceStateService:initialiseDevice(DeviceId.PHONE)
-
-    if stateResult ~= Result.SUCCESS then
-        pcall(instance.shutdown, instance)
-        return stateResult
-    end
-
-    phoneHostInstance = instance
-    phoneHostFaultReported = false
+    runtimeHosts = stagedHosts
+    runtimeHostFaultReported = {}
     return Result.SUCCESS
 end
 
-local function reportRuntimeHostFailure(operationName, failure)
-    if phoneHostFaultReported then
+local function reportRuntimeHostFailure(deviceId, operationName, failure)
+    if runtimeHostFaultReported[deviceId] then
         return
     end
-
-    phoneHostFaultReported = true
+    runtimeHostFaultReported[deviceId] = true
     FORGE.Logger:error(
-        FORGE.Definitions.LogSource.PHONE_HOST,
-        "Phone Host runtime operation '%s' failed: %s",
+        deviceId == DeviceId.PHONE
+            and FORGE.Definitions.LogSource.PHONE_HOST
+            or FORGE.Definitions.LogSource.LAPTOP_HOST,
+        "Device Host '%s' runtime operation '%s' failed: %s",
+        deviceId,
         operationName,
         FORGE.Logger:safeToString(failure, "<unprintable error>")
     )
@@ -336,15 +377,18 @@ local function completeShutdown()
     end
 
     local hostCleanupResult = Result.SUCCESS
-    if phoneHostInstance ~= nil then
-        local callSucceeded, result =
-            pcall(phoneHostInstance.shutdown, phoneHostInstance)
-        phoneHostInstance = nil
-        phoneHostFaultReported = false
-        hostCleanupResult = callSucceeded
-            and result
-            or Result.INTERNAL_ERROR
+    for index = #HOST_ORDER, 1, -1 do
+        local deviceId = HOST_ORDER[index]
+        local instance = runtimeHosts[deviceId]
+        if instance ~= nil then
+            local callSucceeded, result = pcall(instance.shutdown, instance)
+            if not callSucceeded or result ~= Result.SUCCESS then
+                hostCleanupResult = Result.INTERNAL_ERROR
+            end
+        end
     end
+    runtimeHosts = {}
+    runtimeHostFaultReported = {}
 
     local deviceStateCleanupResult =
         FORGE.DeviceStateService:clearRuntimeState()
@@ -533,12 +577,12 @@ local function completeStartup()
         hasUsableHost
     )
 
-    local hostResult = initialisePhoneHost()
+    local hostResult = initialiseRuntimeHosts()
 
     if hostResult ~= Result.SUCCESS then
         FORGE.Logger:error(
-            FORGE.Definitions.LogSource.PHONE_HOST,
-            "Phone Host startup failed with result '%s'",
+            FORGE.Definitions.LogSource.FORGE_OS,
+            "Production Host startup failed with result '%s'",
             FORGE.Logger:safeToString(hostResult, "<unknown>")
         )
         completeShutdown()
@@ -631,20 +675,21 @@ end
 function FORGE.ForgeOS:showDevice(deviceId)
     local result = FORGE.DeviceStateService:showDevice(deviceId)
 
-    if result == Result.SUCCESS
-        and deviceId == DeviceId.PHONE
-        and phoneHostInstance ~= nil then
+    local instance = runtimeHosts[deviceId]
+    if result == Result.SUCCESS and instance ~= nil then
         local callSucceeded, resumeResult =
-            pcall(phoneHostInstance.resume, phoneHostInstance)
+            pcall(instance.resume, instance)
         if not callSucceeded then
             FORGE.Logger:warning(
-                FORGE.Definitions.LogSource.PHONE_HOST,
-                "Phone resume orchestration failed; displaying Home surface"
+                FORGE.Definitions.LogSource.FORGE_OS,
+                "Device '%s' resume orchestration failed; displaying Home surface",
+                deviceId
             )
         elseif resumeResult ~= Result.SUCCESS then
             FORGE.Logger:warning(
-                FORGE.Definitions.LogSource.PHONE_HOST,
-                "Phone resume returned '%s'; displaying Home surface",
+                FORGE.Definitions.LogSource.FORGE_OS,
+                "Device '%s' resume returned '%s'; displaying Home surface",
+                deviceId,
                 FORGE.Logger:safeToString(resumeResult, "<unknown>")
             )
         end
@@ -783,67 +828,83 @@ function FORGE.ForgeOS:getNotifications(deviceId, includeDismissed)
 end
 
 function FORGE.ForgeOS:updateRuntimeHost(dt)
-    if FORGE.ForgeOSCore:getPhase() == Phase.RUNTIME_ACTIVE
-        and phoneHostInstance ~= nil then
-        local succeeded, failure =
-            pcall(phoneHostInstance.update, phoneHostInstance, dt)
-        if not succeeded then
-            reportRuntimeHostFailure("update", failure)
+    if FORGE.ForgeOSCore:getPhase() == Phase.RUNTIME_ACTIVE then
+        for _, deviceId in ipairs(HOST_ORDER) do
+            local instance = runtimeHosts[deviceId]
+            if instance ~= nil then
+                local succeeded, failure =
+                    pcall(instance.update, instance, dt)
+                if not succeeded then
+                    reportRuntimeHostFailure(deviceId, "update", failure)
+                end
+            end
         end
     end
 end
 
 function FORGE.ForgeOS:drawRuntimeHost()
-    if FORGE.ForgeOSCore:getPhase() == Phase.RUNTIME_ACTIVE
-        and phoneHostInstance ~= nil then
-        local succeeded, failure =
-            pcall(phoneHostInstance.draw, phoneHostInstance)
-        if not succeeded then
-            reportRuntimeHostFailure("draw", failure)
+    if FORGE.ForgeOSCore:getPhase() == Phase.RUNTIME_ACTIVE then
+        for _, deviceId in ipairs(HOST_ORDER) do
+            local instance = runtimeHosts[deviceId]
+            if instance ~= nil then
+                local succeeded, failure =
+                    pcall(instance.draw, instance)
+                if not succeeded then
+                    reportRuntimeHostFailure(deviceId, "draw", failure)
+                end
+            end
         end
     end
 end
 
 function FORGE.ForgeOS:dispatchHostInput(action, value, ...)
-    if FORGE.ForgeOSCore:getPhase() ~= Phase.RUNTIME_ACTIVE
-        or phoneHostInstance == nil then
+    if FORGE.ForgeOSCore:getPhase() ~= Phase.RUNTIME_ACTIVE then
         return false
     end
-
-    local call = {
-        pcall(
-            phoneHostInstance.onInput,
-            phoneHostInstance,
-            action,
-            value,
-            ...
-        )
-    }
-    if not call[1] then
-        reportRuntimeHostFailure("input", call[2])
-        return false
+    for _, deviceId in ipairs(HOST_ORDER) do
+        local instance = runtimeHosts[deviceId]
+        if instance ~= nil then
+            local call = { pcall(instance.onInput, instance, action, value, ...) }
+            if not call[1] then
+                reportRuntimeHostFailure(deviceId, "input", call[2])
+            elseif call[2] == true then
+                return true
+            end
+        end
     end
-    return call[2] == true
+    return false
 end
 
-function FORGE.ForgeOS:dispatchHostPointer(...)
-    if FORGE.ForgeOSCore:getPhase() ~= Phase.RUNTIME_ACTIVE
-        or phoneHostInstance == nil then
+function FORGE.ForgeOS:dispatchHostPointer(posX, posY, ...)
+    if FORGE.ForgeOSCore:getPhase() ~= Phase.RUNTIME_ACTIVE then
         return false
     end
+    for _, deviceId in ipairs(HOST_ORDER) do
+        local instance = runtimeHosts[deviceId]
+        if instance ~= nil and instance:containsPoint(posX, posY) then
+            local call = { pcall(instance.onPointer, instance,
+                posX, posY, ...) }
+            if not call[1] then
+                reportRuntimeHostFailure(deviceId, "pointer", call[2])
+            elseif call[2] == true then
+                return true
+            end
+        end
+    end
+    return false
+end
 
-    local call = {
-        pcall(
-            phoneHostInstance.onPointer,
-            phoneHostInstance,
-            ...
-        )
-    }
-    if not call[1] then
-        reportRuntimeHostFailure("pointer", call[2])
+function FORGE.ForgeOS:hasVisibleRuntimeHost()
+    if FORGE.ForgeOSCore:getPhase() ~= Phase.RUNTIME_ACTIVE then
         return false
     end
-    return call[2] == true
+    for _, deviceId in ipairs(HOST_ORDER) do
+        if FORGE.DeviceStateService:getDeviceVisibility(deviceId)
+            == FORGE.Definitions.DeviceVisibility.VISIBLE then
+            return true
+        end
+    end
+    return false
 end
 
 --- Starts or idempotently confirms the ForgeOS lifecycle.

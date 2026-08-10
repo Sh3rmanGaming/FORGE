@@ -227,9 +227,11 @@ Current records:
 - [M2.008 Runtime Verification](reviews/M2.008RuntimeVerification.md)
 - [M2.009 Runtime Verification](reviews/M2.009RuntimeVerification.md)
 - [M2.010 Runtime Verification](reviews/M2.010RuntimeVerification.md)
+- [M2.011 Runtime Verification](reviews/M2.011RuntimeVerification.md)
 - [ADR-003 - Device Host Lifecycle and Visibility](adr/ADR-003-Device-Host-Lifecycle-and-Visibility.md)
 - [ADR-004 - FS25 Cross-Mod ForgeOS Export Bridge](adr/ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md)
 - [Verified M2.010 companion reference](../verification/FS25_FORGE_M2010_Verifier/README.md)
+- [Verified M2.011 companion reference](../verification/FS25_FORGE_M2011_Verifier/README.md)
 - [M2 Architecture Review](reviews/M2ArchitectureReview.md)
 - [Repository Baseline Audit 001](reviews/RepositoryBaselineAudit-001.md)
 
@@ -384,14 +386,18 @@ M2.010 – Phone Host
 Next implementation stage:
 
 ```text
-M2.011 – Laptop Host
+M2.012 – End-to-End Integration
 ```
 
 M2.010 – Phone Host is implemented, synchronized, runtime verified, accepted,
 and frozen within its bounded scope. Production ForgeOS reaches
 `RUNTIME_ACTIVE` with its first concrete Phone Host, and the external companion
-bridge is runtime proven. M2.011 – Laptop Host is the next implementation
-boundary and has not started. Overall M2 remains In Progress.
+bridge is runtime proven. M2.011 – Laptop Host is implemented, synchronized,
+runtime verified, accepted, and frozen within its bounded two-Host scope. F8
+remains its development/fallback adapter while physical in-world Laptop
+interaction remains future work. Dedicated-server Host/UI behaviour remains
+unverified. M2.012 – End-to-End Integration is the next implementation
+boundary. Overall M2 remains In Progress.
 
 ---
 

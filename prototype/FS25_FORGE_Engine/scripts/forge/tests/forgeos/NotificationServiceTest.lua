@@ -67,9 +67,6 @@ function FORGE.Tests.runNotificationServiceTests()
         end
 
         if FORGE.ForgeOS:start() ~= Result.SUCCESS
-            or FORGE.ForgeOS:registerDevice({
-                id = "laptop", displayName = "Laptop", capabilities = {}
-            }) ~= Result.SUCCESS
             or FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS
             or FORGE.ForgeOS:getPhase() ~= Phase.RUNTIME_ACTIVE then
             error("Notification test setup failed")
