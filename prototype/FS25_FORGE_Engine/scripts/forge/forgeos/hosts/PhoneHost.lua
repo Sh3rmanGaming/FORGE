@@ -27,12 +27,34 @@ function PhoneHost.create(context)
     local instance = {
         context = context,
         initialized = false,
+        frameOverlay = nil,
+        appCardOverlay = nil,
         bounds = { x = 0.70, y = 0.12, width = 0.27, height = 0.76 }
     }
 
     function instance:initialize()
         if self.initialized then
             return Result.SUCCESS
+        end
+
+        if type(createImageOverlay) == "function"
+            and type(FORGE.ModDirectory) == "string" then
+            local overlayCreated, overlay = pcall(
+                createImageOverlay,
+                FORGE.ModDirectory
+                    .. "scripts/forge/forgeos/assets/phone_frame.dds"
+            )
+            if overlayCreated then
+                self.frameOverlay = overlay
+            end
+            local cardCreated, cardOverlay = pcall(
+                createImageOverlay,
+                FORGE.ModDirectory
+                    .. "scripts/forge/forgeos/assets/app_card.dds"
+            )
+            if cardCreated then
+                self.appCardOverlay = cardOverlay
+            end
         end
 
         self.initialized = true
@@ -68,6 +90,18 @@ function PhoneHost.create(context)
         end
     end
 
+    local function setColor(red, green, blue, alpha)
+        if type(setTextColor) == "function" then
+            setTextColor(red, green, blue, alpha or 1)
+        end
+    end
+
+    local function drawPanel(x, y, width, height, red, green, blue, alpha)
+        if type(drawFilledRect) == "function" then
+            drawFilledRect(x, y, width, height, red, green, blue, alpha)
+        end
+    end
+
     function instance:draw()
         if not self.initialized
             or self.context.getVisibility()
@@ -76,35 +110,34 @@ function PhoneHost.create(context)
         end
 
         local bounds = self.bounds
-        if type(drawFilledRect) == "function" then
-            drawFilledRect(
-                bounds.x,
-                bounds.y,
-                bounds.width,
-                bounds.height,
-                0.035,
-                0.045,
-                0.06,
-                0.94
-            )
-            drawFilledRect(
-                bounds.x + 0.008,
-                bounds.y + 0.012,
-                bounds.width - 0.016,
-                bounds.height - 0.024,
-                0.09,
-                0.11,
-                0.14,
-                0.98
-            )
+        if self.frameOverlay ~= nil and type(renderOverlay) == "function" then
+            if type(setOverlayColor) == "function" then
+                setOverlayColor(self.frameOverlay, 1, 1, 1, 1)
+            end
+            renderOverlay(self.frameOverlay,
+                bounds.x - 0.014, bounds.y - 0.014,
+                bounds.width + 0.028, bounds.height + 0.028)
+        else
+            drawPanel(bounds.x, bounds.y, bounds.width, bounds.height,
+                0.01, 0.014, 0.019, 0.97)
+            drawPanel(bounds.x + 0.004, bounds.y + 0.012,
+                bounds.width - 0.008, bounds.height - 0.024,
+                0.045, 0.055, 0.068, 0.98)
         end
 
-        local x = bounds.x + 0.02
-        local y = bounds.y + bounds.height - 0.055
-        if type(setTextColor) == "function" then
-            setTextColor(1, 1, 1, 1)
-        end
-        drawLabel("FORGE Phone", x, y, 0.025)
+        -- Keep frame hardware visually separate from the OS content.
+        drawPanel(bounds.x + 0.012,
+            bounds.y + bounds.height - 0.072,
+            bounds.width - 0.024, 0.004, 0.95, 0.48, 0.12, 1)
+
+        local x = bounds.x + 0.022
+        local y = bounds.y + bounds.height - 0.112
+        setColor(0.96, 0.97, 0.99, 1)
+        drawLabel("FORGE", x, y, 0.026)
+        setColor(1, 0.56, 0.18, 1)
+        drawLabel("OS", x + 0.088, y, 0.026)
+        setColor(0.60, 0.64, 0.70, 1)
+        drawLabel("OPERATIONS HUB", x, y - 0.03, 0.011)
 
         local appId = self.context.getActiveAppId()
         local presentationId = nil
@@ -125,22 +158,64 @@ function PhoneHost.create(context)
             routeId = self.context.getCurrentRoute(appId)
         end
 
-        y = y - 0.06
-        drawLabel("Surface: " .. appLabel, x, y, 0.018)
-        y = y - 0.035
-        drawLabel(
-            "Presentation: " .. safeText(presentationId, "home"),
-            x,
-            y,
-            0.015
-        )
-        y = y - 0.03
-        drawLabel(
-            "Route: " .. safeText(routeId, "none"),
-            x,
-            y,
-            0.015
-        )
+        local surfaceY = bounds.y + bounds.height - 0.235
+        drawPanel(x, surfaceY, bounds.width - 0.044, 0.09,
+            0.09, 0.105, 0.125, 0.98)
+        drawPanel(x, surfaceY + 0.086, bounds.width - 0.044, 0.004,
+            0.95, 0.48, 0.12, 1)
+        setColor(0.63, 0.67, 0.72, 1)
+        drawLabel("ACTIVE SURFACE", x + 0.012, surfaceY + 0.061, 0.011)
+        setColor(0.96, 0.97, 0.99, 1)
+        drawLabel(appLabel, x + 0.012, surfaceY + 0.035, 0.017)
+        setColor(0.60, 0.64, 0.70, 1)
+        drawLabel(safeText(presentationId, "home") .. "  /  "
+            .. safeText(routeId, "none"), x + 0.012, surfaceY + 0.014, 0.010)
+
+        local launcherY = surfaceY - 0.03
+        setColor(0.63, 0.67, 0.72, 1)
+        drawLabel("APPLICATIONS", x, launcherY, 0.011)
+        local cardY = launcherY - 0.072
+        local cardWidth = (bounds.width - 0.054) / 2
+        local shownApps = 0
+        local registeredApps = type(self.context.getRegisteredAppIds)
+                == "function"
+            and self.context.getRegisteredAppIds()
+            or {}
+        for _, registeredAppId in ipairs(registeredApps) do
+            local app = self.context.getAppDefinition(registeredAppId)
+            if app ~= nil
+                and type(app.supportedDevices) == "table"
+                and app.supportedDevices.phone == true
+                and shownApps < 4 then
+                local column = shownApps % 2
+                local row = math.floor(shownApps / 2)
+                local cardX = x + column * (cardWidth + 0.01)
+                local currentY = cardY - row * 0.078
+                if self.appCardOverlay ~= nil
+                    and type(renderOverlay) == "function" then
+                    if type(setOverlayColor) == "function" then
+                        setOverlayColor(self.appCardOverlay, 1, 1, 1, 1)
+                    end
+                    renderOverlay(self.appCardOverlay,
+                        cardX, currentY, cardWidth, 0.064)
+                else
+                    drawPanel(cardX, currentY, cardWidth, 0.064,
+                        0.105, 0.12, 0.145, 0.98)
+                    drawPanel(cardX, currentY + 0.06, cardWidth, 0.004,
+                        0.95, 0.48, 0.12, 1)
+                end
+                setColor(0.95, 0.96, 0.98, 1)
+                drawLabel(safeText(app.displayName, registeredAppId),
+                    cardX + 0.009, currentY + 0.035, 0.012)
+                setColor(0.58, 0.62, 0.68, 1)
+                drawLabel("OPEN", cardX + 0.009, currentY + 0.014, 0.009)
+                shownApps = shownApps + 1
+            end
+        end
+        if shownApps == 0 then
+            setColor(0.52, 0.56, 0.62, 1)
+            drawLabel("No applications registered", x, cardY + 0.02, 0.011)
+        end
 
         local notifications = self.context.getNotifications()
         local unread = 0
@@ -150,28 +225,38 @@ function PhoneHost.create(context)
             end
         end
 
-        if type(setTextColor) == "function" then
-            setTextColor(1, 1, 1, 1)
+        local notificationY = bounds.y + 0.205
+        setColor(0.63, 0.67, 0.72, 1)
+        drawLabel("NOTIFICATIONS", x, notificationY, 0.011)
+        if unread > 0 then
+            drawPanel(x + bounds.width - 0.087, notificationY - 0.004,
+                0.03, 0.024, 0.95, 0.48, 0.12, 1)
+            setColor(0.08, 0.05, 0.02, 1)
+            drawLabel(tostring(unread), x + bounds.width - 0.077,
+                notificationY + 0.002, 0.011)
         end
-
-        y = y - 0.055
-        drawLabel("Notifications (" .. unread .. ")", x, y, 0.018)
 
         local shown = 0
         for _, notification in ipairs(notifications) do
             if not notification.dismissed and shown < 4 then
                 shown = shown + 1
-                y = y - 0.04
+                notificationY = notificationY - 0.036
                 local marker = notification.read and "" or "* "
+                setColor(notification.read and 0.62 or 0.96,
+                    notification.read and 0.66 or 0.97,
+                    notification.read and 0.72 or 0.99, 1)
                 drawLabel(
                     marker .. safeText(notification.title, notification.id)
                         .. " [" .. safeText(notification.severity, "") .. "]",
                     x,
-                    y,
-                    0.014
+                    notificationY,
+                    0.011
                 )
             end
         end
+        setColor(0.52, 0.56, 0.62, 1)
+        drawLabel("F7 CLOSE  |  F6 POINTER", x, bounds.y + 0.035, 0.010)
+        setColor(1, 1, 1, 1)
     end
 
     function instance:resume()
@@ -283,6 +368,14 @@ function PhoneHost.create(context)
     end
 
     function instance:shutdown()
+        if self.frameOverlay ~= nil and type(delete) == "function" then
+            pcall(delete, self.frameOverlay)
+        end
+        if self.appCardOverlay ~= nil and type(delete) == "function" then
+            pcall(delete, self.appCardOverlay)
+        end
+        self.frameOverlay = nil
+        self.appCardOverlay = nil
         self.initialized = false
         FORGE.Logger:info(
             FORGE.Definitions.LogSource.PHONE_HOST,

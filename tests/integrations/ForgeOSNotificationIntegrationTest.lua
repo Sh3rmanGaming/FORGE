@@ -108,6 +108,86 @@ function FORGE.Tests.runForgeOSNotificationIntegrationTests()
             error("Notification persistence integration failed")
         end
 
+        local sharedResult, sharedId = FORGE.ForgeOS:createNotification({
+            source = "forge.integration.shared",
+            title = "Shared Device State",
+            body = "One identity across Phone and Laptop",
+            severity = Severity.INFO,
+            persistence = Persist.SESSION,
+            targetDevices = { phone = true, laptop = true }
+        })
+        local phoneShared = FORGE.ForgeOS:getNotification(sharedId)
+        local laptopShared = FORGE.ForgeOS:getNotifications("laptop", true)
+        if sharedResult ~= Result.SUCCESS
+            or phoneShared == nil
+            or phoneShared.read
+            or laptopShared[#laptopShared] == nil
+            or laptopShared[#laptopShared].id ~= sharedId
+            or FORGE.ForgeOS:markNotificationRead(sharedId) ~= Result.SUCCESS
+            or not FORGE.ForgeOS:getNotification(sharedId).read then
+            error("Shared multi-target notification read state failed")
+        end
+        local phoneAfterRead = FORGE.ForgeOS:getNotifications("phone", true)
+        local laptopAfterRead = FORGE.ForgeOS:getNotifications("laptop", true)
+        local phoneRecord = nil
+        local laptopRecord = nil
+        for _, record in ipairs(phoneAfterRead) do
+            if record.id == sharedId then phoneRecord = record end
+        end
+        for _, record in ipairs(laptopAfterRead) do
+            if record.id == sharedId then laptopRecord = record end
+        end
+        if phoneRecord == nil or laptopRecord == nil
+            or not phoneRecord.read or not laptopRecord.read then
+            error("Shared notification read was not visible on both devices")
+        end
+        phoneRecord.read = false
+        if not FORGE.ForgeOS:getNotification(sharedId).read
+            or FORGE.ForgeOS:dismissNotification(sharedId) ~= Result.SUCCESS then
+            error("Shared notification detachment or dismissal failed")
+        end
+        for _, record in ipairs(FORGE.ForgeOS:getNotifications("phone")) do
+            if record.id == sharedId then
+                error("Dismissed shared notification remained on Phone")
+            end
+        end
+        for _, record in ipairs(FORGE.ForgeOS:getNotifications("laptop")) do
+            if record.id == sharedId then
+                error("Dismissed shared notification remained on Laptop")
+            end
+        end
+
+        local independentOneResult, independentOneId =
+            FORGE.ForgeOS:createNotification({
+                source = "forge.integration.independent",
+                title = "Identical",
+                body = "Independent records",
+                severity = Severity.INFO,
+                persistence = Persist.SESSION,
+                targetDevices = { phone = true, laptop = true }
+            })
+        local independentTwoResult, independentTwoId =
+            FORGE.ForgeOS:createNotification({
+                source = "forge.integration.independent",
+                title = "Identical",
+                body = "Independent records",
+                severity = Severity.INFO,
+                persistence = Persist.SESSION,
+                targetDevices = { phone = true, laptop = true }
+            })
+        if independentOneResult ~= Result.SUCCESS
+            or independentTwoResult ~= Result.SUCCESS
+            or independentOneId == independentTwoId
+            or FORGE.ForgeOS:markNotificationRead(independentOneId)
+                ~= Result.SUCCESS
+            or FORGE.ForgeOS:getNotification(independentTwoId).read then
+            error("Separately created notification identity was not independent")
+        end
+
+        -- Refresh the sequence snapshot after the additional integration
+        -- creations so the retained M2.009 continuity proof remains exact.
+        state = FORGE.StateStore:snapshot(Namespace)
+
         if verificationDirectory ~= nil then
             local fixture = nil
             for _, record in ipairs(

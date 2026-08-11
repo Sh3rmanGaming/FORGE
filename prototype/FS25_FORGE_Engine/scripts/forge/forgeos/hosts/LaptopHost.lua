@@ -66,6 +66,19 @@ function LaptopHost.create(context)
         end
     end
 
+
+    local function setColor(red, green, blue, alpha)
+        if type(setTextColor) == "function" then
+            setTextColor(red, green, blue, alpha or 1)
+        end
+    end
+
+    local function drawPanel(x, y, width, height, red, green, blue, alpha)
+        if type(drawFilledRect) == "function" then
+            drawFilledRect(x, y, width, height, red, green, blue, alpha)
+        end
+    end
+
     function instance:draw()
         if not self.initialized
             or self.context.getVisibility() ~= Visibility.VISIBLE then
@@ -73,23 +86,23 @@ function LaptopHost.create(context)
         end
 
         local bounds = self.bounds
-        if type(drawFilledRect) == "function" then
-            drawFilledRect(bounds.x, bounds.y, bounds.width, bounds.height,
-                0.025, 0.035, 0.055, 0.96)
-            drawFilledRect(bounds.x + 0.01, bounds.y + 0.02,
-                bounds.width - 0.02, bounds.height - 0.04,
-                0.10, 0.12, 0.16, 0.98)
-        end
-
-        if type(setTextColor) == "function" then
-            setTextColor(1, 1, 1, 1)
-        end
+        drawPanel(bounds.x, bounds.y, bounds.width, bounds.height,
+            0.012, 0.018, 0.028, 0.97)
+        drawPanel(bounds.x + 0.009, bounds.y + 0.018,
+            bounds.width - 0.018, bounds.height - 0.036,
+            0.052, 0.064, 0.082, 0.98)
+        drawPanel(bounds.x + 0.009,
+            bounds.y + bounds.height - 0.014,
+            bounds.width - 0.018, 0.005, 0.95, 0.48, 0.12, 1)
 
         local x = bounds.x + 0.025
         local y = bounds.y + bounds.height - 0.055
-        drawLabel("FORGE Laptop", x, y, 0.026)
-        y = y - 0.05
-        drawLabel("Home / Desktop", x, y, 0.019)
+        setColor(0.96, 0.97, 0.99, 1)
+        drawLabel("FORGE", x, y, 0.026)
+        setColor(1, 0.56, 0.18, 1)
+        drawLabel("OS", x + 0.09, y, 0.026)
+        setColor(0.60, 0.64, 0.70, 1)
+        drawLabel("LAPTOP  /  OPERATIONS DESKTOP", x, y - 0.032, 0.011)
 
         local appId = self.context.getActiveAppId()
         local appLabel = "Home"
@@ -104,16 +117,27 @@ function LaptopHost.create(context)
             routeId = self.context.getCurrentRoute(appId)
         end
 
-        y = y - 0.05
-        drawLabel("Application: " .. appLabel, x, y, 0.017)
-        y = y - 0.032
-        drawLabel("Presentation: " .. safeText(presentationId, "home"), x, y, 0.014)
-        y = y - 0.028
-        drawLabel("Route: " .. safeText(routeId, "none"), x, y, 0.014)
+        local workspaceY = bounds.y + bounds.height - 0.235
+        local workspaceWidth = bounds.width * 0.52
+        drawPanel(x, workspaceY, workspaceWidth, 0.12,
+            0.09, 0.105, 0.13, 0.98)
+        drawPanel(x, workspaceY + 0.115, workspaceWidth, 0.005,
+            0.95, 0.48, 0.12, 1)
+        setColor(0.62, 0.66, 0.72, 1)
+        drawLabel("ACTIVE WORKSPACE", x + 0.014,
+            workspaceY + 0.087, 0.011)
+        setColor(0.96, 0.97, 0.99, 1)
+        drawLabel(appLabel, x + 0.014, workspaceY + 0.055, 0.018)
+        setColor(0.58, 0.62, 0.68, 1)
+        drawLabel("Presentation  " .. safeText(presentationId, "home"),
+            x + 0.014, workspaceY + 0.029, 0.010)
+        drawLabel("Route  " .. safeText(routeId, "none"),
+            x + 0.014, workspaceY + 0.011, 0.010)
 
         local launcherX = bounds.x + bounds.width * 0.56
-        local launcherY = bounds.y + bounds.height - 0.105
-        drawLabel("Applications", launcherX, launcherY, 0.017)
+        local launcherY = bounds.y + bounds.height - 0.108
+        setColor(0.62, 0.66, 0.72, 1)
+        drawLabel("APPLICATIONS", launcherX, launcherY, 0.011)
         local shownApps = 0
         for _, registeredAppId in ipairs(self.context.getRegisteredAppIds()) do
             local app = self.context.getAppDefinition(registeredAppId)
@@ -121,9 +145,23 @@ function LaptopHost.create(context)
                 and type(app.supportedDevices) == "table"
                 and app.supportedDevices.laptop == true
                 and shownApps < 6 then
+                local column = shownApps % 2
+                local row = math.floor(shownApps / 2)
+                local cardWidth = bounds.width * 0.185
+                local cardX = launcherX + column * (cardWidth + 0.012)
+                local cardY = launcherY - 0.082 - row * 0.09
+                drawPanel(cardX, cardY, cardWidth, 0.072,
+                    0.10, 0.118, 0.145, 0.98)
+                drawPanel(cardX, cardY + 0.067, cardWidth, 0.005,
+                    column == 0 and 0.22 or 0.95,
+                    column == 0 and 0.62 or 0.48,
+                    column == 0 and 0.95 or 0.12, 1)
+                setColor(0.96, 0.97, 0.99, 1)
+                drawLabel(safeText(app.displayName, registeredAppId),
+                    cardX + 0.01, cardY + 0.038, 0.012)
+                setColor(0.58, 0.62, 0.68, 1)
+                drawLabel("SHORTCUT", cardX + 0.01, cardY + 0.015, 0.009)
                 shownApps = shownApps + 1
-                launcherY = launcherY - 0.035
-                drawLabel(safeText(app.displayName, registeredAppId), launcherX, launcherY, 0.014)
             end
         end
 
@@ -134,17 +172,36 @@ function LaptopHost.create(context)
                 unread = unread + 1
             end
         end
-        y = y - 0.055
-        drawLabel("Notifications (" .. unread .. ")", x, y, 0.017)
+        local notificationY = bounds.y + 0.285
+        setColor(0.62, 0.66, 0.72, 1)
+        drawLabel("NOTIFICATIONS", x, notificationY, 0.011)
+        if unread > 0 then
+            drawPanel(x + 0.14, notificationY - 0.004,
+                0.032, 0.024, 0.95, 0.48, 0.12, 1)
+            setColor(0.08, 0.05, 0.02, 1)
+            drawLabel(tostring(unread), x + 0.151,
+                notificationY + 0.002, 0.011)
+        end
         local shown = 0
         for _, notification in ipairs(notifications) do
             if not notification.dismissed and shown < 5 then
                 shown = shown + 1
-                y = y - 0.034
+                notificationY = notificationY - 0.034
+                setColor(notification.read and 0.62 or 0.96,
+                    notification.read and 0.66 or 0.97,
+                    notification.read and 0.72 or 0.99, 1)
                 drawLabel((notification.read and "" or "* ")
-                    .. safeText(notification.title, notification.id), x, y, 0.014)
+                    .. safeText(notification.title, notification.id),
+                    x, notificationY, 0.011)
             end
         end
+        drawPanel(bounds.x + 0.009, bounds.y + 0.018,
+            bounds.width - 0.018, 0.038, 0.035, 0.043, 0.055, 0.99)
+        setColor(0.58, 0.62, 0.68, 1)
+        drawLabel("F8 CLOSE", x, bounds.y + 0.031, 0.010)
+        drawLabel("F6 POINTER MODE", bounds.x + bounds.width - 0.155,
+            bounds.y + 0.031, 0.010)
+        setColor(1, 1, 1, 1)
     end
 
     function instance:resume()

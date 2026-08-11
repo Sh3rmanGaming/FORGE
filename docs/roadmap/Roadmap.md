@@ -1,7 +1,7 @@
 # FORGE Roadmap
 
 **Status:** Active  
-**Last Updated:** 2026-08-05
+**Last Updated:** 2026-08-11
 
 ---
 
@@ -11,7 +11,7 @@
 |-----------|--------|
 | M0 – Foundation | ✅ Complete |
 | M1 – Engine | ✅ Complete |
-| M2 – ForgeOS | 🟡 In Progress |
+| M2 – ForgeOS | ✅ Complete |
 | M3 – Communications | ⬜ Planned |
 | M4 – Projects | ⬜ Planned |
 | M5 – Banking | ⬜ Planned |
@@ -21,16 +21,13 @@
 
 ---
 
-## Current Milestone — M2: ForgeOS
+## Most Recently Completed Milestone — M2: ForgeOS
 
 # FORGE Development Roadmap
 
 ## Completed
----
 
-## In Progress
-
-### 🟡 M2 – ForgeOS
+### ✅ M2 – ForgeOS
 
 #### ⏳ M2.001 – Documentation
 
@@ -463,7 +460,15 @@ Overall M2 remains In Progress.
 
 ---
 
-#### ⏳ M2.012 – End-to-End Integration
+#### ✅ M2.012 – End-to-End Integration
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.012 is implemented and runtime verified through one unchanged-package,
+two-cycle FS25 gate across a hard restart. See
+[M2.012 Runtime Verification](../reviews/M2.012RuntimeVerification.md).
 
 - ForgeOS startup verification
 - Device registration verification
@@ -474,11 +479,23 @@ Overall M2 remains In Progress.
 - Resume state verification
 - Persistence verification
 - Notification verification
-- Multiplayer compatibility verification
+- Bounded multiplayer compatibility review
+- Explicit multiplayer and dedicated-server non-verification record
+- Shared cross-device notification-state verification
 
 ---
 
-#### ⏳ M2.013 – ForgeOS Polish
+#### ✅ M2.013 – ForgeOS Polish
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+M2.013 is accepted and complete. The implemented ForgeOS Foundation is frozen
+within the layered boundary recorded by the
+[M2.013 Final Architecture Review](../reviews/M2.013FinalArchitectureReview.md)
+and supported by the
+[M2.013 Runtime Verification](../reviews/M2.013RuntimeVerification.md).
 
 - Remove temporary diagnostics
 - Documentation review
@@ -487,7 +504,16 @@ Overall M2 remains In Progress.
 - Code review
 - Performance review
 - Final architecture review
-- Freeze ForgeOS API
+- Freeze the implemented ForgeOS Foundation contract
+- Classify addon-facing, Engine/platform-adapter, internal, and deferred APIs
+- Preserve compatible future additive API evolution
+
+Overall M2 – ForgeOS is complete. The freeze covers the accepted Foundation,
+not every future ForgeOS capability. Multiplayer and dedicated-server Host/UI
+behaviour, controller/application rendering, interactive Phone application
+menus, source-to-app badge ownership, Laptop desktop/window management, general
+focus/text-input ownership, and physical Laptop interaction remain explicitly
+deferred, unverified, and non-frozen where applicable.
 
 ---
 
@@ -500,10 +526,16 @@ Overall M2 remains In Progress.
 - Campaign registry
 
 ### ⏳ M1.009 – Phone OS Foundation
-- Operating system bootstrap
-- Application lifecycle
-- Window management
-- UI framework integration
+
+Historical scope classification:
+
+- Operating system bootstrap — superseded by M2 ForgeOS Core and Bootstrap.
+- Application lifecycle — superseded by M2.007 App Lifecycle.
+- Bounded UI framework integration — superseded by the M2.010 Phone Host and
+  M2.011 Laptop Host foundations.
+- Window management — retained as future post-M2 desktop/UI architecture work.
+- Rich application UI and physical Laptop interaction — retained as future
+  work and not implemented by M2.
 
 ### ⏳ M1.010 – Engine Bootstrap
 - Module discovery
@@ -521,7 +553,7 @@ M2 – ForgeOS is considered complete when all of the following are true:
 ## Architecture
 
 - All ForgeOS design documentation has been reviewed and finalised.
-- No unresolved architectural decisions remain.
+- No unresolved architectural decisions block the accepted M2 scope.
 - Public contracts are frozen.
 
 ## Definitions
@@ -590,7 +622,9 @@ M2 – ForgeOS is considered complete when all of the following are true:
 - Persistence verified across save/load.
 - Resume state verified after reload.
 - Event flow verified.
-- Multiplayer compatibility validated where applicable.
+- The bounded multiplayer compatibility review is complete; stable multiplayer
+  identity, comprehensive multiplayer runtime behaviour, and dedicated-server
+  Host/UI behaviour remain explicitly unverified and non-frozen.
 
 ## Quality
 

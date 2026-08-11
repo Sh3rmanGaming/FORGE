@@ -327,7 +327,8 @@ def build_manifest() -> dict[Path, Path]:
 
     Test files are placed beneath tests/ in the prototype.
 
-    ForgeOS Lua files are placed beneath forgeos/ in the prototype.
+    ForgeOS Lua files and approved DDS presentation assets are placed beneath
+    forgeos/ in the prototype.
     """
     print()
     print("Building synchronisation manifest...")
@@ -348,7 +349,7 @@ def build_manifest() -> dict[Path, Path]:
     forgeos_entries = collect_source_files(
         CONFIG["paths"]["forgeos"],
         Path("forgeos"),
-        included_file_suffixes={".lua"},
+        included_file_suffixes={".lua", ".dds"},
     )
 
     merge_manifest_entries(

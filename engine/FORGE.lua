@@ -17,3 +17,4 @@ FORGE = FORGE or {}
 
 FORGE.Version = "0.5.0-dev"
 FORGE.Name = "Farming Operations & Regional Growth Engine"
+FORGE.ModDirectory = g_currentModDirectory or ""

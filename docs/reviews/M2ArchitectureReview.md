@@ -1557,5 +1557,99 @@ general cursor/focus ownership, text entry, drag-and-drop, notification
 actions, or other deferred Host/UI capability. Dedicated-server behaviour is
 explicitly unverified and unfrozen.
 
-M2.012 – End-to-End Integration is the next implementation boundary and has
-not started. Overall M2 remains In Progress.
+M2.012 – End-to-End Integration is the current implementation boundary under
+the approved combined M2.012/M2.013 closing plan. Overall M2 remains In
+Progress.
+
+## M2.012 and M2.013 Closing Architecture Clarification
+
+The Project Director and Chief Architect approved these bounded decisions:
+
+- M2.012 multiplayer work is a compatibility review, not multiplayer or
+  dedicated-server runtime verification. Stable multiplayer identity,
+  comprehensive multiplayer behaviour, and dedicated-server Host/UI behaviour
+  remain unverified and non-frozen.
+- M2.013 freezes the implemented ForgeOS Foundation rather than every future
+  ForgeOS capability. The final review distinguishes addon-facing contracts,
+  Engine/platform adapter contracts, internal implementation contracts,
+  deferred architecture, and compatible future additive evolution.
+- Runtime Host update, draw, keyboard dispatch, and pointer dispatch methods
+  are Engine/platform adapter contracts, not addon-facing application APIs.
+- The approved concept art is visual direction only. Bounded shell treatment,
+  FORGE identity, typography, spacing, existing cards, headers, footers, and
+  notification presentation may be refined without adding new UI capability.
+- Laptop window management, application rendering, z-order, focus, geometry,
+  modal ownership, and text input form a future post-M2 architecture boundary.
+- Notification identity owns shared read and dismissal state. Target devices
+  determine presentation eligibility. One multi-target record changes for both
+  Phone and Laptop when either Host reads or dismisses it; separately created
+  records remain independent.
+- Notification `source` does not establish app ownership or unread app-badge
+  routing during M2.
+- M2 may close with its documented multiplayer, dedicated-server, application-
+  rendering, window-management, and other deferred exclusions.
+
+The historical M1.009 Phone OS Foundation scope remains in the roadmap with a
+classification: bootstrap and lifecycle are superseded by M2; bounded Host UI
+is superseded by M2.010–M2.011; window management, rich application UI, and the
+physical Laptop interaction remain future work.
+
+## M2.012 Runtime Verification
+
+M2.012 is authored, architecture-reviewed, approved, implemented, and verified.
+The authoritative evidence is
+[M2.012 Runtime Verification](M2.012RuntimeVerification.md). The definitive
+cycles used one unchanged FORGE/verifier package pair across a real FS25
+process restart and save boundary.
+
+The verification proves integrated production startup and shutdown, external
+registration, the complete retained suite, the consolidated M2.012 harness,
+shared read and dismissal state for one Phone-and-Laptop notification identity,
+independent device navigation resume, two-Host operation, F7/F8 input, F6
+pointer mode, and camera restoration. Multiplayer and dedicated-server runtime
+behaviour remain explicitly unverified and non-frozen.
+
+M2.013 – ForgeOS Polish was the final M2 implementation boundary.
+
+## M2.013 Acceptance and Overall M2 Foundation Freeze
+
+The Project Director and Chief Architect accepted M2.013 and overall M2 on
+2026-08-11. M2.013 is authored, architecture-reviewed, approved, implemented,
+and verified. The authoritative records are the
+[M2.013 Final Architecture Review](M2.013FinalArchitectureReview.md) and
+[M2.013 Runtime Verification](M2.013RuntimeVerification.md).
+
+The accepted freeze is deliberately layered:
+
+- addon-facing contracts comprise the approved public ForgeOS façade and the
+  versioned cross-mod acquisition contract;
+- Engine/platform-adapter contracts comprise FS25 lifecycle, Host orchestration,
+  input, pointer/camera, rendering, persistence, and MessageCenter integration
+  boundaries and are not addon application APIs;
+- internal implementation contracts comprise the accepted registry, service,
+  state, ordering, ownership, repair, retention, and cleanup invariants without
+  making their representations public;
+- compatible additive API evolution remains possible after the applicable
+  architecture, compatibility, persistence, documentation, and verification
+  review; and
+- intentionally deferred architecture remains outside the M2 freeze.
+
+M2.013 accepts the bounded visual polish implemented through the existing Host
+presentation architecture: consistent dark/translucent shells, FORGE identity,
+typography and spacing, Phone frame and rounded launcher cards, headers,
+footers, and existing notification presentation. These visuals do not create
+interactive application cards, application/controller rendering, or a desktop
+window system.
+
+The Foundation freeze excludes stable multiplayer identity, comprehensive
+multiplayer runtime behaviour, dedicated-server Host/UI behaviour, remote or
+network façade access, application and route-controller execution, application-
+owned custom rendering, Phone application-menu behaviour, icon registration,
+notification-source-to-app badge ownership, Laptop desktop/window and multi-app
+architecture, general focus/text-input ownership, and physical Laptop
+world-object interaction. These exclusions are deferred or unverified scope,
+not failures of the accepted M2 Foundation.
+
+Overall M2 – ForgeOS is Complete. No unresolved architectural decision blocks
+the accepted M2 scope; post-M2 capabilities require their own bounded planning
+and approval.

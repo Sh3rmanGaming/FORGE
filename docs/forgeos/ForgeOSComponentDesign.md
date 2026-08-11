@@ -1636,6 +1636,28 @@ M2.012 Integration Testing
 M2.013 Documentation and API Freeze
 ```
 
+M2.012 adds one consolidated integration boundary over the retained component
+and integration suites. It proves production startup, external registration,
+presentation resolution, lifecycle, navigation, persistence, notifications,
+the two-Host runtime, and shutdown without replacing the detailed owning
+component tests.
+
+For a notification targeted to both production devices, PhoneHost and
+LaptopHost project the same authoritative record. Read and dismissal mutations
+therefore become observable through both device queries. Device targeting
+controls presentation eligibility only.
+
+`updateRuntimeHost()`, `drawRuntimeHost()`, `dispatchHostInput()`, and
+`dispatchHostPointer()` are Engine/platform adapter operations. They are not
+addon-facing application APIs merely because the current implementation places
+them on the ForgeOS façade table.
+
+M2.013 is a stabilization, bounded visual-polish, documentation, and contract-
+freeze boundary. It does not execute application controllers or introduce the
+future desktop/window subsystem. Window/session ownership, z-order, focus,
+geometry, application rendering, modal ownership, and text input remain future
+post-M2 architecture.
+
 ---
 
 # Open Decisions

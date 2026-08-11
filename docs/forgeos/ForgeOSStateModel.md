@@ -923,6 +923,15 @@ memory and clear on shutdown. Savegame records are controlled plain data in
 unrelated player, device, resume, and preference state whenever it commits or
 repairs notification state.
 
+Notification identity owns notification state. For one retained notification
+record, `read` and `dismissed` are shared across every entry in
+`targetDevices`. Device targeting determines where the record may be presented;
+it does not create a per-device copy of either state. Reading or dismissing a
+Phone-and-Laptop notification through either Host is therefore immediately
+observable through both device queries. Two separately created notifications
+remain independent even when their content is identical. Each Host still owns
+its device-specific presentation of the detached record.
+
 Retained state is bounded. Oldest dismissed records are reclaimed first,
 otherwise oldest read records. An unread undismissed record is never silently
 evicted. The literal private capacity is not a persistence contract.

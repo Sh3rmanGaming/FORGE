@@ -12,6 +12,10 @@ function FORGE.Tests.runPhoneHostTests()
     local hides = 0
     local reads = 0
     local dismissals = 0
+    local rectangles = 0
+    local labels = 0
+    local overlays = 0
+    local overlayDeletes = 0
     local resumeCalls = {}
     local resumeDestination = nil
     local context = {
@@ -19,7 +23,14 @@ function FORGE.Tests.runPhoneHostTests()
         show = function() visibility = Visibility.VISIBLE; shows = shows + 1; return Result.SUCCESS end,
         hide = function() visibility = Visibility.HIDDEN; hides = hides + 1; return Result.SUCCESS end,
         getActiveAppId = function() return nil end,
-        getAppDefinition = function() return nil end,
+        getRegisteredAppIds = function() return { "forge.test" } end,
+        getAppDefinition = function()
+            return {
+                id = "forge.test",
+                displayName = "Test App",
+                supportedDevices = { phone = true }
+            }
+        end,
         resolvePresentation = function() return Result.NOT_AVAILABLE, nil end,
         getCurrentRoute = function() return nil end,
         getValidatedResumeDestination = function() return Result.SUCCESS, resumeDestination end,
@@ -35,12 +46,31 @@ function FORGE.Tests.runPhoneHostTests()
         isUiBlocked = function() return false end
     }
 
+    local originalDrawFilledRect = drawFilledRect
+    local originalRenderText = renderText
+    local originalSetTextColor = setTextColor
+    local originalCreateImageOverlay = createImageOverlay
+    local originalRenderOverlay = renderOverlay
+    local originalSetOverlayColor = setOverlayColor
+    local originalDelete = delete
+    drawFilledRect = function() rectangles = rectangles + 1 end
+    renderText = function() labels = labels + 1 end
+    setTextColor = function() end
+    createImageOverlay = function() return 100 end
+    renderOverlay = function() overlays = overlays + 1 end
+    setOverlayColor = function() end
+    delete = function() overlayDeletes = overlayDeletes + 1 end
+
     local success, errorMessage = pcall(function()
         local host = FORGE.PhoneHost.create(context)
         if host == nil or host:initialize() ~= Result.SUCCESS
             or not host:isOperational()
             or host:onInput("FORGE_TOGGLE_PHONE", 1) ~= true
             or shows ~= 1
+            or (host:draw() == false)
+            or rectangles < 3
+            or labels < 10
+            or overlays < 2
             or host:onPointer(0.71, 0.13, true, false, 1) ~= true
             or reads ~= 1
             or host:onPointer(0.71, 0.13, true, false, 3) ~= true
@@ -53,6 +83,7 @@ function FORGE.Tests.runPhoneHostTests()
             or shows ~= 1
             or host:onInput("KEY_EVENT", 0, { sym = 118 }) ~= false
             or host:shutdown() ~= Result.SUCCESS
+            or overlayDeletes ~= 2
             or host:isOperational() then
             error("Phone Host presentation/input lifecycle failed")
         end
@@ -71,6 +102,14 @@ function FORGE.Tests.runPhoneHostTests()
             error("Phone Host resume orchestration failed")
         end
     end)
+
+    drawFilledRect = originalDrawFilledRect
+    renderText = originalRenderText
+    setTextColor = originalSetTextColor
+    createImageOverlay = originalCreateImageOverlay
+    renderOverlay = originalRenderOverlay
+    setOverlayColor = originalSetOverlayColor
+    delete = originalDelete
 
     if not success then return false, errorMessage end
     return true

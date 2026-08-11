@@ -802,6 +802,11 @@ The following profiles are design defaults, not runtime registrations.
 
 Laptop windowing and multiple simultaneous applications are deferred.
 
+The `windowedApps = false` and `multiApp = false` values remain authoritative
+for the M2 Laptop. M2.013 visual refinement does not change these capabilities.
+Window/session ownership, z-order, focus, geometry, and application rendering
+require future post-M2 architecture.
+
 ---
 
 ---

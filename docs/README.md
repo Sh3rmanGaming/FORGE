@@ -228,6 +228,9 @@ Current records:
 - [M2.009 Runtime Verification](reviews/M2.009RuntimeVerification.md)
 - [M2.010 Runtime Verification](reviews/M2.010RuntimeVerification.md)
 - [M2.011 Runtime Verification](reviews/M2.011RuntimeVerification.md)
+- [M2.012 Runtime Verification](reviews/M2.012RuntimeVerification.md)
+- [M2.013 Final Architecture Review](reviews/M2.013FinalArchitectureReview.md)
+- [M2.013 Runtime Verification](reviews/M2.013RuntimeVerification.md)
 - [ADR-003 - Device Host Lifecycle and Visibility](adr/ADR-003-Device-Host-Lifecycle-and-Visibility.md)
 - [ADR-004 - FS25 Cross-Mod ForgeOS Export Bridge](adr/ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md)
 - [Verified M2.010 companion reference](../verification/FS25_FORGE_M2010_Verifier/README.md)
@@ -383,10 +386,10 @@ M2.009 – Notification Service
 M2.010 – Phone Host
 ```
 
-Next implementation stage:
+Completed Foundation stage:
 
 ```text
-M2.012 – End-to-End Integration
+M2 – ForgeOS
 ```
 
 M2.010 – Phone Host is implemented, synchronized, runtime verified, accepted,
@@ -396,8 +399,12 @@ bridge is runtime proven. M2.011 – Laptop Host is implemented, synchronized,
 runtime verified, accepted, and frozen within its bounded two-Host scope. F8
 remains its development/fallback adapter while physical in-world Laptop
 interaction remains future work. Dedicated-server Host/UI behaviour remains
-unverified. M2.012 – End-to-End Integration is the next implementation
-boundary. Overall M2 remains In Progress.
+unverified. M2.012 – End-to-End Integration is runtime verified through an
+unchanged-package two-cycle gate. M2.013 – ForgeOS Polish is runtime verified,
+accepted, and complete. The bounded implemented ForgeOS Foundation contract is
+frozen, and overall M2 is Complete. Multiplayer and dedicated-server Host/UI
+runtime behaviour and the other recorded post-M2 capabilities remain
+unverified or deferred and are not included in that freeze.
 
 ---
 

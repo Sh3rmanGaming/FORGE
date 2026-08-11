@@ -989,6 +989,32 @@ Future devices may include:
     exposing partially committed lifecycle, navigation, resume, notification,
     or visibility state. Staging, rollback, callback timing, and re-entrancy
     remain open architectural decisions.
+15. Notification identity owns notification read and dismissal state.
+    `targetDevices` controls where the same notification may be presented; it
+    does not create independent per-device notification state.
+16. Addon-facing ForgeOS operations are distinct from Engine/platform Host
+    adapter operations even where both are currently methods on
+    `FORGE.ForgeOS`. Runtime Host update, draw, keyboard dispatch, and pointer
+    dispatch are Engine/platform contracts and are not application APIs.
+
+## M2 Closing Boundary
+
+M2.012 validates the implemented ForgeOS Foundation end to end. Its multiplayer
+work is a bounded compatibility review only. Current `player.local`,
+savegame-global persistence, multiplayer Host ownership, notification authority,
+and dedicated-server Host/UI behaviour remain unverified and non-frozen.
+
+M2.013 may refine the existing Phone and Laptop shells using the approved dark,
+translucent FORGE visual direction, typography, spacing, cards, headers,
+footers, and existing notification presentation. The visual concept is a
+direction rather than a feature contract. Application-specific UI, icon
+registration, controller execution, Laptop windows, taskbars, movable or
+resizable surfaces, and persistent geometry remain future architecture.
+
+The final M2 freeze applies to the implemented ForgeOS Foundation, not to every
+future ForgeOS capability. It distinguishes addon-facing contracts,
+Engine/platform adapter contracts, internal implementation contracts,
+intentionally deferred architecture, and compatible future additive evolution.
 
 ---
 

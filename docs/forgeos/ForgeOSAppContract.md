@@ -1440,6 +1440,15 @@ make an undeclared device type available.
 17. ForgeOS MUST NOT report a multi-service operation as successful while
     exposing partially committed lifecycle, navigation, resume, notification,
     or visibility state.
+18. Engine/platform Host orchestration methods are not addon-facing application
+    APIs. External applications acquire the façade through the cross-mod bridge
+    and use only the documented registration, query, lifecycle, navigation,
+    notification, and visibility operations.
+19. `notification.source` identifies the origin of a notification; it does not
+    establish application ownership, inbox routing, or an unread app-badge
+    contract.
+20. The M2 freeze permits future backward-compatible additive API evolution
+    following compatibility, documentation, and test review.
 
 ---
 

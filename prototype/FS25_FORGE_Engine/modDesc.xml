@@ -150,6 +150,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSEngineInputIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSCrossModBridgeIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSProductionStartupIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSEndToEndIntegrationTest.lua"/>
 
         <!-- Engine lifecycle registration must load last -->
         <sourceFile filename="scripts/forge/Engine.lua"/>

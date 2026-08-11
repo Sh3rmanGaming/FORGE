@@ -299,6 +299,7 @@ local function runDevelopmentTests()
     runHarness(FORGE.Tests.runForgeOSEngineInputIntegrationTests)
     runHarness(FORGE.Tests.runForgeOSCrossModBridgeIntegrationTests)
     runHarness(FORGE.Tests.runForgeOSProductionStartupIntegrationTests)
+    runHarness(FORGE.Tests.runForgeOSEndToEndIntegrationTests)
 
     if suitePassed then
         FORGE.Logger:info(
@@ -967,51 +968,23 @@ function FORGE.Engine.onTogglePhone(
     callbackState,
     isAnalog
 )
-    local consumed = FORGE.ForgeOS:dispatchHostInput(
+    return FORGE.ForgeOS:dispatchHostInput(
         "FORGE_TOGGLE_PHONE",
         inputValue
     )
-    FORGE.Logger:info(
-        FORGE.Definitions.LogSource.ENGINE,
-        "Phone input callback value='%s' phase='%s' consumed='%s'",
-        FORGE.Logger:safeToString(inputValue, "<nil>"),
-        FORGE.Logger:safeToString(FORGE.ForgeOS:getPhase(), "<nil>"),
-        FORGE.Logger:safeToString(consumed, "<nil>")
-    )
-    return consumed
 end
 
 function FORGE.Engine.onToggleLaptop(target, actionName, inputValue)
-    local consumed = FORGE.ForgeOS:dispatchHostInput(
+    return FORGE.ForgeOS:dispatchHostInput(
         "FORGE_TOGGLE_LAPTOP", inputValue)
-    FORGE.Logger:info(
-        FORGE.Definitions.LogSource.ENGINE,
-        "Laptop input callback value='%s' phase='%s' consumed='%s'",
-        FORGE.Logger:safeToString(inputValue, "<nil>"),
-        FORGE.Logger:safeToString(FORGE.ForgeOS:getPhase(), "<nil>"),
-        FORGE.Logger:safeToString(consumed, "<nil>")
-    )
-    return consumed
 end
 
 function FORGE.Engine.onToggleCursorMode(target, actionName, inputValue)
     if inputValue == 0 then
-        FORGE.Logger:info(
-            FORGE.Definitions.LogSource.ENGINE,
-            "Cursor input callback release ignored"
-        )
         return false
     end
-    local changed = setCursorMode(cursorMode == "GAMEPLAY"
+    return setCursorMode(cursorMode == "GAMEPLAY"
         and "FORGE_POINTER" or "GAMEPLAY")
-    FORGE.Logger:info(
-        FORGE.Definitions.LogSource.ENGINE,
-        "Cursor input callback value='%s' mode='%s' changed='%s'",
-        FORGE.Logger:safeToString(inputValue, "<nil>"),
-        cursorMode,
-        FORGE.Logger:safeToString(changed, "<nil>")
-    )
-    return changed
 end
 
 function FORGE.Engine:keyEvent(

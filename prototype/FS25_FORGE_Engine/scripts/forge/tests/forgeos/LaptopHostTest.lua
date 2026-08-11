@@ -9,6 +9,7 @@ function FORGE.Tests.runLaptopHostTests()
     local Visibility = FORGE.Definitions.DeviceVisibility
     local visibility = Visibility.HIDDEN
     local reads, dismissals = 0, 0
+    local rectangles, labels = 0, 0
     local context = {
         getVisibility = function() return visibility end,
         show = function() visibility = Visibility.VISIBLE; return Result.SUCCESS end,
@@ -28,12 +29,22 @@ function FORGE.Tests.runLaptopHostTests()
         dismissNotification = function() dismissals = dismissals + 1; return Result.SUCCESS end,
         isUiBlocked = function() return false end
     }
+    local originalDrawFilledRect = drawFilledRect
+    local originalRenderText = renderText
+    local originalSetTextColor = setTextColor
+    drawFilledRect = function() rectangles = rectangles + 1 end
+    renderText = function() labels = labels + 1 end
+    setTextColor = function() end
+
     local success, errorMessage = pcall(function()
         local host = FORGE.LaptopHost.create(context)
         if host == nil or host:initialize() ~= Result.SUCCESS
             or not host:isOperational()
             or host:onInput("FORGE_TOGGLE_LAPTOP", 1) ~= true
             or visibility ~= Visibility.VISIBLE
+            or (host:draw() == false)
+            or rectangles < 8
+            or labels < 10
             or not host:containsPoint(0.20, 0.20)
             or host:containsPoint(0.90, 0.90)
             or host:onPointer(0.20, 0.20, true, false, 1) ~= true
@@ -46,6 +57,9 @@ function FORGE.Tests.runLaptopHostTests()
             error("Laptop Host bounded shell contract failed")
         end
     end)
+    drawFilledRect = originalDrawFilledRect
+    renderText = originalRenderText
+    setTextColor = originalSetTextColor
     if not success then return false, errorMessage end
     return true
 end
