@@ -83,6 +83,16 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSEvent.lua"/>
         <sourceFile filename="scripts/forge/forgeos/definitions/ForgeOSResult.lua"/>
 
+        <!-- Communications definitions and pure validation -->
+        <sourceFile filename="scripts/forge/communications/definitions/CommunicationsDefinitions.lua"/>
+        <sourceFile filename="scripts/forge/communications/definitions/CommunicationsNamespace.lua"/>
+        <sourceFile filename="scripts/forge/communications/definitions/CommunicationsAppId.lua"/>
+        <sourceFile filename="scripts/forge/communications/definitions/MessageChannel.lua"/>
+        <sourceFile filename="scripts/forge/communications/definitions/MessagePriority.lua"/>
+        <sourceFile filename="scripts/forge/communications/definitions/CommunicationsResult.lua"/>
+        <sourceFile filename="scripts/forge/communications/definitions/CommunicationsEvent.lua"/>
+        <sourceFile filename="scripts/forge/communications/CommunicationsValidation.lua"/>
+
         <!-- Core services -->
         <sourceFile filename="scripts/forge/services/Logger.lua"/>
         <sourceFile filename="scripts/forge/services/EventBus.lua"/>
@@ -119,6 +129,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/persistence/XMLWriterTest.lua"/>
         <sourceFile filename="scripts/forge/tests/persistence/XMLReaderTest.lua"/>
         <sourceFile filename="scripts/forge/tests/definitions/ForgeOSDefinitionsTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/definitions/CommunicationsDefinitionsTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSCoreTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSBootstrapTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSRegistrationCoordinatorTest.lua"/>

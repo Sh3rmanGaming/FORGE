@@ -24,6 +24,19 @@ M2.011 applies the same boundary independently to Laptop. Phone and Laptop may
 be visible simultaneously and retain separate active app, route, history, and
 resume state. No global active-device or focus owner is introduced.
 
+## M3.001 Communications Presentation Proposal
+
+M3.001 proposes a bounded ForgeOS-owned presentation adapter for the built-in
+`forge.communications` application. It returns detached versioned models and
+accepts declared controlled actions; it does not expose or directly render
+application controllers. The exact additive Host-facing methods, result
+mapping, navigation mediation, and provider protocol remain under review in
+[Communications Application Contract](../communications/CommunicationsAppContract.md).
+
+Existing controller and action examples later in this document describe the
+broader conceptual application model. They are not evidence that arbitrary
+controller execution was implemented or frozen by M2.
+
 ---
 
 # Purpose

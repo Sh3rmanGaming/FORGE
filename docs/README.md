@@ -231,6 +231,13 @@ Current records:
 - [M2.012 Runtime Verification](reviews/M2.012RuntimeVerification.md)
 - [M2.013 Final Architecture Review](reviews/M2.013FinalArchitectureReview.md)
 - [M2.013 Runtime Verification](reviews/M2.013RuntimeVerification.md)
+- [M3 Architecture Review](reviews/M3ArchitectureReview.md)
+- [M3.002 Runtime Verification](reviews/M3.002RuntimeVerification.md)
+- [Communications Architecture](communications/CommunicationsArchitecture.md)
+- [Communications Component Design](communications/CommunicationsComponentDesign.md)
+- [Communications Definitions](communications/CommunicationsDefinitions.md)
+- [Communications State Model](communications/CommunicationsStateModel.md)
+- [Communications Application Contract](communications/CommunicationsAppContract.md)
 - [ADR-003 - Device Host Lifecycle and Visibility](adr/ADR-003-Device-Host-Lifecycle-and-Visibility.md)
 - [ADR-004 - FS25 Cross-Mod ForgeOS Export Bridge](adr/ADR-004-FS25-Cross-Mod-ForgeOS-Export-Bridge.md)
 - [Verified M2.010 companion reference](../verification/FS25_FORGE_M2010_Verifier/README.md)
@@ -386,10 +393,10 @@ M2.009 – Notification Service
 M2.010 – Phone Host
 ```
 
-Completed Foundation stage:
+Current implementation stage:
 
 ```text
-M2 – ForgeOS
+M3.002 – Communications Definitions
 ```
 
 M2.010 – Phone Host is implemented, synchronized, runtime verified, accepted,
@@ -405,6 +412,16 @@ accepted, and complete. The bounded implemented ForgeOS Foundation contract is
 frozen, and overall M2 is Complete. Multiplayer and dedicated-server Host/UI
 runtime behaviour and the other recorded post-M2 capabilities remain
 unverified or deferred and are not included in that freeze.
+
+M3.001 Architecture is approved. Its contracts define one received-message
+`forge.communications` application, a separate Communications-owned SAVEGAME
+inbox, asymmetric notification linkage, and a bounded detached application-
+presentation adapter. M3.002 definitions are implemented, synchronized,
+runtime verified, accepted, and frozen within their bounded scope. No message
+storage, Communications service, persistence operation, notification execution,
+presentation execution, UI, or external producer API has been implemented.
+M3.003 – Communications Manager is the next implementation boundary and has not
+started.
 
 ---
 

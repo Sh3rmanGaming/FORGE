@@ -87,6 +87,12 @@ ForgeOS does not own:
 - domain validation
 - rendering state
 
+M3 Communications therefore uses the separate proposed
+`forge.communications` namespace for message contents, ordering, read/archive
+state, and unread truth. ForgeOS continues to store only its own application
+lifecycle, device navigation/resume, and linked notification state. See
+[Communications State Model](../communications/CommunicationsStateModel.md).
+
 ---
 
 # State Layers

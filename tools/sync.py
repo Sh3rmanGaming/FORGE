@@ -4,24 +4,23 @@ FORGE Synchronisation Tool
 =============================================================================
 
 Purpose:
-    Synchronises the authoritative FORGE engine and test source trees into the
-    prototype reference implementation.
+    Synchronises configured authoritative FORGE source trees into the prototype
+    reference implementation.
 
 Responsibilities:
     • Validate the required repository structure.
     • Build one combined synchronisation manifest.
-    • Recursively synchronise all engine files.
-    • Recursively synchronise all test files.
+    • Recursively synchronise Engine, tests, ForgeOS, and Communications.
     • Remove stale prototype files controlled by the synchronisation process.
     • Report synchronisation results.
 
 Design Principles:
     • The repository is the source of truth.
     • Synchronisation is recursive, repeatable, and idempotent.
-    • New source folders require no synchronisation-tool changes.
+    • New files within configured source trees require no tool changes.
     • Source-path collisions are rejected.
     • Fail early with clear diagnostics.
-    • Never modify authoritative engine or test source files.
+    • Never modify authoritative source files.
 
 This tool is part of the FORGE developer toolchain.
 =============================================================================
@@ -45,6 +44,7 @@ CONFIG = {
         "engine": REPOSITORY_ROOT / "engine",
         "tests": REPOSITORY_ROOT / "tests",
         "forgeos": REPOSITORY_ROOT / "forgeos",
+        "communications": REPOSITORY_ROOT / "communications",
         "prototype": (
             REPOSITORY_ROOT
             / "prototype"
@@ -170,6 +170,7 @@ def validate_repository() -> bool:
         "engine": engine_root,
         "tests": tests_root,
         "forgeos": CONFIG["paths"]["forgeos"],
+        "communications": CONFIG["paths"]["communications"],
         "prototype": prototype_root,
     }
 
@@ -329,6 +330,9 @@ def build_manifest() -> dict[Path, Path]:
 
     ForgeOS Lua files and approved DDS presentation assets are placed beneath
     forgeos/ in the prototype.
+
+    Communications Lua files are placed beneath communications/ in the
+    prototype.
     """
     print()
     print("Building synchronisation manifest...")
@@ -352,6 +356,12 @@ def build_manifest() -> dict[Path, Path]:
         included_file_suffixes={".lua", ".dds"},
     )
 
+    communications_entries = collect_source_files(
+        CONFIG["paths"]["communications"],
+        Path("communications"),
+        included_file_suffixes={".lua"},
+    )
+
     merge_manifest_entries(
         manifest,
         engine_entries,
@@ -367,6 +377,11 @@ def build_manifest() -> dict[Path, Path]:
         forgeos_entries,
     )
 
+    merge_manifest_entries(
+        manifest,
+        communications_entries,
+    )
+
     print(
         f"[MANIFEST] Engine: "
         f"{len(engine_entries)} files"
@@ -380,6 +395,11 @@ def build_manifest() -> dict[Path, Path]:
     print(
         f"[MANIFEST] ForgeOS: "
         f"{len(forgeos_entries)} files"
+    )
+
+    print(
+        f"[MANIFEST] Communications: "
+        f"{len(communications_entries)} files"
     )
 
     print(

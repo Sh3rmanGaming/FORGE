@@ -58,7 +58,7 @@ ForgeOS Bootstrap
     │     ├── Phone Host
     │     └── Laptop Host
     │
-    └── Registered Applications
+    └── Registered Applications (conceptual roadmap set)
           ├── Settings App
           ├── Communications App
           ├── Projects App
@@ -76,6 +76,11 @@ Communications Manager
 ```
 
 Applications bridge domain managers into ForgeOS.
+
+The diagram is a responsibility map, not an implementation inventory. M3.001
+specifies `forge.communications` as the first post-M2 domain application. Other
+listed applications and any unimplemented services remain future work until
+their own approved milestones.
 
 ---
 

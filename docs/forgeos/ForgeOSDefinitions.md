@@ -1629,6 +1629,10 @@ Identifiers must:
 
 Display names may change without changing application identifiers.
 
+M3.001 standardizes `forge.communications` as the single initial built-in
+Communications application identifier. Historical `forge.messages`, `mail`,
+and `messages` labels do not define additional application identities.
+
 ---
 
 ---

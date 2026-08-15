@@ -12,7 +12,7 @@
 | M0 – Foundation | ✅ Complete |
 | M1 – Engine | ✅ Complete |
 | M2 – ForgeOS | ✅ Complete |
-| M3 – Communications | ⬜ Planned |
+| M3 – Communications | 🟡 In Progress |
 | M4 – Projects | ⬜ Planned |
 | M5 – Banking | ⬜ Planned |
 | M6 – Companies | ⬜ Planned |
@@ -21,7 +21,7 @@
 
 ---
 
-## Most Recently Completed Milestone — M2: ForgeOS
+## Current Milestone — M3: Communications
 
 # FORGE Development Roadmap
 
@@ -514,6 +514,59 @@ behaviour, controller/application rendering, interactive Phone application
 menus, source-to-app badge ownership, Laptop desktop/window management, general
 focus/text-input ownership, and physical Laptop interaction remain explicitly
 deferred, unverified, and non-frozen where applicable.
+
+---
+
+## In Progress
+
+### 🟡 M3 – Communications
+
+#### ✅ M3.001 – Communications Architecture
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ➖ N/A | ➖ N/A |
+
+M3.001 specifies the received-message domain, persistence boundary,
+notification relationship, and bounded ForgeOS application-presentation
+adapter. Architecture approval now authorizes M3.002 definitions only. See the
+[M3 Architecture Review](../reviews/M3ArchitectureReview.md).
+
+#### ✅ M3.002 – Communications Definitions
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+
+- Stable identifiers, enumerations, results, events, and validation
+- Pure controlled-data validation and detachment helper
+- Component harness integrated into the development test runner
+- Runtime verified, accepted, and frozen within the bounded definitions scope
+
+#### ⏳ M3.003 – Communications Manager
+
+- Authoritative bounded inbox, read/archive state, persistence, and repair
+- Next implementation boundary; not started
+
+#### ⏳ M3.004 – Communications Application Contract
+
+- Built-in application registration and bounded presentation integration
+
+#### ⏳ M3.005 – Notification Integration
+
+- Linked alerts, asymmetric read propagation, and navigation linkage
+
+#### ⏳ M3.006 – Phone Communications UI
+
+- Full-screen inbox and message-detail Phone surfaces
+
+#### ⏳ M3.007 – Laptop Communications UI
+
+- One bounded Laptop application surface without desktop/window expansion
+
+#### ⏳ M3.008 – End-to-End Verification and Polish
+
+- Retained regression, two-cycle persistence, runtime evidence, and acceptance
 
 ---
 

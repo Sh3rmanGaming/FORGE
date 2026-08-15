@@ -312,7 +312,7 @@ Example identifiers:
 
 ```text
 forge.projects
-forge.messages
+forge.communications
 forge.bank
 forge.companies
 forge.settings
@@ -320,6 +320,11 @@ forge.settings
 
 Application identifiers become part of the public ForgeOS API and should remain
 stable after release.
+
+M3 standardizes the built-in Communications application identity as
+`forge.communications`. Earlier `forge.messages`, `mail`, and `messages`
+examples are conceptual or historical labels rather than separate registered
+applications.
 
 ---
 

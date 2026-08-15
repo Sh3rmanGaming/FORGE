@@ -202,6 +202,10 @@ local function runDevelopmentTests()
         FORGE.Tests.runForgeOSDefinitionsTests
     )
 
+    runHarness(
+        FORGE.Tests.runCommunicationsDefinitionsTests
+    )
+
     runHarness(FORGE.Tests.runLoggerTests)
 
     runHarness(FORGE.Tests.runEventBusTests)
