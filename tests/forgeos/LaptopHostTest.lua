@@ -10,6 +10,7 @@ function FORGE.Tests.runLaptopHostTests()
     local visibility = Visibility.HIDDEN
     local reads, dismissals = 0, 0
     local rectangles, labels = 0, 0
+    local overlays, overlayDeletes = 0, 0
     local context = {
         getVisibility = function() return visibility end,
         show = function() visibility = Visibility.VISIBLE; return Result.SUCCESS end,
@@ -32,9 +33,17 @@ function FORGE.Tests.runLaptopHostTests()
     local originalDrawFilledRect = drawFilledRect
     local originalRenderText = renderText
     local originalSetTextColor = setTextColor
+    local originalCreateImageOverlay = createImageOverlay
+    local originalRenderOverlay = renderOverlay
+    local originalSetOverlayColor = setOverlayColor
+    local originalDelete = delete
     drawFilledRect = function() rectangles = rectangles + 1 end
     renderText = function() labels = labels + 1 end
     setTextColor = function() end
+    createImageOverlay = function() return 200 end
+    renderOverlay = function() overlays = overlays + 1 end
+    setOverlayColor = function() end
+    delete = function() overlayDeletes = overlayDeletes + 1 end
 
     local success, errorMessage = pcall(function()
         local host = FORGE.LaptopHost.create(context)
@@ -43,16 +52,18 @@ function FORGE.Tests.runLaptopHostTests()
             or host:onInput("FORGE_TOGGLE_LAPTOP", 1) ~= true
             or visibility ~= Visibility.VISIBLE
             or (host:draw() == false)
-            or rectangles < 8
-            or labels < 10
+            or rectangles < 5
+            or labels < 8
+            or overlays < 1
             or not host:containsPoint(0.20, 0.20)
-            or host:containsPoint(0.90, 0.90)
+            or host:containsPoint(0.99, 0.99)
             or host:onPointer(0.20, 0.20, true, false, 1) ~= true
             or reads ~= 1
             or host:onPointer(0.20, 0.20, true, false, 3) ~= true
             or dismissals ~= 1
-            or host:onPointer(0.90, 0.90, true, false, 1) ~= false
+            or host:onPointer(0.99, 0.99, true, false, 1) ~= false
             or host:shutdown() ~= Result.SUCCESS
+            or overlayDeletes ~= 1
             or host:isOperational() then
             error("Laptop Host bounded shell contract failed")
         end
@@ -60,6 +71,10 @@ function FORGE.Tests.runLaptopHostTests()
     drawFilledRect = originalDrawFilledRect
     renderText = originalRenderText
     setTextColor = originalSetTextColor
+    createImageOverlay = originalCreateImageOverlay
+    renderOverlay = originalRenderOverlay
+    setOverlayColor = originalSetOverlayColor
+    delete = originalDelete
     if not success then return false, errorMessage end
     return true
 end

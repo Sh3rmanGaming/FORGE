@@ -669,6 +669,30 @@ function Registry:getLifecycleCallback(
     return assets.callbacks[callbackName]
 end
 
+--- Returns one private presentation provider for internal ForgeOS use.
+-- The executable reference is never included in detached app snapshots.
+-- @param appId any
+-- @param presentationKey any
+-- @return table|nil provider
+function Registry:getPresentationProvider(
+    appId,
+    presentationKey
+)
+    if type(appId) ~= "string"
+        or type(presentationKey) ~= "string" then
+        return nil
+    end
+
+    local assets = runtimeAssets[appId]
+    local presentation = assets ~= nil
+        and assets.presentations[presentationKey]
+        or nil
+
+    return presentation ~= nil
+        and presentation.controller
+        or nil
+end
+
 function Registry:getRegisteredAppIds()
     local ids = {}
     for appId in pairs(definitions) do

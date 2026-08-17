@@ -8,6 +8,7 @@
 ---     • Request authoritative lifecycle changes from ForgeOS Core.
 ---     • Initialise ForgeOS state and persistence registration.
 ---     • Publish completed lifecycle events.
+---     • Expose bounded application presentation transport.
 ---     • Coordinate ForgeOS cleanup.
 ---
 --- This component must never own phase state, registries, gameplay, or UI.
@@ -30,6 +31,7 @@ local Namespace =
 local DeviceId = FORGE.Definitions.DeviceId
 local Capability = FORGE.Definitions.DeviceCapability
 local HOST_ORDER = { DeviceId.PHONE, DeviceId.LAPTOP }
+local HOST_DRAW_ORDER = { DeviceId.LAPTOP, DeviceId.PHONE }
 local HOST_ID_BY_DEVICE = {
     [DeviceId.PHONE] = "phoneHost",
     [DeviceId.LAPTOP] = "laptopHost"
@@ -260,6 +262,23 @@ local function createHostContext(deviceId)
         closeApp = function(appId)
             return FORGE.ForgeOS:closeApp(deviceId, appId)
         end,
+        getApplicationPresentationModel = function(appId)
+            return FORGE.ForgeOS:getApplicationPresentationModel(
+                deviceId,
+                appId
+            )
+        end,
+        performApplicationAction = function(appId, actionId, parameters)
+            return FORGE.ForgeOS:performApplicationAction(
+                deviceId,
+                appId,
+                actionId,
+                parameters
+            )
+        end,
+        getApplicationBadge = function(appId)
+            return FORGE.ForgeOS:getApplicationBadge(deviceId, appId)
+        end,
         getNotifications = function()
             return FORGE.ForgeOS:getNotifications(
                 deviceId,
@@ -376,6 +395,9 @@ local function completeShutdown()
         end
     end
 
+    local presentationCleanupResult =
+        FORGE.ApplicationPresentationService:clearRuntimeState()
+
     local hostCleanupResult = Result.SUCCESS
     for index = #HOST_ORDER, 1, -1 do
         local deviceId = HOST_ORDER[index]
@@ -425,6 +447,10 @@ local function completeShutdown()
 
     if hostCleanupResult ~= Result.SUCCESS then
         return hostCleanupResult
+    end
+
+    if presentationCleanupResult ~= Result.SUCCESS then
+        return presentationCleanupResult
     end
 
     if deviceStateCleanupResult ~= Result.SUCCESS then
@@ -775,6 +801,43 @@ function FORGE.ForgeOS:getActiveAppId(deviceId)
     return FORGE.AppLifecycleService:getActiveAppId(deviceId)
 end
 
+--- Returns a detached model for the visible active application.
+-- @param deviceId any
+-- @param appId any
+-- @return table|nil model
+function FORGE.ForgeOS:getApplicationPresentationModel(deviceId, appId)
+    return FORGE.ApplicationPresentationService:getModel(deviceId, appId)
+end
+
+--- Delivers one declared application action and mediates its navigation.
+-- @param deviceId any
+-- @param appId any
+-- @param actionId any
+-- @param parameters any
+-- @return string result
+-- @return table|nil outcome
+function FORGE.ForgeOS:performApplicationAction(
+    deviceId,
+    appId,
+    actionId,
+    parameters
+)
+    return FORGE.ApplicationPresentationService:performAction(
+        deviceId,
+        appId,
+        actionId,
+        parameters
+    )
+end
+
+--- Returns the bounded badge for the visible active application.
+-- @param deviceId any
+-- @param appId any
+-- @return number badgeCount
+function FORGE.ForgeOS:getApplicationBadge(deviceId, appId)
+    return FORGE.ApplicationPresentationService:getBadge(deviceId, appId)
+end
+
 function FORGE.ForgeOS:navigate(
     deviceId,
     appId,
@@ -844,7 +907,7 @@ end
 
 function FORGE.ForgeOS:drawRuntimeHost()
     if FORGE.ForgeOSCore:getPhase() == Phase.RUNTIME_ACTIVE then
-        for _, deviceId in ipairs(HOST_ORDER) do
+        for _, deviceId in ipairs(HOST_DRAW_ORDER) do
             local instance = runtimeHosts[deviceId]
             if instance ~= nil then
                 local succeeded, failure =
@@ -879,14 +942,24 @@ function FORGE.ForgeOS:dispatchHostPointer(posX, posY, ...)
     if FORGE.ForgeOSCore:getPhase() ~= Phase.RUNTIME_ACTIVE then
         return false
     end
+    local pointerArguments = { ... }
+    local isRelease = pointerArguments[2] == true
     for _, deviceId in ipairs(HOST_ORDER) do
         local instance = runtimeHosts[deviceId]
-        if instance ~= nil and instance:containsPoint(posX, posY) then
+        local containsPoint = instance ~= nil
+            and instance:containsPoint(posX, posY)
+        if instance ~= nil
+            and (containsPoint or isRelease) then
             local call = { pcall(instance.onPointer, instance,
                 posX, posY, ...) }
             if not call[1] then
                 reportRuntimeHostFailure(deviceId, "pointer", call[2])
             elseif call[2] == true then
+                return true
+            end
+            if deviceId == DeviceId.PHONE and containsPoint
+                and FORGE.DeviceStateService:getDeviceVisibility(deviceId)
+                    == FORGE.Definitions.DeviceVisibility.VISIBLE then
                 return true
             end
         end
@@ -905,6 +978,15 @@ function FORGE.ForgeOS:hasVisibleRuntimeHost()
         end
     end
     return false
+end
+
+--- Returns whether one runtime Host exists and is operational.
+-- Internal presentation services use this without receiving the Host instance.
+-- @param deviceId any
+-- @return boolean operational
+function FORGE.ForgeOS:isRuntimeHostOperational(deviceId)
+    return type(deviceId) == "string"
+        and hasUsableHost(deviceId)
 end
 
 --- Starts or idempotently confirms the ForgeOS lifecycle.

@@ -105,6 +105,12 @@ This development build adds the first XML-driven campaign and live Projects app 
         <!-- Persistence coordination -->
         <sourceFile filename="scripts/forge/managers/SaveManager.lua"/>
 
+        <!-- Communications Manager -->
+        <sourceFile filename="scripts/forge/communications/services/CommunicationsService.lua"/>
+        <sourceFile filename="scripts/forge/communications/persistence/CommunicationsPersistence.lua"/>
+        <sourceFile filename="scripts/forge/communications/CommunicationsApp.lua"/>
+        <sourceFile filename="scripts/forge/communications/Communications.lua"/>
+
         <!-- ForgeOS Core Lifecycle Foundation -->
         <sourceFile filename="scripts/forge/forgeos/ForgeOSCore.lua"/>
         <sourceFile filename="scripts/forge/forgeos/ForgeOSRegistrationCoordinator.lua"/>
@@ -114,6 +120,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/forgeos/services/PresentationResolver.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/AppLifecycleService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/NavigationService.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/services/ApplicationPresentationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/NotificationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/DeviceStateService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/hosts/PhoneHost.lua"/>
@@ -130,6 +137,8 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/persistence/XMLReaderTest.lua"/>
         <sourceFile filename="scripts/forge/tests/definitions/ForgeOSDefinitionsTest.lua"/>
         <sourceFile filename="scripts/forge/tests/definitions/CommunicationsDefinitionsTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/communications/CommunicationsServiceTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/communications/CommunicationsPersistenceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSCoreTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSBootstrapTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ForgeOSRegistrationCoordinatorTest.lua"/>
@@ -138,6 +147,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/forgeos/PresentationResolverTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/AppLifecycleServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/NavigationServiceTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/ApplicationPresentationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/NotificationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceHostRegistryTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceStateServiceTest.lua"/>
@@ -147,6 +157,10 @@ This development build adds the first XML-driven campaign and live Projects app 
 
         <!-- Integration test harnesses -->
         <sourceFile filename="scripts/forge/tests/integrations/SaveManagerIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/CommunicationsManagerIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/CommunicationsApplicationIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/PhoneCommunicationsPresentationIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/LaptopCommunicationsPresentationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSCoreLifecycleIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSRegistrationLifecycleIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSDeviceRegistryIntegrationTest.lua"/>

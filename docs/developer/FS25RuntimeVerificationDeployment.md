@@ -33,23 +33,34 @@ FS25 runtime evidence
 
 1. Require a clean `python tools/sync.py --check` result for every controlled
    authoritative/prototype pair.
-2. Enable `DevelopmentTestBootstrap.lua` only through its reviewed
+2. Run `python tools/check_test_order.py`. The development suite must retain
+   the exact `PROCESS_INITIAL`, `FOUNDATION`, `LIFECYCLE_MUTATING`, and
+   `END_TO_END` phase order. `ForgeOSCoreTest` must be the first harness that
+   can start or stop ForgeOS.
+3. Enable `DevelopmentTestBootstrap.lua` only through its reviewed
    `modDesc.xml` source entry.
-3. Package the contents of `prototype/FS25_FORGE_Engine/`, not the directory's
+4. Run
+   `python tools/validate_runtime_package.py --expect-bootstrap 1` before
+   packaging.
+5. Package the contents of `prototype/FS25_FORGE_Engine/`, not the directory's
    parent and not an enclosing directory.
-4. Require `modDesc.xml` at the ZIP root.
-5. Require POSIX `/` separators for every ZIP entry. Reject every entry
+6. Require `modDesc.xml` at the ZIP root.
+7. Require POSIX `/` separators for every ZIP entry. Reject every entry
    containing `\`.
-6. Open and parse the packaged `modDesc.xml`.
-7. Enumerate every declared `<sourceFile>` path. Require each exact relative
+8. Open and parse the packaged `modDesc.xml`.
+9. Enumerate every declared `<sourceFile>` path. Require each exact relative
    path to exist exactly once in the ZIP.
-8. Reject duplicate ZIP entries and unexpected package contents.
-9. Verify dependency order, including Logger before Development Test
+10. Reject duplicate ZIP entries and unexpected package contents.
+11. Verify dependency order, including Logger before Development Test
    Bootstrap, production dependencies before their consumers, harness
    definitions before Engine, and `Engine.lua` last.
-10. Record synchronization inventory counts, archive entry count, declared
+12. Run `python tools/validate_runtime_package.py --expect-bootstrap 1
+    --archive <verification.zip>` against the completed archive.
+13. Run `python -m unittest discover tools/tests` and require every preflight
+    regression test to pass.
+14. Record synchronization inventory counts, archive entry count, declared
     source count, package SHA-256, deployed SHA-256, destination, and timestamp.
-11. Deploy the validated ZIP and require its SHA-256 to match the package
+15. Deploy the validated ZIP and require its SHA-256 to match the package
     SHA-256 before launching FS25.
 
 ## Deployment Hard Gate
@@ -57,6 +68,7 @@ FS25 runtime evidence
 STOP before FS25 launch when:
 
 - synchronization is not clean;
+- test-suite phase or lifecycle ordering is invalid;
 - `modDesc.xml` is not at the ZIP root;
 - any ZIP path contains a backslash;
 - an archive entry is duplicated or unexpected;
@@ -70,6 +82,28 @@ STOP before FS25 launch when:
 
 Do not use an FS25 launch to discover a packaging defect detectable by static
 inspection.
+
+## Development Suite Phase Contract
+
+The Engine test runner owns four ordered phases:
+
+```text
+PROCESS_INITIAL
+    -> FOUNDATION
+    -> LIFECYCLE_MUTATING
+    -> END_TO_END
+```
+
+`PROCESS_INITIAL` contains assertions that can be made only once in a genuine
+Lua process. The ForgeOS Core harness checks `UNAVAILABLE` before it performs
+any lifecycle mutation. A normal `shutdown()` produces `STOPPED`; tests must
+never fabricate a return to `UNAVAILABLE`.
+
+Every runtime harness records its ForgeOS phase before and after execution. A
+declared phase prerequisite fails fast with the harness name, required phase,
+and observed phase. New harnesses that call `ForgeOS:start()`,
+`completeStartup()`, or `shutdown()` belong after the process-initial harness
+and must pass `tools/check_test_order.py` before packaging.
 
 ## Runtime Evidence
 
@@ -87,8 +121,9 @@ After successful evidence capture:
 3. confirm the permanent Logger default remains false;
 4. require bootstrap entry count zero;
 5. reparse operational XML and verify `Engine.lua` remains last;
-6. rerun `python tools/sync.py --check`; and
-7. report the restored operational prototype separately from the retained
+6. run `python tools/validate_runtime_package.py --expect-bootstrap 0`;
+7. rerun `python tools/sync.py --check`; and
+8. report the restored operational prototype separately from the retained
    verification package.
 
 ## Required Deployment Record

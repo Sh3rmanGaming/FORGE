@@ -292,6 +292,13 @@ development/fallback Laptop visibility trigger. The future normal Laptop entry
 point is expected to be a physical world object calling the same visibility
 facade through a separate adapter; no such object is implemented in M2.011.
 
+The approved M3.007 visual amendment preserves Phone-then-Laptop construction,
+initialization, update, eligible keyboard/input dispatch, and lifecycle order,
+but introduces a presentation-only draw order of Laptop then Phone. This lets
+the full-screen Laptop remain visible beneath the independently visible Phone.
+Within visible Phone bounds, Phone is the topmost pointer surface and blocks
+click-through to Laptop even when no Phone application control activates.
+
 ---
 
 # Application Model

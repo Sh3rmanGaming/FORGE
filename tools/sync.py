@@ -35,6 +35,7 @@ import shutil
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+FORGEOS_FILE_SUFFIXES = {".lua", ".dds", ".png"}
 
 
 CONFIG = {
@@ -328,8 +329,8 @@ def build_manifest() -> dict[Path, Path]:
 
     Test files are placed beneath tests/ in the prototype.
 
-    ForgeOS Lua files and approved DDS presentation assets are placed beneath
-    forgeos/ in the prototype.
+    ForgeOS Lua files and approved DDS/PNG presentation assets are placed
+    beneath forgeos/ in the prototype.
 
     Communications Lua files are placed beneath communications/ in the
     prototype.
@@ -353,7 +354,7 @@ def build_manifest() -> dict[Path, Path]:
     forgeos_entries = collect_source_files(
         CONFIG["paths"]["forgeos"],
         Path("forgeos"),
-        included_file_suffixes={".lua", ".dds"},
+        included_file_suffixes=FORGEOS_FILE_SUFFIXES,
     )
 
     communications_entries = collect_source_files(

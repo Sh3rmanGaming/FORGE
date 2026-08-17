@@ -24,6 +24,54 @@ ForgeOS
 Names are proposed implementation locations for M3.002-M3.005 and are not
 implemented by M3.001.
 
+## M3.003 Implemented Boundary
+
+M3.003 implements `Communications.lua`, `CommunicationsService.lua`, and
+`CommunicationsPersistence.lua`. The facade is FORGE-owned and in-process; it
+is not exported through the cross-mod ForgeOS bridge. Engine registers the
+Communications namespace before persistence loading, completes staged repair
+after loading, and makes the service unavailable before State Store cleanup on
+shutdown.
+
+Notification execution, application registration, presentation providers, and
+Host UI remain assigned to later M3 milestones.
+
+## M3.004 Implemented Boundary
+
+M3.004 implements `CommunicationsApp.lua` and
+`ApplicationPresentationService.lua`. The built-in application registers its
+private provider during `REGISTRATION_OPEN`; App Registry retains the provider
+outside detached snapshots. The ForgeOS facade exposes only detached model,
+action-outcome, and badge operations.
+
+The adapter is restricted to the built-in Communications application during
+M3.004. Phone/Laptop drawing and input integration remain M3.006/M3.007 work,
+and notification creation/linkage remains M3.005 work.
+
+## M3.005 Implemented Boundary
+
+M3.005 extends `CommunicationsService.lua` only at the approved public ForgeOS
+notification facade boundary. Message creation commits first, notification
+creation follows, and successful linkage is committed in a second
+Communications namespace replacement. Creation or linkage failure never rolls
+back either subsystem's authoritative committed record.
+
+`markMessageRead` commits Communications state before requesting the linked
+notification read mutation. Missing, already-read, or infrastructure-failed
+notification propagation cannot change the successful Communications result.
+
+M3.007 integrates the existing detached application model with `LaptopHost`.
+The Host retains shell chrome, owns a six-row inbox viewport, thirteen-line
+detail viewport, deterministic Laptop clipping, runtime-only independent
+scroll offsets, and primary-release hit regions. It invokes only the public
+presentation adapter and Lifecycle Service facade; it does not access
+Communications Service, registries, navigation state, or persistence directly.
+Normal launcher and notification content are not rendered while Communications
+is active. The Host-owned Home control closes the current active application
+and is separate from the Communications inbox action.
+Infrastructure failures and linkage-commit failures emit one controlled
+Communications diagnostic and are not retried.
+
 ## Communications Facade
 
 `FORGE.Communications` coordinates the domain service and exposes the bounded

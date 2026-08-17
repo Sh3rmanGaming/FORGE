@@ -173,6 +173,28 @@ surface. Producers cannot override that linkage.
 12. optional linked-notification request and link commit;
 13. completed events.
 
+### M3.005 notification integration
+
+M3.005 replaces the temporary M3.003 deferral with the approved message-first
+notification sequence. `createMessage` returns:
+
+```text
+CommunicationsResult, messageId | nil, detachedIntegrationDetail | nil
+```
+
+No notification request returns no detail. A requested notification returns
+the actual ForgeOS result and notification identifier, when one was created.
+The optional `integrationResult` is `notificationCreationFailed` or
+`notificationLinkageFailed`; either partial integration outcome retains
+Communications `success` and the committed message identifier.
+
+Communications creates the notification with source `forge.communications`,
+metadata `{ communicationsMessageId = messageId }`, and the declarative
+`forge.communications` / `messageDetail` route whose parameters contain that
+message identifier. An absent notification title defaults to message subject;
+an absent notification body defaults exactly to `""`. Explicit strings are
+preserved unchanged.
+
 `markMessageRead` and `archiveMessage`:
 
 1. identifier validation;

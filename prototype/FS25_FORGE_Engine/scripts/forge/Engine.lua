@@ -9,6 +9,7 @@
 ---     • Coordinate development test execution.
 ---     • Coordinate ForgeOS startup and shutdown.
 ---     • Register engine-owned persistent state.
+---     • Register approved built-in applications.
 ---     • Coordinate persistence loading and saving.
 ---     • Coordinate FORGE shutdown.
 ---     • Dispatch frame and input callbacks.
@@ -176,9 +177,31 @@ local function runDevelopmentTests()
 
     local suitePassed = true
 
-    local function runHarness(operation)
+    local function harness(name, operation, requiredPhase)
+        return {
+            name = name,
+            operation = operation,
+            requiredPhase = requiredPhase
+        }
+    end
+
+    local function runHarness(definition)
+        local before = FORGE.ForgeOS:getPhase()
+        if definition.requiredPhase ~= nil
+            and before ~= definition.requiredPhase then
+            suitePassed = false
+            FORGE.Logger:error(
+                FORGE.Definitions.LogSource.TEST,
+                "Test harness '%s' requires ForgeOS phase '%s', found '%s'",
+                definition.name,
+                definition.requiredPhase,
+                FORGE.Logger:safeToString(before, "<unknown>"))
+            return false
+        end
+
+        local operation = definition.operation
         if operation == nil then
-            return
+            return true
         end
 
         local callSucceeded, harnessResult, harnessDetail =
@@ -196,114 +219,142 @@ local function runDevelopmentTests()
                 )
             )
         end
+        FORGE.Logger:debug(
+            FORGE.Definitions.LogSource.TEST,
+            "Test harness '%s' ForgeOS phase: %s -> %s",
+            definition.name,
+            FORGE.Logger:safeToString(before, "<unknown>"),
+            FORGE.Logger:safeToString(
+                FORGE.ForgeOS:getPhase(), "<unknown>"))
+        return true
     end
 
-    runHarness(
-        FORGE.Tests.runForgeOSDefinitionsTests
-    )
+    local phases = {
+        -- TEST PHASE: PROCESS_INITIAL
+        {
+            name = "PROCESS_INITIAL",
+            harnesses = {
+                harness("ForgeOS definitions",
+                    FORGE.Tests.runForgeOSDefinitionsTests),
+                harness("Communications definitions",
+                    FORGE.Tests.runCommunicationsDefinitionsTests),
+                harness("ForgeOS Core", FORGE.Tests.runForgeOSCoreTests,
+                    FORGE.Definitions.ForgeOSPhase.UNAVAILABLE)
+            }
+        },
+        -- TEST PHASE: FOUNDATION
+        {
+            name = "FOUNDATION",
+            harnesses = {
+                harness("Communications Service",
+                    FORGE.Tests.runCommunicationsServiceTests),
+                harness("Communications Persistence",
+                    FORGE.Tests.runCommunicationsPersistenceTests),
+                harness("Logger", FORGE.Tests.runLoggerTests),
+                harness("Event Bus", FORGE.Tests.runEventBusTests),
+                harness("State Store", FORGE.Tests.runStateStoreTests),
+                harness("Save Manager", FORGE.Tests.runSaveManagerTests),
+                harness("XML Writer", FORGE.Tests.runXMLWriterTests),
+                harness("XML Reader", FORGE.Tests.runXMLReaderTests),
+                harness("Save Manager integration",
+                    FORGE.Tests.runSaveManagerIntegrationTests)
+            }
+        },
+        -- TEST PHASE: LIFECYCLE_MUTATING
+        {
+            name = "LIFECYCLE_MUTATING",
+            harnesses = {
+                harness("Communications Manager integration",
+                    FORGE.Tests.runCommunicationsManagerIntegrationTests),
+                harness("ForgeOS Bootstrap",
+                    FORGE.Tests.runForgeOSBootstrapTests),
+                harness("ForgeOS Core lifecycle integration",
+                    FORGE.Tests.runForgeOSCoreLifecycleIntegrationTests),
+                harness("ForgeOS Registration Coordinator",
+                    FORGE.Tests.runForgeOSRegistrationCoordinatorTests),
+                harness("ForgeOS registration lifecycle integration",
+                    FORGE.Tests.runForgeOSRegistrationLifecycleIntegrationTests),
+                harness("Device Registry",
+                    FORGE.Tests.runDeviceRegistryTests),
+                harness("Device Registry integration",
+                    FORGE.Tests.runForgeOSDeviceRegistryIntegrationTests),
+                harness("App Registry", FORGE.Tests.runAppRegistryTests),
+                harness("App Registry integration",
+                    FORGE.Tests.runForgeOSAppRegistryIntegrationTests),
+                harness("Presentation Resolver",
+                    FORGE.Tests.runPresentationResolverTests),
+                harness("Presentation Resolver integration",
+                    FORGE.Tests.runForgeOSPresentationResolverIntegrationTests),
+                harness("App Lifecycle Service",
+                    FORGE.Tests.runAppLifecycleServiceTests),
+                harness("App Lifecycle integration",
+                    FORGE.Tests.runForgeOSAppLifecycleIntegrationTests),
+                harness("Navigation Service",
+                    FORGE.Tests.runNavigationServiceTests),
+                harness("Application Presentation Service",
+                    FORGE.Tests.runApplicationPresentationServiceTests),
+                harness("Communications Application integration",
+                    FORGE.Tests.runCommunicationsApplicationIntegrationTests),
+                harness("Phone Communications presentation integration",
+                    FORGE.Tests
+                        .runPhoneCommunicationsPresentationIntegrationTests),
+                harness("Laptop Communications presentation integration",
+                    FORGE.Tests
+                        .runLaptopCommunicationsPresentationIntegrationTests),
+                harness("Navigation integration",
+                    FORGE.Tests.runForgeOSNavigationIntegrationTests),
+                harness("Notification Service",
+                    FORGE.Tests.runNotificationServiceTests),
+                harness("Notification integration",
+                    FORGE.Tests.runForgeOSNotificationIntegrationTests)
+            }
+        },
+        -- TEST PHASE: END_TO_END
+        {
+            name = "END_TO_END",
+            harnesses = {
+                harness("Device Host Registry",
+                    FORGE.Tests.runDeviceHostRegistryTests),
+                harness("Device State Service",
+                    FORGE.Tests.runDeviceStateServiceTests),
+                harness("Phone Host", FORGE.Tests.runPhoneHostTests),
+                harness("Laptop Host", FORGE.Tests.runLaptopHostTests),
+                harness("ForgeOS Export Bridge",
+                    FORGE.Tests.runForgeOSExportBridgeTests),
+                harness("Phone Host integration",
+                    FORGE.Tests.runForgeOSPhoneHostIntegrationTests),
+                harness("Laptop Host integration",
+                    FORGE.Tests.runForgeOSLaptopHostIntegrationTests),
+                harness("Multi-Host integration",
+                    FORGE.Tests.runForgeOSMultiHostIntegrationTests),
+                harness("Engine input integration",
+                    FORGE.Tests.runForgeOSEngineInputIntegrationTests),
+                harness("Cross-mod bridge integration",
+                    FORGE.Tests.runForgeOSCrossModBridgeIntegrationTests),
+                harness("Production startup integration",
+                    FORGE.Tests.runForgeOSProductionStartupIntegrationTests),
+                harness("ForgeOS end-to-end integration",
+                    FORGE.Tests.runForgeOSEndToEndIntegrationTests)
+            }
+        }
+    }
 
-    runHarness(
-        FORGE.Tests.runCommunicationsDefinitionsTests
-    )
-
-    runHarness(FORGE.Tests.runLoggerTests)
-
-    runHarness(FORGE.Tests.runEventBusTests)
-
-    runHarness(FORGE.Tests.runStateStoreTests)
-
-    runHarness(FORGE.Tests.runSaveManagerTests)
-
-    runHarness(FORGE.Tests.runXMLWriterTests)
-
-    runHarness(FORGE.Tests.runXMLReaderTests)
-
-    runHarness(
-        FORGE.Tests
-            .runSaveManagerIntegrationTests
-    )
-
-    runHarness(FORGE.Tests.runForgeOSCoreTests)
-
-    runHarness(
-        FORGE.Tests.runForgeOSBootstrapTests
-    )
-
-    runHarness(
-        FORGE.Tests
-            .runForgeOSCoreLifecycleIntegrationTests
-    )
-
-    runHarness(
-        FORGE.Tests
-            .runForgeOSRegistrationCoordinatorTests
-    )
-
-    runHarness(
-        FORGE.Tests
-            .runForgeOSRegistrationLifecycleIntegrationTests
-    )
-
-    runHarness(
-        FORGE.Tests.runDeviceRegistryTests
-    )
-
-    runHarness(
-        FORGE.Tests
-            .runForgeOSDeviceRegistryIntegrationTests
-    )
-
-    runHarness(
-        FORGE.Tests.runAppRegistryTests
-    )
-
-    runHarness(
-        FORGE.Tests
-            .runForgeOSAppRegistryIntegrationTests
-    )
-
-    runHarness(
-        FORGE.Tests.runPresentationResolverTests
-    )
-
-    runHarness(
-        FORGE.Tests
-            .runForgeOSPresentationResolverIntegrationTests
-    )
-
-    runHarness(
-        FORGE.Tests.runAppLifecycleServiceTests
-    )
-
-    runHarness(
-        FORGE.Tests
-            .runForgeOSAppLifecycleIntegrationTests
-    )
-
-    runHarness(FORGE.Tests.runNavigationServiceTests)
-
-    runHarness(
-        FORGE.Tests.runForgeOSNavigationIntegrationTests
-    )
-
-    runHarness(FORGE.Tests.runNotificationServiceTests)
-
-    runHarness(
-        FORGE.Tests.runForgeOSNotificationIntegrationTests
-    )
-
-    runHarness(FORGE.Tests.runDeviceHostRegistryTests)
-    runHarness(FORGE.Tests.runDeviceStateServiceTests)
-    runHarness(FORGE.Tests.runPhoneHostTests)
-    runHarness(FORGE.Tests.runLaptopHostTests)
-    runHarness(FORGE.Tests.runForgeOSExportBridgeTests)
-    runHarness(FORGE.Tests.runForgeOSPhoneHostIntegrationTests)
-    runHarness(FORGE.Tests.runForgeOSLaptopHostIntegrationTests)
-    runHarness(FORGE.Tests.runForgeOSMultiHostIntegrationTests)
-    runHarness(FORGE.Tests.runForgeOSEngineInputIntegrationTests)
-    runHarness(FORGE.Tests.runForgeOSCrossModBridgeIntegrationTests)
-    runHarness(FORGE.Tests.runForgeOSProductionStartupIntegrationTests)
-    runHarness(FORGE.Tests.runForgeOSEndToEndIntegrationTests)
+    local preconditionFailed = false
+    for _, phase in ipairs(phases) do
+        FORGE.Logger:info(
+            FORGE.Definitions.LogSource.TEST,
+            "FORGE development test phase started: %s",
+            phase.name)
+        for _, definition in ipairs(phase.harnesses) do
+            if not runHarness(definition) then
+                preconditionFailed = true
+                break
+            end
+        end
+        if preconditionFailed then
+            break
+        end
+    end
 
     if suitePassed then
         FORGE.Logger:info(
@@ -769,6 +820,17 @@ function FORGE.Engine:loadMap(mapName)
         )
     end
 
+    local communicationsStarted =
+        FORGE.Communications:start()
+            == FORGE.Definitions.CommunicationsResult.SUCCESS
+
+    if not communicationsStarted then
+        FORGE.Logger:error(
+            "Communications",
+            "FORGE startup could not initialise Communications persistence"
+        )
+    end
+
     -------------------------------------------------------------------------
     -- Save Lifecycle Hook
     -------------------------------------------------------------------------
@@ -801,6 +863,38 @@ function FORGE.Engine:loadMap(mapName)
             FORGE.Definitions.LogSource.ENGINE,
             "FORGE startup completed without loaded persistence"
         )
+    end
+
+    local communicationsRestored = false
+
+    if communicationsStarted and persistenceLoaded then
+        communicationsRestored =
+            FORGE.Communications:completeRestoration()
+                == FORGE.Definitions.CommunicationsResult.SUCCESS
+
+        if not communicationsRestored then
+            FORGE.Logger:error(
+                "Communications",
+                "FORGE startup could not restore Communications state"
+            )
+        end
+    end
+
+    if communicationsRestored then
+        local appRegistrationResult =
+            FORGE.Communications:registerApplication()
+
+        if appRegistrationResult
+            ~= FORGE.Definitions.ForgeOSResult.SUCCESS then
+            FORGE.Logger:error(
+                "Communications",
+                "Communications application registration failed with result '%s'",
+                FORGE.Logger:safeToString(
+                    appRegistrationResult,
+                    "<unknown>"
+                )
+            )
+        end
     end
 
     self.isMissionLoaded = true
@@ -907,6 +1001,21 @@ function FORGE.Engine:deleteMap()
             FORGE.Definitions.LogSource.ENGINE,
             "ForgeOS shutdown failed with result '%s'",
             forgeOSShutdownResult
+        )
+    end
+
+    local communicationsShutdownResult =
+        FORGE.Communications:shutdown()
+
+    if communicationsShutdownResult
+        ~= FORGE.Definitions.CommunicationsResult.SUCCESS then
+        FORGE.Logger:error(
+            "Communications",
+            "Communications shutdown failed with result '%s'",
+            FORGE.Logger:safeToString(
+                communicationsShutdownResult,
+                "<unknown>"
+            )
         )
     end
 

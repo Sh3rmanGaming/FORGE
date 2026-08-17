@@ -51,17 +51,28 @@ The goal is to ensure that even if the original creators move on, the community 
 
 **Development Stage**
 
-🟡 Active Development
+Active development
 
-The project is currently focused on building the core engine and framework that future gameplay systems will rely upon.
+The ForgeOS foundation is complete. Development is currently focused on the
+M3 Communications system that uses that foundation.
 
 ---
 
-# Current milestone:
+# Current milestone
 
-**M1 — Engine Foundation**
+**M3 — Communications**
 
-The project is currently focused on building the core engine and framework that future gameplay systems will rely upon.
+M3.001 through M3.004 are implemented, runtime verified, accepted, and frozen
+within their bounded scopes. FORGE now has authoritative received-message
+storage and persistence, a built-in Communications application, detached
+inbox/detail presentation models, unread badges, declared application actions,
+and ForgeOS-mediated navigation.
+
+M3.005 — Notification Integration, M3.006 — Phone Communications UI, and
+M3.007 — Laptop Communications UI are implemented, runtime verified,
+accepted, and frozen within their bounded scopes. M3.008 — End-to-End
+Verification and Polish passed its unchanged-package two-cycle gate. M3.008
+and overall M3 are accepted and frozen within their bounded scopes.
 
 # Repository Structure
 
@@ -145,7 +156,7 @@ Recommended reading order:
 
 # License
 
-A project license will be selected before the first public release.
+FORGE is distributed under the terms recorded in [LICENSE](LICENSE).
 
 ---
 

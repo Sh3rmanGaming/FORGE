@@ -62,6 +62,51 @@ function FORGE.Tests.runForgeOSMultiHostIntegrationTests()
             error("Laptop initialization failure cleanup order failed")
         end
 
+        local draws, pointers = {}, {}
+        local function presentationFactory(deviceId)
+            return function()
+                return {
+                    initialize = function() return Result.SUCCESS end,
+                    isOperational = function() return true end,
+                    update = function() end,
+                    draw = function() table.insert(draws, deviceId) end,
+                    containsPoint = function(_, x)
+                        return deviceId == "laptop" or x >= 0.70
+                    end,
+                    onPointer = function()
+                        table.insert(pointers, deviceId)
+                        return deviceId == "laptop"
+                    end,
+                    onInput = function() return false end,
+                    shutdown = function() return Result.SUCCESS end
+                }
+            end
+        end
+        FORGE.PhoneHost.create = presentationFactory("phone")
+        FORGE.LaptopHost.create = presentationFactory("laptop")
+        reset()
+        if FORGE.ForgeOS:start() ~= Result.SUCCESS
+            or FORGE.ForgeOS:completeStartup() ~= Result.SUCCESS
+            or FORGE.ForgeOS:showDevice("phone") ~= Result.SUCCESS
+            or FORGE.ForgeOS:showDevice("laptop") ~= Result.SUCCESS then
+            error("Layered Host presentation setup failed")
+        end
+        FORGE.ForgeOS:drawRuntimeHost()
+        if draws[1] ~= "laptop" or draws[2] ~= "phone" then
+            error("Laptop-first Phone-last presentation order failed")
+        end
+        if not FORGE.ForgeOS:dispatchHostPointer(0.80, 0.50,
+                true, false, 1)
+            or pointers[1] ~= "phone" or pointers[2] ~= nil then
+            error("Visible Phone did not occlude Laptop pointer input")
+        end
+        pointers = {}
+        if not FORGE.ForgeOS:dispatchHostPointer(0.20, 0.50,
+                true, false, 1)
+            or pointers[1] ~= "laptop" then
+            error("Laptop did not receive pointer outside Phone bounds")
+        end
+
         FORGE.PhoneHost.create = originalPhoneCreate
         FORGE.LaptopHost.create = originalLaptopCreate
         FORGE.ForgeOS:shutdown()

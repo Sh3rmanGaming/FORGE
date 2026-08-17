@@ -33,6 +33,13 @@ messageDetail
 Phone and Laptop declare separate presentation identities while using the same
 domain state.
 
+The exact built-in presentation identifiers are:
+
+```text
+forge.communications.phone
+forge.communications.laptop
+```
+
 ## Presentation Adapter API
 
 Proposed additive Host-facing ForgeOS operations:
@@ -116,6 +123,19 @@ content = {
 Unknown or reclaimed detail identifiers produce a valid not-found model with a
 bounded return-to-inbox action; they do not expose domain failure details.
 
+The exact not-found content is:
+
+```lua
+{
+    kind = "communications.messageDetail",
+    message = nil
+}
+```
+
+Inbox `preview` is the complete authoritative message body without
+transformation. Sender display uses `senderDisplayName` when present and
+otherwise uses `source`. Visual clipping remains Host-owned.
+
 ## Declared Actions
 
 Initial action identifiers:
@@ -151,6 +171,12 @@ ForgeOS navigation facade.
 Opening a message requests `messageDetail`. Opening inbox/home requests the
 default `inbox` route. Back uses existing `goBack`. A failed navigation does not
 roll back a completed domain mutation.
+
+Successful archive from message detail requests the default inbox route.
+Successful or idempotent `markRead` remains on message detail and returns no
+route-changing navigation. A missing or reclaimed `openMessage` returns
+`completed = false`, `domainResult = "notFound"`, and no navigation while the
+adapter delivery result remains `SUCCESS`.
 
 ## Badge Contract
 
@@ -203,12 +229,60 @@ does not reinterpret or add an M2 ForgeOS result.
 - back/home, read, and archive controls;
 - no text entry or outbound composition.
 
+M3.006 retains the Phone shell/header and replaces the Home interior while
+Communications is active. The Host displays inbox rows newest-first through a
+fixed four-row viewport, owns transient inbox/detail scroll offsets, and resets
+the route-specific offset on route change. Launcher and ordinary notification
+content are hidden while active.
+
+Communications controls activate on primary-button release only when press and
+release resolve to the same currently rendered Host-owned hit region. Inbox
+rows invoke `communications.openMessage`; detail controls invoke only the
+declared back, inbox, mark-read, and archive actions. Pointer wheel buttons move
+the applicable bounded viewport. Keyboard/controller application navigation,
+focus, text entry, and generic widget/controller execution remain deferred.
+
+Phone clipping is deterministic and presentation-only: sender and subject are
+single-line ellipsized values, preview is at most two visual lines, and detail
+body draws only its scrolled viewport. Detached models are never reordered or
+mutated. Missing detail renders `Message unavailable`; absent models render a
+bounded unavailable state while a safe last model for the same route may remain
+visible.
+
 ## Laptop Presentation
 
 - one Communications surface inside the existing Laptop Host;
 - inbox and detail routes;
 - no windows, taskbar, z-order, movable geometry, or multi-app rendering;
 - F8 remains development/fallback device activation only.
+
+M3.007 retains the existing Laptop shell, header, footer, cursor behavior, and
+Host chrome while replacing the Home interior with Communications content.
+The normal launcher and notification panel are hidden while Communications is
+active. A Host-owned Laptop Home control closes the current active application
+through Lifecycle Service and is distinct from `communications.openInbox`.
+
+Laptop inbox rows render newest-first through a deterministic fixed viewport.
+The Host owns runtime-only inbox and detail scroll offsets, deterministic
+Laptop-specific clipping, viewport selection, and hit regions without mutating
+the detached model. Route changes, application closure, and Host restart reset
+the applicable offsets; same-route hide/show may retain them.
+
+The bounded M3.007 Laptop geometry uses six visible inbox rows, 64-character
+sender/subject clipping bounds, two preview lines at 72 characters per visual
+line, and thirteen detail-body lines at 88 characters per visual line. These
+are deterministic Host presentation values, not Communications content limits.
+
+Laptop application controls use primary-button release after press and release
+within the same logical control. Rows and detail controls invoke only their
+declared Communications actions through the presentation adapter. Badge truth
+comes exactly from `getApplicationBadge`; notification state is not used to
+derive it. Missing messages and adapter/model failures remain controlled and
+cannot cause fabricated state or inferred navigation.
+
+M3.007 application interaction is pointer-only. Keyboard/controller focus,
+text entry, arbitrary controller execution, desktop/window architecture, and
+multi-app rendering remain deferred.
 
 ## Cross-Device Semantics
 

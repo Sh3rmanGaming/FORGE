@@ -1340,6 +1340,14 @@ F8 is the current remappable development/fallback visibility adapter. The Host
 does not depend on F8 or any activation source; a future physical Laptop object
 is expected to request the same public Laptop visibility operation.
 
+M3.007 expands the Laptop presentation bounds to a screen-safe full-screen
+surface while retaining one active application. The Home surface uses an
+original FORGE woodland operations background, fixed launcher shortcuts, and
+bounded status chrome; an active application replaces Home content rather than
+opening a movable window. ForgeOS draws Laptop before Phone and treats a
+visible Phone rectangle as pointer-occluding. All non-presentation Host order,
+independent visibility, lifecycle, and navigation behavior remains unchanged.
+
 ---
 
 # ForgeOS Application Contract

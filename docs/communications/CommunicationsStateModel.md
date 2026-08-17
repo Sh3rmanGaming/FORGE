@@ -76,6 +76,10 @@ When capacity is required:
 Capacity rejection consumes no identifier and mutates no notification state.
 The capacity policy is frozen only after M3 implementation acceptance.
 
+M3.003 implements the private initial capacity as 256 records. This literal is
+an implementation parameter, not an addon-facing or persistence compatibility
+definition.
+
 ## Atomic Mutation
 
 Every state-changing operation stages a detached namespace copy, validates the
@@ -94,6 +98,12 @@ the message remains without `notificationId` and the ForgeOS notification
 remains intact. Communications emits one controlled diagnostic, reports the
 linkage failure in detached detail, performs no automatic retry, and never
 repairs the link by inspecting notification metadata.
+
+The M3.005 integration definition uses notification source
+`forge.communications`, metadata key `communicationsMessageId`, and a
+declarative `forge.communications` `messageDetail` route carrying `messageId`.
+These notification-owned values are never scanned to reconstruct missing
+Communications linkage during restoration.
 
 ## Older State
 

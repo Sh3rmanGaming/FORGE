@@ -543,30 +543,59 @@ adapter. Architecture approval now authorizes M3.002 definitions only. See the
 - Component harness integrated into the development test runner
 - Runtime verified, accepted, and frozen within the bounded definitions scope
 
-#### ⏳ M3.003 – Communications Manager
+#### ✅ M3.003 – Communications Manager
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
 
 - Authoritative bounded inbox, read/archive state, persistence, and repair
-- Next implementation boundary; not started
+- Runtime verified, accepted, and frozen within the bounded M3.003 scope
 
-#### ⏳ M3.004 – Communications Application Contract
+#### ✅ M3.004 – Communications Application Contract
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
 
 - Built-in application registration and bounded presentation integration
+- Runtime verified, accepted, and frozen within the bounded M3.004 scope
 
-#### ⏳ M3.005 – Notification Integration
+#### ✅ M3.005 – Notification Integration
 
-- Linked alerts, asymmetric read propagation, and navigation linkage
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
 
-#### ⏳ M3.006 – Phone Communications UI
+- Linked alerts, asymmetric read propagation, and declarative navigation
+  linkage
+- Runtime verified, accepted, and frozen within the bounded M3.005 scope
+
+#### ✅ M3.006 – Phone Communications UI
+
+| Authored | Architecture Review | Approved | Implemented | Verified |
+|----------|---------------------|----------|-------------|----------|
+| ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
 
 - Full-screen inbox and message-detail Phone surfaces
+- Runtime verified, accepted, and frozen within the bounded M3.006 scope
 
-#### ⏳ M3.007 – Laptop Communications UI
+#### ✅ M3.007 – Laptop Communications UI
 
 - One bounded Laptop application surface without desktop/window expansion
+- Full-screen single-application Laptop presentation with independent Phone
+  overlay and bounded pointer occlusion
+- Runtime verified, accepted, and frozen within the bounded M3.007 scope
+- [M3.007 Runtime Verification](../reviews/M3.007RuntimeVerification.md)
 
-#### ⏳ M3.008 – End-to-End Verification and Polish
+#### ✅ M3.008 – End-to-End Verification and Polish
 
 - Retained regression, two-cycle persistence, runtime evidence, and acceptance
+- Bounded cross-launch verification protocol implemented
+- Retained regression and unchanged-package two-cycle FS25 runtime gate passed
+- Player-visible Phone/Laptop verification passed
+- M3.008 and overall M3 accepted and frozen within their bounded scopes
+- [M3.008 Runtime Verification](../reviews/M3.008RuntimeVerification.md)
 
 ---
 

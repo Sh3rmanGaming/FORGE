@@ -233,6 +233,12 @@ Current records:
 - [M2.013 Runtime Verification](reviews/M2.013RuntimeVerification.md)
 - [M3 Architecture Review](reviews/M3ArchitectureReview.md)
 - [M3.002 Runtime Verification](reviews/M3.002RuntimeVerification.md)
+- [M3.003 Runtime Verification](reviews/M3.003RuntimeVerification.md)
+- [M3.004 Runtime Verification](reviews/M3.004RuntimeVerification.md)
+- [M3.005 Runtime Verification](reviews/M3.005RuntimeVerification.md)
+- [M3.006 Runtime Verification](reviews/M3.006RuntimeVerification.md)
+- [M3.007 Runtime Verification](reviews/M3.007RuntimeVerification.md)
+- [M3.008 Runtime Verification](reviews/M3.008RuntimeVerification.md)
 - [Communications Architecture](communications/CommunicationsArchitecture.md)
 - [Communications Component Design](communications/CommunicationsComponentDesign.md)
 - [Communications Definitions](communications/CommunicationsDefinitions.md)
@@ -374,7 +380,7 @@ optional maintenance.
 ```text
 Current Milestone
 
-M2 – ForgeOS
+M3 – Communications
 ```
 
 Completed implementation:
@@ -391,12 +397,21 @@ M2.007 – Lifecycle Service
 M2.008 – Navigation Service
 M2.009 – Notification Service
 M2.010 – Phone Host
+M2.011 – Laptop Host
+M2.012 – End-to-End Integration
+M2.013 – ForgeOS Polish
+M3.001 – Communications Architecture
+M3.002 – Communications Definitions
+M3.003 – Communications Manager
+M3.004 – Communications Application Contract
+M3.005 – Notification Integration
+M3.006 – Phone Communications UI
 ```
 
-Current implementation stage:
+Current verification stage:
 
 ```text
-M3.002 – Communications Definitions
+M3.008 – End-to-End Verification and Polish
 ```
 
 M2.010 – Phone Host is implemented, synchronized, runtime verified, accepted,
@@ -417,11 +432,26 @@ M3.001 Architecture is approved. Its contracts define one received-message
 `forge.communications` application, a separate Communications-owned SAVEGAME
 inbox, asymmetric notification linkage, and a bounded detached application-
 presentation adapter. M3.002 definitions are implemented, synchronized,
-runtime verified, accepted, and frozen within their bounded scope. No message
-storage, Communications service, persistence operation, notification execution,
-presentation execution, UI, or external producer API has been implemented.
-M3.003 – Communications Manager is the next implementation boundary and has not
-started.
+runtime verified, accepted, and frozen within their bounded scope. Notification
+execution, presentation execution, UI, and external producer APIs remain
+unimplemented.
+M3.003 – Communications Manager provides the authoritative inbox, read/archive
+lifecycle, persistence registration,
+deterministic restoration, detached queries, retention, and Engine lifecycle
+coordination. Implementation and runtime verification are complete; the
+milestone was accepted and frozen within that bounded scope on 2026-08-16.
+M3.004 – Communications Application Contract provides built-in app
+registration, private provider retention, detached inbox/detail models, unread
+badges, declared actions, and ForgeOS-mediated navigation. It is implemented,
+runtime verified, accepted, and frozen within that bounded scope. Host UI and
+notification linkage remain deferred from the frozen M3.004 scope. M3.005 –
+Notification Integration is implemented, runtime verified, accepted, and
+frozen within its bounded scope. M3.006 Phone Communications UI and M3.007
+Laptop Communications UI are implemented, runtime verified, accepted, and
+frozen within their bounded scopes. M3.008 End-to-End Verification and Polish
+is implemented and runtime verified through an unchanged-package two-cycle
+gate. M3.008 and overall M3 are accepted and frozen within their bounded
+scopes.
 
 ---
 
