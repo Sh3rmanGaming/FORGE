@@ -18,3 +18,5 @@
 *.png binary
 *.dds binary
 *.jpg binary
+# Runtime evidence is recorded by SHA-256 in docs/reviews; store it byte-for-byte
+docs/reviews/evidence/** -text
