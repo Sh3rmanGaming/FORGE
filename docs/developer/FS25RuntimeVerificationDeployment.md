@@ -63,6 +63,24 @@ FS25 runtime evidence
 15. Deploy the validated ZIP and require its SHA-256 to match the package
     SHA-256 before launching FS25.
 
+## Packaging Tool
+
+`python tools/package_runtime.py <label> [--mode operational|verification|both]
+[--deploy operational|verification]` automates the pre-deployment procedure
+above. It runs the synchronization, test-order, tool-test, and manifest gates;
+builds the packages from a staging copy of the prototype (so `modDesc.xml` is
+never edited, and a verification package adds the Development Test Bootstrap
+entry after the Logger); validates each archive; and writes a record into
+`_builds/`.
+
+With `--deploy` it copies the chosen package to the FS25 mods directory as
+`FS25_FORGE_Engine.zip` (override with `--mods-directory` or the
+`FORGE_FS25_MODS_DIR` environment variable). It refuses to run while FS25 is
+open, copies any previously deployed file into `_builds/deployed-backups/`
+first, and requires the deployed SHA-256 to match the built package. It never
+overwrites an existing built package; use a new label. Packages and backups
+stay outside Git.
+
 ## Deployment Hard Gate
 
 STOP before FS25 launch when:
