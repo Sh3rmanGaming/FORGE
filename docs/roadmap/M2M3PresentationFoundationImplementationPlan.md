@@ -317,9 +317,17 @@ PF.003 and PF.004 accepted.
 - one private Host-context function, `getApplicationAttention(appId)`, in the
   per-device context built by `ForgeOS.lua`, calling the existing service query;
   no new method on the public `FORGE.ForgeOS` table;
-- LaptopHost and PhoneHost badge drawing for the five states (drawn shapes, exact
-  count, `99+` display above 99), replacing integer-only drawing, including the
-  Laptop active-app badge route;
+- a shared badge module that turns state, count and size into the shape image,
+  tint token, and count text, with a flat-rectangle fallback;
+- generated badge image assets (rounded corners) under `forgeos/assets/`, with a
+  reproducible generator script in `tools/`;
+- LaptopHost badge drawing on launcher shortcuts (replacing integer-only
+  drawing) and new PhoneHost launcher badges, for the five states with exact
+  count and `99+` display above 99. The Communications model-v1 in-app badges
+  stay untouched; PF.007 and PF.008 remove them;
+- a session-local attention snapshot per Host, refreshed on the normal refresh
+  path and never persisted, instead of querying while drawing;
+- a development-only test app that shows all five states;
 - the Communications provider attention method (active unread to `unread` with
   the exact count; otherwise `none`); and
 - tests.

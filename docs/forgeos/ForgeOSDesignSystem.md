@@ -232,7 +232,12 @@ Decided by the project owner for PF.005:
 - A count above 99 displays as `99+`. The displayed text is a visual
   compression only; the authoritative value is never altered.
 - `warning`, `error`, and `attention` may display without a count.
-- Shapes are drawn by the Host. No new image assets are introduced.
+- Badge shapes are generated image assets with anti-aliased rounded corners
+  (white shape, any glyph baked in dark), tinted at draw time by the semantic
+  token for the state. The count text is rendered by the Host. If an overlay
+  cannot be created, the Host falls back to flat rectangles so a badge is still
+  shown. New image assets are permitted for PF.005; final artwork refinement
+  remains open.
 - The accessible label is carried in the model but not drawn.
 - No badge animation is used; any later motion needs its own reduced-motion-
   compatible decision.

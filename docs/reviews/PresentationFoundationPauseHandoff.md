@@ -199,8 +199,13 @@ Do not modify these for PF.005 until the plan is explicitly approved.
 triangle for warning, square with an X for error; warning/error/attention may
 show without a count; Phone badge starts slightly larger than Laptop with final
 sizes set from in-game screenshots; accessible label kept in the model and not
-drawn; no animation; drawn shapes with no new image assets. Recorded in the
-Design System. The list below is the original question set.
+drawn; no animation; badge shapes are generated image assets with rounded
+corners (new assets are permitted). Recorded in the Design System. The list
+below is the original question set.
+
+**Correction (2026-10-30):** an earlier version of this note said "no new image
+assets". The project owner never decided that; it came from an AI suggestion that
+was not specifically authorized. It has been removed.
 
 - visual count-compression threshold;
 - state-specific icon/shape vocabulary;
