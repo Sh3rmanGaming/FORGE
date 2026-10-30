@@ -58,6 +58,12 @@ Laptop
 - Exact counts remain exact semantic values; visual fitting may adapt type size.
 - Badge truth is queried from the app/domain attention provider, never counted
   from notifications by LaptopHost.
+- PF.005: the badge shows the state shape and exact count defined in the
+  Design System (`99+` above 99). It is anchored at the icon's top-right corner,
+  is smaller than the Phone badge, and does not obscure icon recognition. The
+  Laptop reads attention only through the private Host context function
+  `getApplicationAttention`. Final dimensions are set at PF.005 runtime
+  verification.
 
 ## Future PF.006 Toast-Safe Region
 

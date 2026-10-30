@@ -188,6 +188,16 @@ Badge acquisition is side-effect-free, detached by value, and returns `0` for
 unavailable/no-readable-result conditions. Hosts must not infer diagnostic
 classification from zero.
 
+### Attention (PF.005)
+
+Communications answers the optional private provider attention query. Active
+unread records map to `state = "unread"` with the same exact count the badge
+uses; zero active unread maps to `state = "none"`. Archived unread records are
+excluded. Communications reports no `attention`, `warning`, or `error` state in
+PF.005. The query is side-effect-free and detached by value. Notification state
+and `notification.source` never establish attention. The integer
+`getApplicationBadge` contract remains compatible and unchanged.
+
 ## Query Contract
 
 Model acquisition is side-effect-free. It must not:

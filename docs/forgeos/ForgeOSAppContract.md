@@ -1585,6 +1585,16 @@ PF.002 design is in
 [Shared Host Renderer Architecture](ForgeOSSharedHostRendererArchitecture.md)
 and [ForgeOS Component Design](ForgeOSComponentDesign.md).
 
+### PF.005 provider attention method (not yet contractual)
+
+A provider may implement an optional `getAttention(context)` returning the
+controlled attention model defined in the
+[Presentation Architecture](ForgeOSPresentationArchitecture.md). It is read only
+through the private Host context and is not part of App API version 1 or the
+provider protocol. Do not rely on it from outside FORGE until a public API
+versioning review approves exposure. Providers without it keep the integer
+badge mapping.
+
 ## PF.003 Laptop Desktop Projection
 
 PF.003 adds no App Registry field, public callback, API version, or asset

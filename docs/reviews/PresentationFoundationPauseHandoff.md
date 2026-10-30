@@ -142,10 +142,17 @@ Laptop integer badge
 Phone currently reserves attention geometry but does not present the generic
 attention model. Laptop currently renders the compatible integer badge.
 
-The proposed PF.005 architecture should add a private optional semantic
-attention provider/query, validate and detach its result, map the existing
-integer badge only when the semantic method is absent, and project the same
-authoritative application/domain truth independently through both Hosts.
+**Correction (2026-10-30):** the private optional semantic attention query,
+result validation/detachment, and legacy integer-badge mapping already exist as
+`ApplicationPresentationService:getAttention()`, delivered with PF.002 and
+frozen. The remaining PF.005 work is the Host projection: a private Host-context
+function, Laptop and Phone badge drawing, the Communications provider method,
+and tests. The query stays private; no public API is added.
+
+The PF.005 architecture should therefore keep the private optional semantic
+attention provider/query, map the existing integer badge only when the semantic
+method is absent, and project the same authoritative application/domain truth
+independently through both Hosts.
 
 Important proposed rules awaiting architecture-plan approval:
 
@@ -163,7 +170,12 @@ Important proposed rules awaiting architecture-plan approval:
 
 ## Proposed PF.005 documentation package
 
-The last returned plan proposed these files, but it has not yet been approved:
+**Superseded (2026-10-30):** the owner approved a leaner eight-file package in
+place of the twelve-file list below: Presentation Architecture, Design System,
+Laptop UX, Phone UX, Communications App Contract, App Contract, the
+implementation plan, and this handoff. The new architecture document,
+Component Design, Definitions, State Model and `docs/README.md` are not
+changed for PF.005. The original list is kept for the record:
 
 1. `ForgeOSApplicationAttentionArchitecture.md` (new)
 2. `ForgeOSPresentationArchitecture.md`
@@ -180,7 +192,15 @@ The last returned plan proposed these files, but it has not yet been approved:
 
 Do not modify these for PF.005 until the plan is explicitly approved.
 
-## PF.005 open Design Lead decisions
+## PF.005 design decisions
+
+**Decided 2026-10-30 by the project owner** (there is no separate Design Lead):
+`99+` display above 99; round unread badge, `!` in a circle for attention,
+triangle for warning, square with an X for error; warning/error/attention may
+show without a count; Phone badge starts slightly larger than Laptop with final
+sizes set from in-game screenshots; accessible label kept in the model and not
+drawn; no animation; drawn shapes with no new image assets. Recorded in the
+Design System. The list below is the original question set.
 
 - visual count-compression threshold;
 - state-specific icon/shape vocabulary;

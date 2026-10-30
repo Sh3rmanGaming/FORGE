@@ -62,6 +62,14 @@ unread derivation, count, severity, label, persistence, colour, or refresh.
 Communications-specific badge logic is not the future generic model. PF.005 owns
 attention behaviour and visual acceptance.
 
+PF.005 presentation: the Phone shows the state shape and exact count defined in
+the Design System (`99+` above 99) in the reserved anchor at the shortcut's
+top-right corner. The badge starts slightly larger than the Laptop badge, must
+not obscure icon recognition, and stays inside the protected shell geometry.
+The Phone reads attention only through the private Host context function
+`getApplicationAttention`. Final dimensions are set at PF.005 runtime
+verification.
+
 ## PF.006 notification seam
 
 Reserve an empty, clipped top-edge layer that can later overlay Home or active

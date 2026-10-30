@@ -368,8 +368,11 @@ Notification dismissal remains unrelated to domain archive/delete/read state.
 Badge truth remains application/domain-derived and side-effect-free. Hosts
 never count notifications or domain records.
 
-The current integer `getApplicationBadge()` contract remains compatible. Add an
-optional controlled attention query/model:
+The current integer `getApplicationBadge()` contract remains compatible. The
+private, optional controlled attention query
+(`ApplicationPresentationService:getAttention()`) is implemented and frozen with
+PF.002. PF.005 completes its Host projection; it does not add the query. The
+attention model is:
 
 ```lua
 {
@@ -399,6 +402,36 @@ Rules:
 
 The attention model is an additive internal/provider extension. Public API
 versioning must be reviewed before external exposure.
+
+### PF.005 Host route (private)
+
+PF.005 keeps attention private. Each Host reads attention only through the
+Host-internal context that ForgeOS builds per device, by adding one function,
+`getApplicationAttention(appId)`, beside the existing `getApplicationBadge`. It
+calls the Application Presentation Service directly and returns the detached
+attention model. Consequences:
+
+- no new method on the public `FORGE.ForgeOS` table;
+- no App Registry field, App API version change, or persistence change;
+- no new provider protocol version; the provider method stays optional and the
+  legacy `getBadge` mapping above applies when it is absent;
+- Hosts display the returned state and exact count and never derive, count,
+  cache, or persist attention; and
+- Phone and Laptop project the same authoritative application truth
+  independently.
+
+Malformed semantic output fails closed to `{ state = "none" }` and is not
+concealed by the legacy fallback.
+
+### PF.005 presentation rules
+
+Each state carries a non-colour cue (see the Design System):
+
+- a count above 99 is shown as `99+`; the authoritative value is unchanged;
+- `warning` and `error` may appear without a count;
+- the accessible label stays in the model and is not drawn, because the FS25
+  backend offers no presentation path for it; and
+- no badge animation is introduced.
 
 ## Persistence Boundaries
 

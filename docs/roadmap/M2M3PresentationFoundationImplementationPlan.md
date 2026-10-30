@@ -298,8 +298,15 @@ PF.008 removal ownership; and retained suites, save, package, and shutdown pass.
 
 ### Objective
 
-Add a derived controlled attention model while preserving exact legacy integer
-badges and application/domain ownership.
+Project the controlled attention model onto both Hosts while preserving exact
+legacy integer badges and application/domain ownership. The attention query
+stays private; PF.005 adds no public API.
+
+### Already delivered (PF.001/PF.002, frozen)
+
+The five attention states, the optional exact count, the independent-count rule,
+and `ApplicationPresentationService:getAttention()` with its validation, legacy
+badge mapping, fail-closed handling, and tests. PF.005 does not re-add them.
 
 ### Dependencies
 
@@ -307,14 +314,25 @@ PF.003 and PF.004 accepted.
 
 ### Expected source changes
 
-Optional provider attention method, ApplicationPresentationService validation,
-Host-neutral ForgeOS query, shell badge components, Communications adapter, and
-tests. No Notification Service ownership inference.
+- one private Host-context function, `getApplicationAttention(appId)`, in the
+  per-device context built by `ForgeOS.lua`, calling the existing service query;
+  no new method on the public `FORGE.ForgeOS` table;
+- LaptopHost and PhoneHost badge drawing for the five states (drawn shapes, exact
+  count, `99+` display above 99), replacing integer-only drawing, including the
+  Laptop active-app badge route;
+- the Communications provider attention method (active unread to `unread` with
+  the exact count; otherwise `none`); and
+- tests.
+
+No Notification Service ownership inference, no App Registry field, no API
+version change, and no persistence change.
 
 ### Documentation
 
-Reconcile App Contract, Definitions, Communications App Contract, Presentation
-Architecture, and Design System.
+Reconcile Presentation Architecture, Design System, Laptop and Phone UX
+Specifications, Communications App Contract, and App Contract (provider method
+noted as not yet contractual). Definitions, Component Design, and State Model do
+not change.
 
 ### Tests
 

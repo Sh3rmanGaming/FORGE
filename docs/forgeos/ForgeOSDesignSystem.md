@@ -217,6 +217,28 @@ Badges represent application-provided attention models. They do not derive
 truth from Host notification counting. Status indicators use semantic state and
 accessible text.
 
+#### PF.005 attention badge decisions
+
+Decided by the project owner for PF.005:
+
+| State | Shape cue |
+|-------|-----------|
+| `none` | no badge |
+| `unread` | round badge showing the exact count |
+| `attention` | `!` in a circle |
+| `warning` | triangle |
+| `error` | square containing an X |
+
+- A count above 99 displays as `99+`. The displayed text is a visual
+  compression only; the authoritative value is never altered.
+- `warning`, `error`, and `attention` may display without a count.
+- Shapes are drawn by the Host. No new image assets are introduced.
+- The accessible label is carried in the model but not drawn.
+- No badge animation is used; any later motion needs its own reduced-motion-
+  compatible decision.
+- Phone badges start slightly larger than Laptop badges. Final dimensions and
+  token values are set from in-game screenshots at PF.005 runtime verification.
+
 ### Tabs
 
 Use only for peer views within one logical route/area. Tabs do not replace
