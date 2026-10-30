@@ -1,7 +1,7 @@
 # FORGE Roadmap
 
 **Status:** Active  
-**Last Updated:** 2026-08-22
+**Last Updated:** 2026-10-30
 
 ---
 
@@ -22,26 +22,33 @@
 
 ---
 
-## Current Architecture Gate — PF.002 Shared Host Renderer
+## Current Architecture Gate — PF.005 Application Attention
 
 M3 Communications remains complete and historically accepted. The Project
 Director and Chief Architect approved the bounded reopening of M2/M3
 presentation contracts before M4.001 implementation. The
 [M2/M3 Presentation Foundation Review](../reviews/M2M3PresentationFoundationReview.md)
 and [implementation plan](M2M3PresentationFoundationImplementationPlan.md) are
-Approved. The original PF.001 definitions package remains implemented, runtime
-verified, accepted, and frozen with its fingerprint preserved. A bounded
-node/action/text clarification was subsequently approved and implemented; it
-has passed definition/load-order runtime verification and is accepted/refrozen
-as the current Presentation Foundation definition baseline. PF.002 architecture
-is implemented and verified pending acceptance; PF.003-PF.009 remain
-unauthorized.
+Approved.
+
+| Batch | State |
+|-------|-------|
+| PF.001 Definitions | Implemented, verified, accepted and frozen (clarified baseline) |
+| PF.002 Shared Host Renderer | Implemented, verified, accepted and frozen |
+| PF.003 Laptop Shell | Implemented, verified, visually reviewed, accepted and frozen |
+| PF.004 Phone Shell | Implemented, verified, visually reviewed, accepted and frozen |
+| PF.005 Application Attention | Architecture/UX documentation plan awaiting approval |
+| PF.006-PF.009 | Implementation not authorized |
+
+PF.005 implementation is not authorized. Communications model-v1 renderers
+remain a bounded compatibility exception: PF.007 owns the Laptop migration and
+PF.008 owns the Phone migration.
 
 The [M4 Foundation Architecture Plan](M4FoundationArchitecturePlan.md) remains
-Approved. M4.001 Subject Identity architecture remains unchanged and at Review,
-but its implementation is temporarily paused until the Presentation Foundation
-amendment is implemented, verified, accepted, and refrozen. No M4 or gameplay-
-domain production implementation is currently authorized.
+Approved. M4.001 Subject Identity architecture remains unchanged and at Review.
+Its implementation does not begin until the Presentation Foundation amendment
+is implemented, verified, accepted, and refrozen. No M4 or gameplay-domain
+production implementation is currently authorized.
 
 # FORGE Development Roadmap
 
