@@ -17,7 +17,7 @@ apiVersion: 1
 devices:    phone, laptop
 ```
 
-Proposed routes:
+Accepted routes:
 
 ```text
 inbox
@@ -42,7 +42,7 @@ forge.communications.laptop
 
 ## Presentation Adapter API
 
-Proposed additive Host-facing ForgeOS operations:
+Accepted additive Host-facing ForgeOS operations:
 
 ```lua
 ForgeOS:getApplicationPresentationModel(deviceId, appId)

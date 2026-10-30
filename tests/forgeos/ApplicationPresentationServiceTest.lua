@@ -17,6 +17,7 @@ function FORGE.Tests.runApplicationPresentationServiceTests()
     local mode = "valid"
     local reentrantModel = "unset"
     local reentrantAction = nil
+    local reentrantAttention = "unset"
     local provider = { protocolVersion = 1 }
 
     function provider:getModel(context)
@@ -53,6 +54,9 @@ function FORGE.Tests.runApplicationPresentationServiceTests()
     function provider:getBadge(_)
         if mode == "badBadge" then
             return -1
+        end
+        if mode == "legacyZero" then
+            return 0
         end
         return 3
     end
@@ -160,6 +164,69 @@ function FORGE.Tests.runApplicationPresentationServiceTests()
         if repeated.title ~= "Test" then
             error("Provider model was not detached")
         end
+
+        local legacyAttention =
+            FORGE.ApplicationPresentationService:getAttention("phone", AppId)
+        if legacyAttention.state ~= "unread"
+            or legacyAttention.count ~= 3 then
+            error("Legacy badge attention fallback failed")
+        end
+        mode = "legacyZero"
+        local zeroAttention =
+            FORGE.ApplicationPresentationService:getAttention("phone", AppId)
+        if zeroAttention.state ~= "none"
+            or zeroAttention.count ~= 0 then
+            error("Zero legacy badge attention fallback failed")
+        end
+        mode = "valid"
+
+        provider.getAttention = function(self, context)
+            reentrantAttention =
+                FORGE.ApplicationPresentationService:getAttention(
+                    context.deviceId,
+                    context.appId
+                )
+            if mode == "badAttention" then
+                return { state = "unread", count = -1 }
+            end
+            if mode == "attentionFailure" then
+                error("intentional attention provider failure")
+            end
+            return {
+                state = "warning",
+                count = 5,
+                accessibleLabel = "Five warnings"
+            }
+        end
+        local attention =
+            FORGE.ApplicationPresentationService:getAttention("phone", AppId)
+        if attention.state ~= "warning"
+            or attention.count ~= 5
+            or attention.accessibleLabel ~= "Five warnings"
+            or reentrantAttention.state ~= "none" then
+            error("Semantic attention query or re-entrancy failed")
+        end
+        attention.accessibleLabel = "mutated"
+        local repeatedAttention =
+            FORGE.ApplicationPresentationService:getAttention("phone", AppId)
+        if repeatedAttention.accessibleLabel ~= "Five warnings" then
+            error("Semantic attention was not detached")
+        end
+        mode = "badAttention"
+        if FORGE.ApplicationPresentationService:getAttention(
+                "phone",
+                AppId
+            ).state ~= "none" then
+            error("Invalid semantic attention did not fail closed")
+        end
+        mode = "attentionFailure"
+        if FORGE.ApplicationPresentationService:getAttention(
+                "phone",
+                AppId
+            ).state ~= "none" then
+            error("Failed semantic attention did not fail closed")
+        end
+        mode = "valid"
 
         mode = "unknownModelField"
         if FORGE.ForgeOS:getApplicationPresentationModel(

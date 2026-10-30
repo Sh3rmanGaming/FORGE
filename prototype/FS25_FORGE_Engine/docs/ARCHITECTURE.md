@@ -1,5 +1,9 @@
 # FORGE Foundation Architecture
 
+> **Status: Historical — Superseded.** This prototype snapshot is retained as
+> development history and must not override the authoritative repository
+> architecture and accepted review records under `docs/`.
+
 ## Server authority
 
 The server owns persistent FORGE state and writes `forge.xml`. Client replication will be implemented through explicit network events in a later milestone.

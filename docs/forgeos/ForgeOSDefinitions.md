@@ -1,7 +1,7 @@
 # FORGE ForgeOS Definitions
 
 **Version:** 0.1  
-**Status:** Verified
+**Status:** Verified and Frozen (M2 baseline and PF.001)
 **Milestone:** M2.002 – ForgeOS Definitions
 
 ---
@@ -2277,3 +2277,101 @@ frozen until its real cross-mod behaviour is verified.
   approval, implementation, and verification governance.
 - [Git Workflow](../style/GitWorkflow.md) governs promotion, tagging, and
   release handling for stable definitions and compatibility changes.
+
+## PF.001 Presentation Foundation Definitions Amendment
+
+**Contract status:** Clarified PF.001 implemented, verified, accepted and
+frozen. Original and rejected-attempt evidence remains separately preserved.
+
+PF.001 adds definition vocabulary only. It does not change
+`ForgeOSVersion.APP_API`, implement model-v2 validation, or add a renderer.
+
+### Model and component vocabulary
+
+`PresentationModelVersion` freezes legacy model `1` and declarative model `2`.
+The initial `PresentationComponent` set is limited to Stack, Row, Split,
+Scroll, Text, Icon, Divider, Empty State, Button, Icon Button, Navigation Item,
+List Row, Badge, and Status.
+
+`PresentationNodeField` defines the exact `component`, `id`, `properties`, and
+`children` node envelope. `PresentationProperty` allow-lists content/action fields plus semantic
+direction, alignment, distribution, spacing, padding, gap, size modes and
+constraints, grow weighting, surface, border, text, clipping, overflow,
+selected, disabled, semantic-state, and count properties. Unknown properties
+are not implicitly permitted.
+
+Layout values are bounded by `PresentationDirection`,
+`PresentationAlignment`, `PresentationDistribution`, `PresentationSizeMode`,
+`PresentationSizeToken`, `PresentationGrowWeight`,
+`PresentationTextAlignment`, `PresentationTextWrap`,
+`PresentationTextOverflow`, `PresentationClipping`, and
+`PresentationOverflow`. Applications cannot submit raw pixels, arbitrary style
+names, drawing instructions, CSS, or executable layout behavior.
+
+### Semantic tokens
+
+`PresentationToken` defines roles for:
+
+- Background, Primary, Secondary, Elevated, Selected, and Disabled surfaces;
+- Primary, Secondary, Muted, Disabled, and Inverse text;
+- Primary and Secondary accents;
+- Success, Warning, Error, Information, Unread, and Attention semantics;
+- Subtle, Standard, Active, and Focus borders;
+- XS through XXL spacing;
+- Display, Heading 1-3, Body, Body Strong, Label, Caption, and Numeric text; and
+- Enter, Exit, and State Change motion.
+
+These identifiers freeze meaning, not color, font, duration, or asset values.
+
+### Envelope, action, route, and attention fields
+
+`PresentationEnvelopeField`, `PresentationActionField`, `AttentionField`, and
+`RouteSchemaField` freeze the controlled field names. The clarification replaces
+the original provisional `hostShell` spelling: presentation actions target only
+`application` or `host`. Optional route schemas support
+identifier, string, boolean, integer, and number parameters. Action targets are
+exactly `application` and `host`; the only approved Host actions are `osHome`
+and `deviceClose`. Logical Back remains Navigation/application owned. A route exposed as
+an actionable notification destination must declare its schema when PF.006
+implements validation.
+
+`AttentionState` meanings are:
+
+| State | Meaning |
+|---|---|
+| `none` | No application-level attention |
+| `unread` | New or unread content exists |
+| `attention` | Action or awareness requested without inherent warning/error |
+| `warning` | Degraded, approaching-risk, or caution condition |
+| `error` | Failed or blocked condition requiring awareness |
+
+Count is optional and independent of state. Legacy badge zero maps to `none`;
+a positive legacy badge maps to `unread` with the exact legacy count.
+
+### Notification presentation and activation vocabulary
+
+`NotificationCueType` defines Phone banner, Laptop toast, and sound cues.
+`NotificationSoundCue` defines semantic Information, Success, Warning, Error,
+and Critical cues without selecting an audio asset.
+
+`NotificationActivationStage` identifies none, preflight, open, activate,
+navigate, mark-read, and complete stages. `NotificationActivationResult`
+distinguishes validation, open, activation, navigation, and read-update failure
+from success. These are future PF.006 detail values and do not imply rollback.
+
+### Bounded node/action/text clarification
+
+The exact canonical node, component-property matrix, text-flow behavior,
+action-reference object, semantic-state vocabulary, Host action allow-list,
+and validation boundary are authoritative in
+[ForgeOS Declarative Presentation Protocol](ForgeOSDeclarativePresentationProtocol.md).
+The clarification selects `MAXIMUM_TEXT_LINES = 32`. It adds no validator or
+renderer; those remain PF.002 work after clarification acceptance.
+
+### Defensive limits
+
+`PresentationLimit` bounds future validators to depth 12, 512 nodes, 64
+children per node, 8,192 text characters, 128 actions, controlled-data depth
+8, 128 controlled-data entries, and 32 route parameters. Increasing a limit is
+an explicit compatibility review; applications cannot bypass a limit through
+custom components.

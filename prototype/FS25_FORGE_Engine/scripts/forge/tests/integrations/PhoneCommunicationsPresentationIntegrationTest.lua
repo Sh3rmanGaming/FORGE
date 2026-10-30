@@ -107,7 +107,9 @@ function FORGE.Tests.runPhoneCommunicationsPresentationIntegrationTests()
         end,
         resolvePresentation = function()
             return Result.SUCCESS,
-                { presentationId = "forge.communications.phone" }
+                { presentationId = "forge.communications.phone",
+                    presentation = { modelVersion = 1,
+                        defaultRoute = "inbox" } }
         end,
         getCurrentRoute = function() return routeId end,
         getValidatedResumeDestination = function()
@@ -194,15 +196,13 @@ function FORGE.Tests.runPhoneCommunicationsPresentationIntegrationTests()
 
         host:draw()
         local notificationsAtHome = notificationsQueried
-        local badgeSeen = false
-        for _, label in ipairs(labels) do
-            if label == "6" then badgeSeen = true end
-        end
-        if not badgeSeen then error("Exact launcher badge was not rendered") end
-
-        if not host:onPointer(0.73, 0.56, true, false, 1)
+        local launcher = host.hitRegions[1]
+        local launcherX = launcher.x + 0.001
+        local launcherY = launcher.y + 0.001
+        if launcher.action.appId ~= "forge.communications"
+            or not host:onPointer(launcherX, launcherY, true, false, 1)
             or #sequence ~= 0
-            or not host:onPointer(0.73, 0.56, false, true, 1)
+            or not host:onPointer(launcherX, launcherY, false, true, 1)
             or sequence[1] ~= "open:forge.communications"
             or sequence[2] ~= "activate:forge.communications"
             or sequence[3] ~= "navigate:forge.communications:inbox" then
@@ -215,6 +215,19 @@ function FORGE.Tests.runPhoneCommunicationsPresentationIntegrationTests()
             or rows[6].subject ~= originalNewestSubject
             or rows[6].preview ~= originalNewestPreview then
             error("Active composition or model immutability failed")
+        end
+        for _, candidate in ipairs(host.hitRegions) do
+            if not candidate.action.phoneHome
+                and (candidate.x < host.applicationViewport.x
+                    or candidate.y < host.applicationViewport.y
+                    or candidate.x + candidate.width
+                        > host.applicationViewport.x
+                            + host.applicationViewport.width
+                    or candidate.y + candidate.height
+                        > host.applicationViewport.y
+                            + host.applicationViewport.height) then
+                error("Communications v1 hit region escaped Phone viewport")
+            end
         end
         local clipped = 0
         local newestIndex = nil

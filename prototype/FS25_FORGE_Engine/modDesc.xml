@@ -12,14 +12,14 @@
 FORGE — Farming Operations & Regional Growth Engine.
 
 Development foundation providing:
-- Multiplayer-first mission lifecycle
+- Engine mission and save lifecycle integration
 - Savegame-embedded persistence
-- Module registry
 - Internal event bus
 - Shared state store
-- Data-driven campaign scaffolding
+- ForgeOS device, application, navigation and notification services
+- Communications inbox, persistence and Phone/Laptop presentation
 
-This development build adds the first XML-driven campaign and live Projects app integration.
+Character, Companies, Banking, Projects and Campaign gameplay domains are not included in this build.
         ]]></en>
     </description>
 
@@ -77,6 +77,24 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/forgeos/definitions/AppLifecycleState.lua"/>
         <sourceFile filename="scripts/forge/forgeos/definitions/AppAvailabilityReason.lua"/>
         <sourceFile filename="scripts/forge/forgeos/definitions/PresentationMatchType.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationModelVersion.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationComponent.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationNodeField.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationProperty.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationLayout.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationTextFlow.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationToken.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationContractField.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationActionTarget.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationHostAction.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationChildPolicy.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationSemanticState.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationComponentContract.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/AttentionState.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/RouteParameterType.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/NotificationCueType.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/NotificationActivation.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/definitions/PresentationLimit.lua"/>
         <sourceFile filename="scripts/forge/forgeos/definitions/NotificationPersistence.lua"/>
         <sourceFile filename="scripts/forge/forgeos/definitions/NotificationSeverity.lua"/>
         <sourceFile filename="scripts/forge/forgeos/definitions/NavigationLayer.lua"/>
@@ -120,6 +138,8 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/forgeos/services/PresentationResolver.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/AppLifecycleService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/NavigationService.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/presentation/PresentationRenderer.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/presentation/PresentationHostAdapter.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/ApplicationPresentationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/NotificationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/DeviceStateService.lua"/>
@@ -148,6 +168,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/forgeos/AppLifecycleServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/NavigationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ApplicationPresentationServiceTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/PresentationRendererTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/NotificationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceHostRegistryTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceStateServiceTest.lua"/>
@@ -161,6 +182,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/integrations/CommunicationsApplicationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/PhoneCommunicationsPresentationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/LaptopCommunicationsPresentationIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/PF002PresentationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSCoreLifecycleIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSRegistrationLifecycleIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSDeviceRegistryIntegrationTest.lua"/>
@@ -176,6 +198,7 @@ This development build adds the first XML-driven campaign and live Projects app 
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSCrossModBridgeIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSProductionStartupIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSEndToEndIntegrationTest.lua"/>
+
 
         <!-- Engine lifecycle registration must load last -->
         <sourceFile filename="scripts/forge/Engine.lua"/>

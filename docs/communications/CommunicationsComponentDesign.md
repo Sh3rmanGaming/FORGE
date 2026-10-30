@@ -21,7 +21,7 @@ ForgeOS
   ApplicationPresentationService.lua bounded Host/application adapter
 ```
 
-Names are proposed implementation locations for M3.002-M3.005 and are not
+Names are the accepted implementation locations for M3.002-M3.005 and are not
 implemented by M3.001.
 
 ## M3.003 Implemented Boundary
@@ -78,7 +78,7 @@ Communications diagnostic and are not retried.
 in-process operations required by FORGE-owned producers and the built-in app.
 It must not expose State Store references or persistence containers.
 
-Proposed domain operations:
+Accepted domain operations:
 
 ```lua
 createMessage(definition)
@@ -165,7 +165,7 @@ It must not:
 
 ## Provider Protocol
 
-Proposed private provider shape:
+Accepted private provider shape:
 
 ```lua
 {

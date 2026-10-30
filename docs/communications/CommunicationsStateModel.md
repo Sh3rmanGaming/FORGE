@@ -5,7 +5,7 @@
 
 ## Purpose
 
-Define the proposed authoritative runtime and persisted representation of the
+Define the accepted authoritative runtime and persisted representation of the
 initial Communications inbox.
 
 ## Namespace

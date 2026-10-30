@@ -1,5 +1,10 @@
 # FORGE Engine 0.4.0.0
 
+> **Status: Historical — Superseded.** This prototype test description is not
+> the current operational package or an authoritative campaign/Projects
+> contract. Use the repository `docs/` architecture, roadmap, and runtime
+> verification records for current guidance.
+
 This development build introduces the first data-driven campaign and project layer.
 
 ## Test

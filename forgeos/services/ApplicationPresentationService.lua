@@ -211,6 +211,13 @@ local function validateActions(actions, presentation)
 end
 
 local function validateModel(model, context, presentation)
+    if type(model) == "table" and model.modelVersion == 2 then
+        return FORGE.PresentationRenderer.validateModel(
+            model,
+            context,
+            presentation
+        )
+    end
     if not hasOnly(model, {
         modelVersion = true,
         appId = true,
@@ -232,6 +239,28 @@ local function validateModel(model, context, presentation)
         return nil
     end
     local valid, copy = copyPlain(model, {}, true)
+    return valid and copy or nil
+end
+
+local function validateAttention(attention)
+    if not hasOnly(attention, {
+        state = true,
+        count = true,
+        accessibleLabel = true
+    })
+        or type(attention.state) ~= "string"
+        or not (attention.state == "none"
+            or attention.state == "unread"
+            or attention.state == "attention"
+            or attention.state == "warning"
+            or attention.state == "error")
+        or (attention.count ~= nil
+            and not isNonNegativeInteger(attention.count))
+        or (attention.accessibleLabel ~= nil
+            and type(attention.accessibleLabel) ~= "string") then
+        return nil
+    end
+    local valid, copy = copyPlain(attention, {}, false)
     return valid and copy or nil
 end
 
@@ -304,9 +333,6 @@ local function gate(deviceId, appId, requireActive)
     if not isIdentifier(deviceId)
         or not isIdentifier(appId) then
         return Result.INVALID_ARGUMENT, nil, nil
-    end
-    if appId ~= FORGE.Definitions.CommunicationsAppId.COMMUNICATIONS then
-        return Result.NOT_AVAILABLE, nil, nil
     end
     if FORGE.ForgeOSCore:getPhase() ~= Phase.RUNTIME_ACTIVE then
         return Result.NOT_AVAILABLE, nil, nil
@@ -475,6 +501,53 @@ function Service:getBadge(deviceId, appId)
     return call[2]
 end
 
+-- Private host-neutral semantic attention query. Do not expose this through
+-- ForgeOS until the public API versioning review approves that boundary.
+function Service:getAttention(deviceId, appId)
+    local gateResult, resolution, provider = gate(deviceId, appId, false)
+    if gateResult ~= Result.SUCCESS then
+        return { state = "none" }
+    end
+    local context = buildContext(deviceId, appId, resolution)
+    local key = context ~= nil and beginOperation(deviceId, appId) or nil
+    if key == nil then
+        return { state = "none" }
+    end
+
+    if type(provider.getAttention) ~= "function" then
+        local call = { pcall(provider.getBadge, provider, context) }
+        finishOperation(key)
+        if not call[1] or not isNonNegativeInteger(call[2]) then
+            if not call[1] then
+                reportFailure("legacy badge attention query", call[2])
+            else
+                reportFailure(
+                    "legacy badge attention validation",
+                    "invalid provider badge"
+                )
+            end
+            return { state = "none" }
+        end
+        return {
+            state = call[2] == 0 and "none" or "unread",
+            count = call[2]
+        }
+    end
+
+    local call = { pcall(provider.getAttention, provider, context) }
+    finishOperation(key)
+    if not call[1] then
+        reportFailure("attention query", call[2])
+        return { state = "none" }
+    end
+    local attention = validateAttention(call[2])
+    if attention == nil then
+        reportFailure("attention validation", "invalid provider attention")
+        return { state = "none" }
+    end
+    return attention
+end
+
 function Service:performAction(deviceId, appId, actionId, parameters)
     if not isIdentifier(actionId) then
         return Result.INVALID_ARGUMENT, nil
@@ -530,4 +603,17 @@ end
 function Service:clearRuntimeState()
     operationActive = {}
     return Result.SUCCESS
+end
+
+function Service:performActionReference(deviceId, appId, reference)
+    if type(reference) ~= "table" or reference.target ~= "application"
+        or not isIdentifier(reference.actionId) then
+        return Result.INVALID_ARGUMENT, nil
+    end
+    return self:performAction(
+        deviceId,
+        appId,
+        reference.actionId,
+        reference.parameters
+    )
 end

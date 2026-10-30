@@ -6,7 +6,7 @@
 ## Purpose
 
 Define the stable identifiers, enumerations, result values, events, and
-validation terminology proposed for the initial Communications subsystem.
+validation terminology accepted for the initial Communications subsystem.
 
 ## Namespace and Identity
 
@@ -48,7 +48,7 @@ authority, lifecycle, or validation.
 
 ## Communications Result
 
-Proposed domain results:
+Accepted domain results:
 
 ```text
 success
@@ -75,7 +75,7 @@ a successfully committed message.
 
 ## Communications Events
 
-Proposed completed events:
+Accepted completed events:
 
 ```text
 communication.messageCreated
@@ -141,7 +141,7 @@ objects, Hosts, controllers, providers, and other executable references.
 
 ## Notification Request
 
-The proposed nested request contains:
+The accepted nested request contains:
 
 ```text
 title          optional; defaults to message subject
@@ -207,7 +207,7 @@ preserved unchanged.
 
 ## Query Semantics
 
-Proposed read-only queries remain primitive:
+Accepted read-only queries remain primitive:
 
 - `getMessage(invalid/unknown/unavailable)` returns `nil`;
 - `getMessages(invalid/unavailable)` returns `{}`;

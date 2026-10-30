@@ -1,5 +1,9 @@
 # FORGE Engine 0.2 Test Procedure
 
+> **Status: Historical — Superseded.** This procedure describes an obsolete
+> prototype and is not a current deployment or acceptance instruction. Use the
+> applicable runtime-verification records under `docs/reviews/`.
+
 1. Remove the previous `FS25_FORGE_Core.zip` from the mods folder to avoid loading both prototypes.
 2. Copy `FS25_FORGE_Engine.zip` into the FS25 mods folder.
 3. Enable **FORGE Engine** on a disposable test save.

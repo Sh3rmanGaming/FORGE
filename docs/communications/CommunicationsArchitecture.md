@@ -169,7 +169,7 @@ by M3.001.
 
 ## Startup and Shutdown
 
-Proposed startup order:
+Accepted startup order:
 
 ```text
 State Store available

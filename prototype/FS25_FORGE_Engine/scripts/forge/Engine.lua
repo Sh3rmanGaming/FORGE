@@ -293,6 +293,8 @@ local function runDevelopmentTests()
                     FORGE.Tests.runNavigationServiceTests),
                 harness("Application Presentation Service",
                     FORGE.Tests.runApplicationPresentationServiceTests),
+                harness("PF.002 Presentation Renderer",
+                    FORGE.Tests.runPresentationRendererTests),
                 harness("Communications Application integration",
                     FORGE.Tests.runCommunicationsApplicationIntegrationTests),
                 harness("Phone Communications presentation integration",
@@ -301,6 +303,8 @@ local function runDevelopmentTests()
                 harness("Laptop Communications presentation integration",
                     FORGE.Tests
                         .runLaptopCommunicationsPresentationIntegrationTests),
+                harness("PF.002 neutral presentation integration",
+                    FORGE.Tests.runPF002PresentationIntegrationTests),
                 harness("Navigation integration",
                     FORGE.Tests.runForgeOSNavigationIntegrationTests),
                 harness("Notification Service",

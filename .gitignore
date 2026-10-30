@@ -1,0 +1,7 @@
+# Build packages: keep locally in _builds/, never commit
+_builds/
+/*.zip
+
+# Python caches
+__pycache__/
+*.pyc

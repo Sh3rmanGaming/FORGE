@@ -1,5 +1,8 @@
 # FORGE Startup Lifecycle
 
+**Status:** Approved
+**Version:** 1.1
+
 ## Purpose
 
 This document defines the exact runtime sequence FORGE follows from the moment Farming Simulator 25 discovers the mod until FORGE is ready to process gameplay.
@@ -12,7 +15,6 @@ It separates:
 - Manager initialisation
 - Mission lifecycle callbacks
 - OS and app startup
-- Campaign loading
 - First gameplay update
 
 ## Phase 1 — Mod Discovery and Lua Loading
@@ -44,7 +46,9 @@ Once the player loads or creates a savegame, Farming Simulator begins the missio
     in progress.
 11. The first eligible Engine update completes registration exactly once.
 12. ForgeOS enters `RUNTIME_ACTIVE` and publishes `STARTED`.
-13. ForgeOS atomically constructs and initializes PhoneHost then LaptopHost.
+13. Communications registers and restores its accepted domain and application
+    participants through their existing owners.
+14. ForgeOS atomically constructs and initializes PhoneHost then LaptopHost.
 
 ## Phase 3 — Gameplay Runtime
 
@@ -53,14 +57,19 @@ After mission loading, normal gameplay processing begins.
 1. FS25 calls `update(dt)` every frame.
 2. `Engine.lua` forwards update processing to active FORGE managers and systems.
 3. FS25 calls `draw()` every frame.
-4. `Engine.lua` delegates drawing and normalized input to visible operational
-   runtime Hosts in fixed Phone-then-Laptop order while ForgeOS is
-   runtime-active.
-5. Engine owns input callbacks and delegates only bounded Phone interactions.
-6. Managers and systems communicate through the Event Bus where practical.
-7. Shared multiplayer state remains server authoritative.
-8. Clients display synced state and submit requests to the server.
-9. FORGE continues using Farming Simulator's game time as its only simulation clock.
+4. `Engine.lua` draws LaptopHost before PhoneHost so the Phone can appear above
+   the Laptop when both are visible.
+5. Update and normalized input delegation remain Phone-first, then Laptop; a
+   visible Phone may claim its bounded pointer region before Laptop handling.
+6. Engine owns input callbacks and delegates only bounded Host interactions.
+7. Managers and systems communicate through the Event Bus where practical.
+8. Shared multiplayer state is intended to remain server authoritative. The
+   transport/request contract is a pre-gameplay-domain foundation gate and is
+   not implemented merely by this lifecycle description.
+9. Clients may display replicated state and request mutations only through a
+   future approved authority boundary.
+10. FORGE uses Farming Simulator game time as its simulation-clock source; a
+    shared deadline contract remains required before time-dependent domains.
 
 ## Phase 4 — Save Lifecycle
 
@@ -114,43 +123,29 @@ Load Save Data
 Populate State Store
         │
         ▼
-Initialise Phone OS
+Open ForgeOS Registration
         │
         ▼
-Register Phone Apps
+Register Devices, Hosts and Apps
         │
         ▼
-Load Campaigns
+Complete Registration and Start ForgeOS
         │
         ▼
-Publish forge.engine.ready
+Restore Communications and Runtime Hosts
         │
         ▼
 Gameplay Begins
 ```
 
-## Open Questions
+## Resolved and Deferred Classification
 
-### Q1 - Event Bus Initialisation
-
-Should the Event Bus be initialised before all other services so that startup events can be published during engine initialisation?
-
-**Status:** Open
-
----
-
-### Q2 - Definition Availability
-
-Definitions are created when Lua files execute, not during runtime.
-
-Should they appear in the startup sequence diagram, or should they simply be treated as available after Lua execution?
-
-**Status:** Open
-
----
-
-### Q3 - Phone App Registration
-
-Should applications register themselves with the Phone OS, or should the Phone OS discover available applications automatically during startup?
-
-**Status:** Open
+- The Event Bus is initialized as an Engine service before runtime publication;
+  changing earlier-service event availability requires a separate contract.
+- Lua definition tables are available after ordered source execution. Future
+  XML gameplay definitions require the separately reviewed Definition Registry.
+- ForgeOS applications register explicitly through the accepted App Registry;
+  automatic application discovery is not implied.
+- Multiplayer request transport and authoritative client/server replication are
+  deferred, with the restriction that future gameplay domains may not equate a
+  local client call with authoritative mutation.

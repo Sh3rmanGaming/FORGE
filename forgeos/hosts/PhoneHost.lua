@@ -1,7 +1,7 @@
 ---=============================================================================
 --- FORGE ForgeOS Phone Host
 ---
---- Presents the bounded Phone shell and the built-in Communications surface.
+--- Presents the bounded PF.004 Phone companion shell and application surface.
 --- Owns transient geometry, clipping, hit regions, and scroll state only.
 ---=============================================================================
 
@@ -10,6 +10,8 @@ FORGE.PhoneHost = {}
 local PhoneHost = FORGE.PhoneHost
 local Result = FORGE.Definitions.ForgeOSResult
 local Visibility = FORGE.Definitions.DeviceVisibility
+local Token = FORGE.Definitions.PresentationToken
+-- Grandfathered model-v1 compatibility only. PF.008 owns removal.
 local CommunicationsAppId = "forge.communications"
 local InboxKind = "communications.inbox"
 local DetailKind = "communications.messageDetail"
@@ -21,6 +23,27 @@ local DetailTextWidth = 38
 local PrimaryButton = 1
 local WheelDown = 4
 local WheelUp = 5
+
+local Theme = {
+    [Token.SURFACE_BACKGROUND] = { 0.012, 0.018, 0.028, 0.99 },
+    [Token.SURFACE_PRIMARY] = { 0.035, 0.043, 0.055, 0.98 },
+    [Token.SURFACE_SECONDARY] = { 0.050, 0.060, 0.073, 0.94 },
+    [Token.SURFACE_ELEVATED] = { 0.070, 0.080, 0.094, 0.96 },
+    [Token.SURFACE_SELECTED] = { 0.115, 0.095, 0.060, 0.96 },
+    [Token.SURFACE_DISABLED] = { 0.038, 0.043, 0.050, 0.82 },
+    [Token.TEXT_PRIMARY] = { 0.94, 0.95, 0.97, 1 },
+    [Token.TEXT_SECONDARY] = { 0.70, 0.73, 0.77, 1 },
+    [Token.TEXT_MUTED] = { 0.50, 0.54, 0.59, 1 },
+    [Token.TEXT_DISABLED] = { 0.38, 0.41, 0.45, 1 },
+    [Token.ACCENT_PRIMARY] = { 0.95, 0.48, 0.12, 1 },
+    [Token.BORDER_SUBTLE] = { 0.20, 0.23, 0.27, 0.72 },
+    [Token.BORDER_ACTIVE] = { 0.95, 0.48, 0.12, 1 },
+    [Token.BORDER_FOCUS] = { 0.92, 0.72, 0.42, 1 }
+}
+
+local function color(token)
+    return Theme[token] or Theme[Token.TEXT_PRIMARY]
+end
 
 local function safeText(value, fallback)
     if type(value) == "string" and value ~= "" then
@@ -86,10 +109,19 @@ function PhoneHost.create(context)
         context = context,
         initialized = false,
         frameOverlay = nil,
-        appCardOverlay = nil,
         bounds = { x = 0.70, y = 0.12, width = 0.27, height = 0.76 },
+        applicationViewport = nil,
+        shortcutViewport = nil,
+        bannerSafeRegion = nil,
         hitRegions = {},
         pressedControl = nil,
+        hoveredControl = nil,
+        focusedControl = nil,
+        disabledControl = nil,
+        shortcutPage = 1,
+        shortcutPageCount = 1,
+        shortcutPageSize = 6,
+        projectedShortcuts = {},
         inboxScrollOffset = 0,
         detailScrollOffset = 0,
         activeAppId = nil,
@@ -97,7 +129,8 @@ function PhoneHost.create(context)
         model = nil,
         modelRouteId = nil,
         refreshElapsed = 0,
-        statusText = nil
+        statusText = nil,
+        declarative = nil
     }
 
     local function drawLabel(text, x, y, size)
@@ -118,6 +151,17 @@ function PhoneHost.create(context)
         end
     end
 
+    local function drawTokenPanel(token, x, y, width, height, alpha)
+        local value = color(token)
+        drawPanel(x, y, width, height, value[1], value[2], value[3],
+            alpha or value[4])
+    end
+
+    local function setTokenColor(token)
+        local value = color(token)
+        setColor(value[1], value[2], value[3], value[4])
+    end
+
     local function region(self, identifier, x, y, width, height, action)
         self.hitRegions[#self.hitRegions + 1] = {
             id = identifier,
@@ -130,7 +174,8 @@ function PhoneHost.create(context)
     end
 
     local function findRegion(self, x, y)
-        for _, candidate in ipairs(self.hitRegions) do
+        for index = #self.hitRegions, 1, -1 do
+            local candidate = self.hitRegions[index]
             if contains(candidate, x, y) then
                 return candidate
             end
@@ -138,15 +183,47 @@ function PhoneHost.create(context)
         return nil
     end
 
+    local function rebuildGeometry(self)
+        local width, height, scale = 1920, 1080, 1
+        if type(self.context.getViewportMetrics) == "function" then
+            local metrics = self.context.getViewportMetrics()
+            if type(metrics) == "table" then
+                width = type(metrics.width) == "number" and metrics.width or width
+                height = type(metrics.height) == "number" and metrics.height or height
+                scale = type(metrics.uiScale) == "number" and metrics.uiScale or scale
+            end
+        end
+        local aspect = height > 0 and width / height or 16 / 9
+        local compact = aspect < 1.48 or scale > 1.15
+        self.density = compact and 0.76 or 0.82
+        self.geometryProfile = compact and "compact" or "standard"
+        self.shortcutPageSize = compact and 4 or 6
+        local b = self.bounds
+        self.bannerSafeRegion = {
+            x = b.x + 0.020, y = b.y + b.height - 0.155,
+            width = b.width - 0.040, height = 0.055
+        }
+        self.applicationViewport = {
+            x = b.x + 0.020, y = b.y + 0.065,
+            width = b.width - 0.040, height = b.height - 0.220
+        }
+        self.shortcutViewport = {
+            x = b.x + 0.024, y = b.y + 0.110,
+            width = b.width - 0.048, height = b.height - 0.310
+        }
+    end
+
     local function resetPresentation(self)
         self.inboxScrollOffset = 0
         self.detailScrollOffset = 0
         self.pressedControl = nil
+        self.hoveredControl = nil
         self.hitRegions = {}
         self.model = nil
         self.modelRouteId = nil
         self.statusText = nil
         self.refreshElapsed = 0
+        if self.declarative ~= nil then self.declarative:reset() end
     end
 
     local function report(self, operation, value)
@@ -247,22 +324,35 @@ function PhoneHost.create(context)
         return nil
     end
 
-    local function openCommunications(self)
+    local function openShortcut(self, appId)
+        local resolved = { pcall(self.context.resolvePresentation, appId) }
+        if not resolved[1] or resolved[2] ~= Result.SUCCESS
+            or type(resolved[3]) ~= "table"
+            or type(resolved[3].presentation) ~= "table"
+            or type(resolved[3].presentation.defaultRoute) ~= "string" then
+            self.disabledControl = "launcher:" .. tostring(appId)
+            report(self, "launcher resolution", resolved[2])
+            return false
+        end
+        local defaultRoute = resolved[3].presentation.defaultRoute
         local sequence = {
-            { "open", self.context.openApp, CommunicationsAppId },
-            { "activate", self.context.activateApp, CommunicationsAppId },
-            { "navigate", self.context.navigate, CommunicationsAppId,
-                "inbox", {} }
+            { "open", self.context.openApp, appId },
+            { "activate", self.context.activateApp, appId },
+            { "navigate", self.context.navigate, appId, defaultRoute, {} }
         }
         for _, step in ipairs(sequence) do
             local call = { pcall(step[2], select(3, unpack(step))) }
             if not call[1] or call[2] ~= Result.SUCCESS then
                 report(self, "launcher " .. step[1],
                     call[1] and call[2] or call[2])
-                return
+                if step[1] ~= "open" then pcall(self.context.closeApp, appId) end
+                self.disabledControl = "launcher:" .. tostring(appId)
+                return false
             end
         end
         synchronizeRoute(self)
+        self.disabledControl = nil
+        return true
     end
 
     local function returnToPhoneHome(self)
@@ -300,12 +390,13 @@ function PhoneHost.create(context)
             and type(FORGE.ModDirectory) == "string" then
             local frameCreated, frame = pcall(createImageOverlay,
                 FORGE.ModDirectory .. "scripts/forge/forgeos/assets/phone_frame.dds")
-            local cardCreated, card = pcall(createImageOverlay,
-                FORGE.ModDirectory .. "scripts/forge/forgeos/assets/app_card.dds")
             self.frameOverlay = frameCreated and frame or nil
-            self.appCardOverlay = cardCreated and card or nil
         end
         resetPresentation(self)
+        rebuildGeometry(self)
+        self.declarative = FORGE.PresentationHostAdapter.create(
+            self.context, self.applicationViewport, self.density,
+            FORGE.Definitions.LogSource.PHONE_HOST)
         self.activeAppId = nil
         self.routeId = nil
         self.initialized = true
@@ -334,6 +425,12 @@ function PhoneHost.create(context)
                 self.refreshElapsed = 0
                 refreshModel(self, true)
             end
+        elseif self.activeAppId ~= nil then
+            self.refreshElapsed = self.refreshElapsed + math.max(dt, 0)
+            if self.refreshElapsed >= 500 then
+                self.refreshElapsed = 0
+                self.declarative:refresh(self.activeAppId)
+            end
         end
     end
 
@@ -346,22 +443,29 @@ function PhoneHost.create(context)
             renderOverlay(self.frameOverlay, bounds.x - 0.014,
                 bounds.y - 0.014, bounds.width + 0.028, bounds.height + 0.028)
         else
-            drawPanel(bounds.x, bounds.y, bounds.width, bounds.height,
-                0.01, 0.014, 0.019, 0.97)
-            drawPanel(bounds.x + 0.004, bounds.y + 0.012,
-                bounds.width - 0.008, bounds.height - 0.024,
-                0.045, 0.055, 0.068, 0.98)
+            drawTokenPanel(Token.SURFACE_BACKGROUND,
+                bounds.x, bounds.y, bounds.width, bounds.height)
+            drawTokenPanel(Token.SURFACE_PRIMARY,
+                bounds.x + 0.004, bounds.y + 0.012,
+                bounds.width - 0.008, bounds.height - 0.024)
         end
-        drawPanel(bounds.x + 0.012, bounds.y + bounds.height - 0.072,
-            bounds.width - 0.024, 0.004, 0.95, 0.48, 0.12, 1)
+        drawTokenPanel(Token.BORDER_ACTIVE,
+            bounds.x + 0.012, bounds.y + bounds.height - 0.072,
+            bounds.width - 0.024, 0.004)
         local x = bounds.x + 0.022
         local y = bounds.y + bounds.height - 0.112
-        setColor(0.96, 0.97, 0.99, 1)
+        setTokenColor(Token.TEXT_PRIMARY)
         drawLabel("FORGE", x, y, 0.026)
-        setColor(1, 0.56, 0.18, 1)
+        setTokenColor(Token.ACCENT_PRIMARY)
         drawLabel("OS", x + 0.088, y, 0.026)
-        setColor(0.60, 0.64, 0.70, 1)
-        drawLabel("OPERATIONS HUB", x, y - 0.03, 0.011)
+        setTokenColor(Token.TEXT_MUTED)
+        drawLabel("COMPANION", x, y - 0.03, 0.010)
+        drawLabel("F7 CLOSE", x, bounds.y + 0.027, 0.009)
+        if self.activeAppId ~= nil then
+            drawLabel("HOME", bounds.x + 0.105, bounds.y + 0.027, 0.009)
+        end
+        drawLabel("F6 POINTER", bounds.x + bounds.width - 0.085,
+            bounds.y + 0.027, 0.009)
     end
 
     local function drawInbox(self, model)
@@ -491,100 +595,96 @@ function PhoneHost.create(context)
             drawLabel(ellipsis(self.statusText, 28),
                 x, self.bounds.y + 0.105, 0.009)
         end
-        setColor(0.52, 0.56, 0.62, 1)
-        drawLabel("F7 CLOSE  |  F6 POINTER", x,
-            self.bounds.y + 0.035, 0.010)
     end
 
     local function drawHome(self)
         self.hitRegions = {}
-        registerPhoneHome(self)
-        local bounds = self.bounds
-        local x = bounds.x + 0.022
-        local surfaceY = bounds.y + bounds.height - 0.235
-        drawPanel(x, surfaceY, bounds.width - 0.044, 0.09,
-            0.09, 0.105, 0.125, 0.98)
-        drawPanel(x, surfaceY + 0.086, bounds.width - 0.044, 0.004,
-            0.95, 0.48, 0.12, 1)
-        setColor(0.63, 0.67, 0.72, 1)
-        drawLabel("ACTIVE SURFACE", x + 0.012, surfaceY + 0.061, 0.011)
-        local appLabel = "Home"
-        local presentationLabel = "home  /  none"
-        if self.activeAppId ~= nil then
-            local app = self.context.getAppDefinition(self.activeAppId)
-            appLabel = safeText(app ~= nil and app.displayName or nil,
-                self.activeAppId)
-            local _, resolution =
-                self.context.resolvePresentation(self.activeAppId)
-            presentationLabel = safeText(
-                resolution ~= nil and resolution.presentationId or nil,
-                "home") .. "  /  " .. safeText(self.routeId, "none")
-        end
-        setColor(0.96, 0.97, 0.99, 1)
-        drawLabel(appLabel, x + 0.012, surfaceY + 0.035, 0.017)
-        setColor(0.60, 0.64, 0.70, 1)
-        drawLabel(presentationLabel, x + 0.012, surfaceY + 0.014, 0.010)
-        local launcherY = surfaceY - 0.03
-        setColor(0.63, 0.67, 0.72, 1)
-        drawLabel("APPLICATIONS", x, launcherY, 0.011)
-        local cardY = launcherY - 0.072
-        local cardWidth = (bounds.width - 0.054) / 2
-        local shownApps = 0
+        local viewport = self.shortcutViewport
+        setTokenColor(Token.TEXT_MUTED)
+        drawLabel("APPLICATIONS", viewport.x,
+            viewport.y + viewport.height, 0.009)
+        local projected = {}
         for _, appId in ipairs(self.context.getRegisteredAppIds()) do
             local app = self.context.getAppDefinition(appId)
-            if app ~= nil and app.supportedDevices.phone == true
-                and shownApps < 4 then
-                local column = shownApps % 2
-                local row = math.floor(shownApps / 2)
-                local cardX = x + column * (cardWidth + 0.01)
-                local currentY = cardY - row * 0.078
-                if self.appCardOverlay ~= nil
-                    and type(renderOverlay) == "function" then
-                    if type(setOverlayColor) == "function" then
-                        setOverlayColor(self.appCardOverlay, 1, 1, 1, 1)
-                    end
-                    renderOverlay(self.appCardOverlay, cardX, currentY,
-                        cardWidth, 0.064)
-                else
-                    drawPanel(cardX, currentY, cardWidth, 0.064,
-                        0.105, 0.12, 0.145, 0.98)
-                end
-                setColor(0.95, 0.96, 0.98, 1)
-                drawLabel(safeText(app.displayName, appId),
-                    cardX + 0.009, currentY + 0.035, 0.012)
-                if appId == CommunicationsAppId then
-                    local badge = self.context.getApplicationBadge(appId)
-                    if badge > 0 then
-                        setColor(1, 0.56, 0.18, 1)
-                        drawLabel(tostring(badge), cardX + cardWidth - 0.026,
-                            currentY + 0.035, 0.010)
-                    end
-                    region(self, "launcher:" .. appId, cardX, currentY,
-                        cardWidth, 0.064, { launcher = true })
-                end
-                shownApps = shownApps + 1
+            local resolved = { pcall(self.context.resolvePresentation, appId) }
+            if app ~= nil and app.supportedDevices ~= nil
+                and app.supportedDevices.phone == true
+                and resolved[1] and resolved[2] == Result.SUCCESS
+                and type(resolved[3]) == "table" then
+                projected[#projected + 1] = { appId = appId,
+                    displayName = safeText(app.displayName, appId),
+                    iconId = app.iconId, iconResolved = false }
             end
         end
-        local notifications = self.context.getNotifications()
-        local notificationY = bounds.y + 0.205
-        setColor(0.63, 0.67, 0.72, 1)
-        drawLabel("NOTIFICATIONS", x, notificationY, 0.011)
-        local shown = 0
-        for _, notification in ipairs(notifications) do
-            if not notification.dismissed and shown < 4 then
-                shown = shown + 1
-                notificationY = notificationY - 0.036
-                setColor(notification.read and 0.62 or 0.96,
-                    notification.read and 0.66 or 0.97,
-                    notification.read and 0.72 or 0.99, 1)
-                drawLabel((notification.read and "" or "* ")
-                    .. safeText(notification.title, notification.id),
-                    x, notificationY, 0.011)
-            end
+        self.projectedShortcuts = projected
+        self.shortcutPageCount = math.max(1,
+            math.ceil(#projected / self.shortcutPageSize))
+        self.shortcutPage = math.max(1,
+            math.min(self.shortcutPage, self.shortcutPageCount))
+        if #projected == 0 then
+            setTokenColor(Token.TEXT_SECONDARY)
+            drawLabel("No Phone applications available", viewport.x,
+                viewport.y + viewport.height - 0.06, 0.010)
+            return
         end
-        setColor(0.52, 0.56, 0.62, 1)
-        drawLabel("F7 CLOSE  |  F6 POINTER", x,
-            bounds.y + 0.035, 0.010)
+        local columns = 2
+        local rows = math.ceil(self.shortcutPageSize / columns)
+        local gap = 0.010
+        local cellWidth = (viewport.width - gap) / columns
+        local cellHeight = math.min(0.095,
+            (viewport.height - 0.045) / rows)
+        local first = (self.shortcutPage - 1) * self.shortcutPageSize + 1
+        local last = math.min(#projected, first + self.shortcutPageSize - 1)
+        for index = first, last do
+            local shortcut = projected[index]
+            local visible = index - first
+            local column, row = visible % columns, math.floor(visible / columns)
+            local x = viewport.x + column * (cellWidth + gap)
+            local y = viewport.y + viewport.height - 0.035
+                - (row + 1) * cellHeight
+            local id = "launcher:" .. shortcut.appId
+            local pressed = self.pressedControl == id
+            local hovered = self.hoveredControl == id
+            local focused = self.focusedControl == id
+            local disabled = self.disabledControl == id
+            if pressed or hovered or focused or disabled then
+                drawTokenPanel(disabled and Token.SURFACE_DISABLED
+                    or pressed and Token.SURFACE_SELECTED
+                    or Token.SURFACE_ELEVATED,
+                    x, y, cellWidth, cellHeight - 0.008)
+                drawTokenPanel((hovered or focused) and Token.BORDER_FOCUS
+                    or Token.BORDER_ACTIVE,
+                    x, y, 0.0025, cellHeight - 0.008)
+            end
+            -- Controlled generic fallback; no domain artwork inference.
+            drawTokenPanel(Token.BORDER_SUBTLE,
+                x + 0.008, y + cellHeight - 0.044, 0.026, 0.026)
+            drawTokenPanel(Token.ACCENT_PRIMARY,
+                x + 0.014, y + cellHeight - 0.038, 0.014, 0.014)
+            setTokenColor(disabled and Token.TEXT_DISABLED
+                or Token.TEXT_PRIMARY)
+            drawLabel(ellipsis(shortcut.displayName, 14), x + 0.008,
+                y + 0.012, 0.009)
+            region(self, id, x, y, cellWidth, cellHeight - 0.008,
+                { launcher = true, appId = shortcut.appId })
+        end
+        if self.shortcutPageCount > 1 then
+            setTokenColor(Token.TEXT_SECONDARY)
+            drawLabel(tostring(self.shortcutPage) .. " / "
+                .. tostring(self.shortcutPageCount), viewport.x,
+                viewport.y + 0.010, 0.008)
+            region(self, "pagePrevious", viewport.x + 0.065,
+                viewport.y, 0.035, 0.030, { page = -1 })
+            region(self, "pageNext", viewport.x + 0.110,
+                viewport.y, 0.035, 0.030, { page = 1 })
+            drawLabel("<", viewport.x + 0.078, viewport.y + 0.009, 0.009)
+            drawLabel(">", viewport.x + 0.123, viewport.y + 0.009, 0.009)
+        end
+        if self.statusText ~= nil then
+            setTokenColor(Token.TEXT_SECONDARY)
+            drawLabel(ellipsis(self.statusText, 28), viewport.x,
+                viewport.y - 0.025, 0.008)
+        end
     end
 
     function instance:draw()
@@ -595,8 +695,24 @@ function PhoneHost.create(context)
         synchronizeRoute(self)
         drawShell(self)
         if self.activeAppId == CommunicationsAppId then
+            self.hitRegions = {}
             refreshModel(self, false)
             drawCommunications(self)
+        elseif self.activeAppId ~= nil then
+            self.hitRegions = {}
+            drawTokenPanel(Token.SURFACE_PRIMARY,
+                self.applicationViewport.x, self.applicationViewport.y,
+                self.applicationViewport.width,
+                self.applicationViewport.height)
+            self.declarative:refresh(self.activeAppId)
+            if not self.declarative:draw() then
+                setTokenColor(Token.TEXT_SECONDARY)
+                drawLabel("Application unavailable",
+                    self.applicationViewport.x + 0.012,
+                    self.applicationViewport.y
+                        + self.applicationViewport.height * 0.5, 0.011)
+            end
+            registerPhoneHome(self)
         else
             drawHome(self)
         end
@@ -643,15 +759,6 @@ function PhoneHost.create(context)
         if self.context.getVisibility() ~= Visibility.VISIBLE then
             return false
         end
-        local payload = select(1, ...)
-        if action == "PHONE_MARK_READ" and type(payload) == "string" then
-            self.context.markNotificationRead(payload)
-            return true
-        end
-        if action == "PHONE_DISMISS" and type(payload) == "string" then
-            self.context.dismissNotification(payload)
-            return true
-        end
         return false
     end
 
@@ -662,6 +769,12 @@ function PhoneHost.create(context)
             return false
         end
         local inside = self:containsPoint(posX, posY)
+        if self.activeAppId ~= nil and self.activeAppId ~= CommunicationsAppId
+            and inside and self.declarative.session.plan ~= nil then
+            if self.declarative:pointer(posX, posY, isDown, isUp, button) then
+                return true
+            end
+        end
         if self.activeAppId == CommunicationsAppId then
             if not inside then
                 if isUp then self.pressedControl = nil end
@@ -708,6 +821,19 @@ function PhoneHost.create(context)
         end
 
         local target = inside and findRegion(self, posX, posY) or nil
+        if not isDown and not isUp then
+            self.hoveredControl = target ~= nil and target.id or nil
+            return target ~= nil
+        end
+        if self.activeAppId == nil and inside and isDown
+            and (button == WheelDown or button == WheelUp)
+            and contains(self.shortcutViewport, posX, posY) then
+            local direction = button == WheelDown and 1 or -1
+            self.shortcutPage = math.max(1, math.min(self.shortcutPageCount,
+                self.shortcutPage + direction))
+            self.pressedControl = nil
+            return true
+        end
         if button == PrimaryButton and isDown and target ~= nil then
             self.pressedControl = target.id
             return true
@@ -720,29 +846,18 @@ function PhoneHost.create(context)
                     return returnToPhoneHome(self)
                 end
                 if target.action.launcher then
-                    openCommunications(self)
+                    self.focusedControl = target.id
+                    return openShortcut(self, target.action.appId)
+                end
+                if target.action.page then
+                    self.focusedControl = target.id
+                    self.shortcutPage = math.max(1,
+                        math.min(self.shortcutPageCount,
+                            self.shortcutPage + target.action.page))
                     return true
                 end
             end
             return pressed ~= nil
-        end
-        if inside and isDown then
-            local notifications = self.context.getNotifications()
-            if button == PrimaryButton then
-                for _, notification in ipairs(notifications) do
-                    if not notification.read and not notification.dismissed then
-                        self.context.markNotificationRead(notification.id)
-                        break
-                    end
-                end
-            elseif button == 2 or button == 3 then
-                for _, notification in ipairs(notifications) do
-                    if not notification.dismissed then
-                        self.context.dismissNotification(notification.id)
-                        break
-                    end
-                end
-            end
         end
         return inside
     end
@@ -751,12 +866,9 @@ function PhoneHost.create(context)
         if self.frameOverlay ~= nil and type(delete) == "function" then
             pcall(delete, self.frameOverlay)
         end
-        if self.appCardOverlay ~= nil and type(delete) == "function" then
-            pcall(delete, self.appCardOverlay)
-        end
         self.frameOverlay = nil
-        self.appCardOverlay = nil
         resetPresentation(self)
+        self.declarative = nil
         self.activeAppId = nil
         self.routeId = nil
         self.initialized = false

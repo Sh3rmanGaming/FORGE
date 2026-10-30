@@ -1819,3 +1819,332 @@ The protocol remains provisional pending the runtime proof required by
   resolve silently.
 - [Engineering Process](../style/EngineeringProcess.md) defines the review and
   implementation workflow governing this design.
+
+## PF.001 Presentation Definitions Component
+
+PF.001 extends the existing ForgeOS definitions package with declarative-model,
+component, property, layout-value, semantic-token, action-reference, attention,
+route-schema, notification-cue, activation-stage/result, limit, and diagnostic
+identifiers. These files contain definitions only and load after the ForgeOS
+definitions namespace but before services, registries, Hosts, applications, and
+tests.
+
+PF.001 does not create a renderer, validator, notification presentation
+coordinator, route-schema executor, attention provider, or activation service.
+Those responsibilities remain separately gated in PF.002, PF.005, and PF.006.
+No component may interpret these definitions before its own implementation
+batch is approved.
+
+The bounded PF.001 clarification also defines canonical declarative node
+fields, text-flow values, Host action identifiers, semantic component states,
+child policies, and an exact `PresentationComponentContract` table. The table
+is definition data only. No component validator, layout engine, renderer, hit
+region builder, or dispatcher is introduced before PF.002 approval.
+
+## PF.002 Declarative Validation and Shared Renderer Component Design
+
+**Status:** Approved
+**Implementation:** Implemented, Verified, Accepted and Frozen
+
+PF.002 consumes the frozen PF.001 definitions and
+[Declarative Presentation Protocol](ForgeOSDeclarativePresentationProtocol.md)
+without adding or reinterpreting vocabulary. The component chain is:
+
+```text
+Application
+    -> detached declarative presentation
+    -> Application Presentation Service
+    -> validation / mediation
+    -> Shared Renderer
+    -> Host adapter and profile
+    -> device geometry, input, and render backend
+```
+
+Gameplay/domain services own truth. Applications own task-specific
+composition. Application Presentation Service owns acquisition, detachment,
+validation, and application-action mediation. Shared renderer components own
+presentation semantics only. Hosts own device environment and independent
+runtime sessions.
+
+### Component allocation
+
+| Component | Responsibility | Must not own |
+|---|---|---|
+| `ApplicationPresentationService` | Resolve context/provider, guard invocation, select v1/v2 validation, mediate application actions | drawing, Host geometry, domain truth |
+| `DeclarativeViewValidator` | Produce a canonical detached v2 copy after complete envelope/tree/contract/limit validation | repair, partial acceptance, token metrics |
+| `PresentationPropertyValidator` | Validate frozen property types, enum/category membership, defaults, component state and action references | new defaults or vocabulary |
+| `HostPresentationProfile` | Immutable per-pass viewport, density, token metrics, typography metrics, colors, icon resolver, hit minimums, scroll step | application data or mutable session state |
+| `PresentationLayoutEngine` | Deterministic bottom-up measurement and top-down arrangement | draw calls, provider calls, gameplay semantics |
+| `PresentationTextLayout` | Bounded measurement, wrapping, maximum-lines, clipping and UTF-8-safe ellipsis records | source-string mutation or arbitrary fonts |
+| `PresentationTokenResolver` | Category-safe resolution of frozen semantic tokens/states through the Host profile | application overrides or raw styling |
+| `PresentationRenderPlanBuilder` | Convert arranged nodes to finite primitives, clips, paint ordinals, scroll extents and action metadata | callbacks or persistent state |
+| `PresentationRendererBackend` | Execute trusted bounded measure/draw/clip operations supplied by the Host | model traversal or application branching |
+| `HostViewSession` | Per-Host generation, last-safe model, scroll, hover, press and diagnostic suppression | persistence or another Host's state |
+| `HostHitRegionController` | Own clipped regions, reverse-paint hit testing, press/release cancellation and input claiming | application action execution |
+| `PresentationActionMediator` | Revalidate and route application or frozen Host actions to their existing owners | generic commands or domain inference |
+| `PhonePresentationAdapter` | Supply Phone viewport/profile/backend/input and its independent session | Laptop state or application-specific rendering |
+| `LaptopPresentationAdapter` | Supply Laptop viewport/profile/backend/input and its independent session | Phone state or application-specific rendering |
+
+These are architectural responsibilities, not authorization for exact Lua
+module names or source creation. Implementation structure must be reviewed
+against this allocation after architecture approval.
+
+### Acquisition and validation interface
+
+Conceptually, a Host requests a refreshed model using only its device and
+current resolved context. `ApplicationPresentationService` validates lifecycle
+and resolution, enters a guard keyed by device and app, calls the private
+provider under protected execution, releases the guard on every exit, and
+routes model v1 to the retained path or model v2 to
+`DeclarativeViewValidator`.
+
+The validator walks provider data once while constructing a new canonical
+copy. It rejects unknown fields, sparse arrays, invalid key/value types,
+metatables, aliases, cycles, invalid component cardinality/content sources,
+nested interactive nodes, invalid action references, category-invalid tokens,
+and every frozen defensive-limit breach. It returns only an entirely valid
+copy; no rejected subtree reaches layout. Provider references are never stored.
+
+Application action activation returns through the service, which rechecks the
+current device/app/presentation/route, declared action, controlled parameters,
+generation, and guard before invoking the existing provider action path. Host
+actions are limited to `osHome` and `deviceClose` and execute only through
+their existing lifecycle/visibility owners.
+
+### Layout component contract
+
+`PresentationLayoutEngine` receives a validated tree, immutable Host profile,
+finite viewport constraint, and current Host scroll offsets. Measurement is
+bottom-up; arrangement is top-down. All calculations remain finite and
+non-negative. Declaration order is the only sibling ordering input.
+
+- Stack uses its frozen direction, with gap between children and distribution
+  on the main axis.
+- Row is the horizontal Stack specialization fixed by the frozen contract.
+- Split always has two children and partitions one bounded axis. Flexible
+  children use their frozen grow values, or equal shares when neither supplies
+  grow. Applications may nest Split to compose multiple generic regions.
+- Scroll always has one child, one declared axis, one finite viewport, and a
+  clamped runtime offset. Its child receives an unbounded axis constraint only
+  for measurement; PF.001 node/depth/child/text/action/parameter limits still
+  bound all work and allocation.
+- spacing is additive outer separation in parent flow; padding is inner inset;
+  gap occurs once between adjacent children; alignment is cross-axis and
+  distribution is main-axis.
+- content/auto/fill/weighted sizing, grow, minimum and maximum constraints use
+  only frozen values. Weighted remainder is redistributed after clamping.
+  Overflow is handled by the declared clip/overflow rule, never negative size
+  or model mutation.
+
+Split carries no navigation, list, reading, mailbox, Project, Banking,
+Companies, Fleet, vehicle, employee, account, invoice, or other domain
+semantics. Those structures arise solely from application composition.
+
+### Leaf and control component contract
+
+| Frozen component | Generic renderer behavior |
+|---|---|
+| Text | Measure approved text role, wrap/limit/clip/ellipsis without changing source |
+| Icon | Resolve one controlled icon ID through the trusted profile |
+| Divider | Produce a non-interactive border-role rule |
+| Empty State | Arrange icon, text, then declared children in a centered vertical internal flow |
+| Button | Arrange icon, text, then declared children in a horizontal internal flow and expose one clipped action region |
+| Icon Button | Arrange required icon/label and expose one clipped action region |
+| Navigation Item | Arrange icon, text, declared children, then trailing count in a horizontal internal flow and expose one clipped action region |
+| List Row | Arrange declared children in a horizontal internal flow and expose one clipped action region |
+| Badge | Render exact optional count and approved semantic state |
+| Status | Arrange icon then text in a horizontal internal flow and apply semantic state |
+
+`accessibleLabel` contributes accessibility meaning and satisfies the frozen
+content rule where allowed, but it does not implicitly create visible text.
+Missing optional sources consume no space. Component `padding` encloses the
+internal flow and `gap` separates only adjacent present items. Declared child
+nodes retain their own full layout semantics, so an application can place a
+Stack or other frozen composition inside a generic control without teaching
+the control any domain structure. Icon Button renders its icon; its required
+label remains accessibility data. Badge with no count renders only its bounded
+semantic indicator. Divider orientation follows its arranged bounds rather
+than an application or domain identifier.
+
+The component identifier alone chooses these semantics. Application, route,
+action, text, and domain identifiers cannot choose renderer code paths. Final
+palette, typography, icon artwork, Phone/Laptop visual composition,
+notification appearance, and Communications layout remain later Design Lead or
+separately gated work.
+
+### Render plan, clipping, and input
+
+Arrangement produces an ephemeral plan. Background/border precedes children;
+children paint in declaration order; later siblings are above earlier siblings.
+There is no supplied z-index. Every primitive and hit region uses the
+intersection of applicable ancestor clips. Empty clips produce neither pixels
+nor action regions.
+
+Each interactive node contributes one Host-owned region with its clipped
+rectangle, structural identity, generation, paint ordinal, detached action,
+and enabled state. Press records the topmost enabled region under the primary
+pointer. Release activates exactly once only when current hit, identity,
+generation, enabled state, and action signature still match. Route/app change,
+Host hide, plan replacement, leaving the region, or secondary input cancels.
+
+### Independent Host sessions and companion overlay
+
+PhoneHost and LaptopHost may be visible simultaneously. They share validator,
+layout, text, token, and render-plan semantics but never a runtime view session.
+Each Host separately owns:
+
+- context key and generation;
+- last-safe validated view;
+- scroll offsets;
+- hover and pressed identity;
+- viewport/profile and clip geometry;
+- render plan and hit regions; and
+- failure-diagnostic suppression.
+
+Showing the right-side Phone overlay does not close, navigate, refresh, or
+reset Laptop. Hiding Phone restores normal input eligibility to the preserved
+Laptop/gameplay state. Overlapping input follows existing Phone-over-Laptop
+occlusion; it does not merge sessions. Exact Phone geometry remains deferred.
+
+Future tutorial or gameplay systems may present instructions through an
+approved application/service path and determine progress from approved events
+or domain facts. Phone never directly controls Laptop application state, and
+PF.002 defines no tutorial/mission component or service.
+
+### Invalid models and controlled failures
+
+Only a fully validated model and successfully built plan replace a Host's safe
+view. Provider failure, re-entry, validation failure, missing profile mapping,
+or layout/render-plan failure retains the safe view only for that exact Host
+context. Otherwise the Host renders its bounded unavailable state. No invalid
+subtree, inferred navigation, domain mutation, or cross-Host fallback occurs.
+Diagnostics use existing presentation/Host sources, omit sensitive body data,
+and throttle repeated equivalent failures per Host context.
+
+### Verification seams
+
+Unit tests cover detachment, exact frozen contracts and limits, sizing,
+component layout, text, clipping, semantic precedence, paint/hit ordering,
+scrolling, input cancellation, mediation, re-entrancy, last-safe behavior, and
+v1 branching. Integration tests use a neutral synthetic provider on both
+Hosts, including simultaneous visibility and proof that one Host cannot alter
+the other's session. FS25 verification requires visible Phone/Laptop v2 views,
+long bounded reading content, pointer/action evidence, controlled failures,
+v1 coexistence, restart-cleared runtime state, retained regressions, and
+separately fingerprinted verification/operational packages.
+
+## PF.002 — ACCEPTED AND FROZEN
+
+PF.002 is implemented, verified, accepted, and frozen. Its accepted operational
+fingerprint is
+`8472BF9B8A3ED573DA57BA7BB99E71B98E69AE7147D31961A98D37C1A654D10F`.
+
+## PF.003 Laptop Shell Component Design
+
+PF.003 composes a Host-owned Laptop shell around, but never inside, the frozen
+PF.002 application renderer:
+
+```text
+LaptopHost
+├── Laptop shell profile (trusted viewport and semantic regions)
+├── Desktop compositor
+│   ├── wallpaper/fallback and readability treatment
+│   ├── identity/status/control regions
+│   └── registry-derived shortcut projection and shell hit regions
+└── active application viewport
+    └── independent Laptop PF.002 Host adapter/session
+```
+
+### Laptop shell profile
+
+The profile derives safe margins, identity/status band, shortcut region,
+application viewport, control/hint band, future-toast safe region, and visible
+Phone overlap from Host-observed viewport, aspect ratio, and UI scale. Exact
+numbers are profile decisions validated in FS25, not application input or pixels
+copied from concept art. An unreadably small geometry produces a controlled
+unavailable shell result.
+
+### Desktop compositor
+
+The compositor receives existing App Registry definitions and Presentation
+Resolver availability outcomes. It projects `displayName`, optional `iconId`,
+and stable identity into deterministic compact shortcut cells. It contains no
+app catalog or application/domain branch. Missing icon assets use the common
+generic fallback plus textual identity; the fallback infers no domain meaning
+and is not the disabled cue.
+
+Shortcut placement is bounded to a deliberate cluster. One/few apps remain at
+the cluster origin without enlargement. Larger populations add profile-defined
+cells and a deterministic bounded overflow page/scroll treatment. Only visible
+cells and fixed shell controls are measured, drawn, and hit-tested; no public
+registry maximum is introduced. Page/offset, hover, press, arrangement, and hit
+regions are runtime-only.
+
+Wallpaper is one fixed shell-owned milestone asset with semantic fallback and
+approved semantic readability treatment. The compositor owns no preference,
+selection, or persistence mechanism.
+
+### Active application viewport
+
+When lifecycle reports one active app, Desktop shortcuts are replaced by the
+application workspace. Restrained Host identity/status/Home/Close/hint regions
+remain outside the delegated rectangle. PF.002 clips the validated app plan and
+its Host-owned hit regions to that rectangle. Shell regions and application
+regions cannot overwrite or reuse each other.
+
+OS Home/Desktop closes the active app through existing App Lifecycle ownership.
+Device Close changes Laptop visibility. Back remains Navigation/application
+action. The design adds no minimise, window, task switch, background surface, or
+multiple-active-app state.
+
+### Input, sessions, and later seams
+
+Shell controls use primary press and release on the same current logical region.
+Application input remains PF.002-owned inside the app viewport. Visible Phone
+geometry draws above Laptop and claims overlapping input; Laptop retains input
+outside overlap. Phone and Laptop sessions remain independent in both mutation
+directions.
+
+PF.003 reserves a shortcut badge anchor but creates no PF.005 attention truth.
+It reserves lower-right geometry but creates no PF.006 toast behavior. PF.007
+owns Communications Laptop composition.
+
+The active-app Communications model-v1 renderer is the sole grandfathered
+exception. It receives only the trusted Laptop application viewport and owns no
+Desktop or global shell region. It gains no feature, schema, layout system, or
+new consumer. PF.007 must migrate Communications Laptop to model-v2 and delete
+this branch; it cannot remain at PF.007 acceptance without a new architecture
+review.
+
+The authoritative complete PF.003 design and traceability are in
+[FORGE OS Laptop Shell Architecture](ForgeOSLaptopShellArchitecture.md).
+
+## PF.004 Phone Shell Component Design
+
+PF.004 composes a Host-owned compact companion shell around one trusted Phone
+application viewport. `PhoneHost` owns frame/safe bounds, identity/status,
+registry-derived Home launcher, page controls, OS Home, Close/hints, shell hit
+regions, and an empty top-edge PF.006-safe region. The active app owns none of
+those regions.
+
+`PhoneShortcutProjection` consumes existing Phone eligibility, presentation
+resolution, app identity, `displayName`, and optional `iconId`. It creates a
+deterministic runtime-only projection with generic icon fallback. The bounded
+shortcut cluster uses fixed profile capacity and pages rather than a four-app
+cap, unlimited grid, or shrinking targets. Its attention anchor is only PF.005.
+
+`PhoneGeometryProfile` derives safe shell, banner seam, launcher/application,
+navigation, and clipping rectangles from Host metrics and UI scale. PF.002
+receives only the application rectangle and Phone density profile. Shell and
+application draw/hit plans are clipped independently.
+
+Generic model-v2 apps use PF.002 without app-ID branching. The existing
+Communications v1 Phone renderer is the sole isolated transition and receives
+only the same trusted viewport. It owns no Home, status, OS Home, Close,
+notification, or global navigation region; PF.008 must migrate and remove it.
+
+Shell press/release requires the same current logical region. Phone continues to
+claim overlapping Laptop input first. Phone and Laptop profile, scroll, hover,
+pressed, last-safe, clipping, hit-region, and generation state remain mutually
+independent. See
+[FORGE OS Phone Shell Architecture](ForgeOSPhoneShellArchitecture.md).

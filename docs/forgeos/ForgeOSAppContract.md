@@ -1509,3 +1509,125 @@ This contract is ready for implementation when:
   approval, implementation, and verification governance.
 - [Git Workflow](../style/GitWorkflow.md) governs promotion, tagging, and
   release handling for public API and compatibility changes.
+
+## PF.001 Declarative Presentation Contract Amendment
+
+The approved internal model-v2 envelope contains controlled fields equivalent
+to `modelVersion`, `appId`, `presentationId`, `routeId`, `title`, `attention`,
+`view`, and `actions`. Model v1 remains valid during the bounded transition;
+PF.001 does not change App API version 1 or expose v2 through the cross-mod API.
+
+A declarative view contains only approved component identifiers, semantic
+properties, token identifiers, bounded value enums, detached content, and
+declared action references. An action reference is an exact controlled object
+containing `target`, `actionId`, and optional `parameters`; it contains no
+callback. Targets are `application` and `host`. Application actions must be
+declared by the resolved presentation; Host actions are limited to `osHome`
+and `deviceClose`. The descriptor must also be declared exactly once in the
+model-v2 envelope `actions` array. Logical Back remains Navigation/application-
+action owned. See
+[ForgeOS Declarative Presentation Protocol](ForgeOSDeclarativePresentationProtocol.md).
+
+Applications cannot provide arbitrary drawing instructions, arbitrary style or
+pixel values, runtime Host objects, mutable domain objects, controller code, or
+CSS-like extensions. The future PF.002 validator rejects unknown components,
+properties, values, envelope fields, and bounds violations.
+
+Routes may add an optional parameter schema using controlled parameter types,
+required flags, and `allowAdditionalParameters`. Navigation remains the sole
+validator when PF.006 implements this contract. Legacy routes without schemas
+retain their existing controlled-plain-data behavior during transition;
+notification-actionable routes must declare schemas.
+
+## PF.002 Internal Acquisition and Mediation Proposal
+
+**Status:** Approved
+**Implementation:** Implemented, Verified, Accepted and Frozen
+**Public API impact:** None
+
+PF.002 retains provider protocol version 1 and App API version 1. Model v2 is
+an internal presentation-model format and is not exposed as a new cross-mod
+provider contract. Existing `getApplicationPresentationModel()` model-or-nil
+behavior remains unchanged.
+
+For each Host refresh, Application Presentation Service:
+
+1. validates device, active app, resolved presentation, route and visibility;
+2. enters the existing operation guard keyed by device and app;
+3. invokes the private provider under controlled error containment;
+4. releases the guard on every exit;
+5. retains model-v1 validation for legacy presentations; and
+6. submits model v2 to complete detachment and frozen PF.001 validation.
+
+The returned v2 value is a newly built canonical copy. Provider tables,
+metatables, aliases, callbacks, Host/service/domain objects, and unknown or
+invalid data never reach the renderer. No provider is invoked during layout,
+drawing, hit testing, hover, press/release, or scrolling.
+
+Application actions remain mediated by the service and existing
+`performApplicationAction()` path. Immediately before invocation, mediation
+rechecks current device/app/presentation/route context, declaration,
+parameters, generation and re-entrancy. Host-target actions are limited to the
+frozen `osHome` and `deviceClose` allow-list and execute through their existing
+lifecycle or device-visibility owners. Back remains Navigation/application-
+action owned.
+
+Phone and Laptop may query and display the same logical app simultaneously.
+Their device keys, resolved presentations and Host sessions remain independent;
+a Phone query or action does not implicitly close, reset or navigate Laptop.
+Applications and future tutorial/gameplay systems coordinate only through
+approved services, actions, events and domain facts, never by receiving a Host
+or another device's runtime view session.
+
+This proposal adds no public callback, drawing API, persistence field, generic
+command bus, renderer plugin, or application-specific Host path. The complete
+PF.002 design is in
+[Shared Host Renderer Architecture](ForgeOSSharedHostRendererArchitecture.md)
+and [ForgeOS Component Design](ForgeOSComponentDesign.md).
+
+## PF.003 Laptop Desktop Projection
+
+PF.003 adds no App Registry field, public callback, API version, or asset
+registration format. LaptopHost derives Desktop population from existing
+registered definitions and accepted presentation-resolution results:
+
+- only applications available for Laptop are projected;
+- stable application identity selects existing lifecycle/navigation operations;
+- `displayName` supplies visible and accessible textual identity; and
+- optional `iconId` requests a controlled internal icon asset.
+
+Missing, omitted, or unresolved `iconId` uses a common generic application
+fallback paired with `displayName`. The shell does not infer domain meaning,
+fabricate application art, or treat the fallback as disabled/unavailable.
+Ordering is deterministic under registry enumeration, with lexical application
+identity as defensive tie/fallback.
+
+LaptopHost maintains no hardcoded application catalog and cannot branch on an
+application identifier. Shortcut overflow is a bounded Host presentation
+concern and does not introduce a registry population limit. Final production
+assets and the unresolved asset-registration format remain separate decisions.
+
+Opening a shortcut uses existing App Lifecycle and Navigation operations. OS
+Home/Desktop closes the active Laptop app; Back remains application/Navigation
+behavior and device Close remains Host visibility. PF.003 does not change
+one-active-app semantics or v1 compatibility. See
+[FORGE OS Laptop Shell Architecture](ForgeOSLaptopShellArchitecture.md).
+
+## PF.004 Phone Home Projection
+
+PF.004 adds no App Registry field, public callback, API version, or asset
+registration format. PhoneHost projects only definitions whose existing
+`supportedDevices.phone` and Presentation Resolver result make them available.
+Existing app identity selects lifecycle/navigation; `displayName` supplies text;
+optional `iconId` requests controlled internal art.
+
+Missing/unresolved icons use a generic fallback with the label. Launcher order
+is deterministic and overflow is Host runtime presentation, not a registration
+limit. Every eligible app receives the same generic launch sequence; no app-ID
+branch or Communications-only launcher hit region is permitted.
+
+OS Home closes the active Phone app, application Back/Home remains application
+or Navigation behaviour, and Close remains device visibility. The existing
+Communications v1 renderer is not a public contract: it is an isolated PF.008-
+bound implementation exception inside the trusted application viewport. See
+[FORGE OS Phone Shell Architecture](ForgeOSPhoneShellArchitecture.md).

@@ -1,7 +1,7 @@
 # FORGE Roadmap
 
 **Status:** Active  
-**Last Updated:** 2026-08-11
+**Last Updated:** 2026-08-22
 
 ---
 
@@ -12,16 +12,36 @@
 | M0 – Foundation | ✅ Complete |
 | M1 – Engine | ✅ Complete |
 | M2 – ForgeOS | ✅ Complete |
-| M3 – Communications | 🟡 In Progress |
-| M4 – Projects | ⬜ Planned |
-| M5 – Banking | ⬜ Planned |
-| M6 – Companies | ⬜ Planned |
-| M7 – Campaign SDK | ⬜ Planned |
-| M8 – Public Release | ⬜ Planned |
+| M3 – Communications | ✅ Complete |
+| M4 – Foundation Contracts and Runtime Seams | ⬜ Planned |
+| M5 – Character and Progression | ⬜ Planned |
+| M6 – Companies and Organisations | ⬜ Planned |
+| M7 – Banking and Economy | ⬜ Planned |
+| M8 – Projects | ⬜ Planned |
+| M9 – Campaign SDK and Content Packs | ⬜ Planned |
 
 ---
 
-## Current Milestone — M3: Communications
+## Current Architecture Gate — PF.002 Shared Host Renderer
+
+M3 Communications remains complete and historically accepted. The Project
+Director and Chief Architect approved the bounded reopening of M2/M3
+presentation contracts before M4.001 implementation. The
+[M2/M3 Presentation Foundation Review](../reviews/M2M3PresentationFoundationReview.md)
+and [implementation plan](M2M3PresentationFoundationImplementationPlan.md) are
+Approved. The original PF.001 definitions package remains implemented, runtime
+verified, accepted, and frozen with its fingerprint preserved. A bounded
+node/action/text clarification was subsequently approved and implemented; it
+has passed definition/load-order runtime verification and is accepted/refrozen
+as the current Presentation Foundation definition baseline. PF.002 architecture
+is implemented and verified pending acceptance; PF.003-PF.009 remain
+unauthorized.
+
+The [M4 Foundation Architecture Plan](M4FoundationArchitecturePlan.md) remains
+Approved. M4.001 Subject Identity architecture remains unchanged and at Review,
+but its implementation is temporarily paused until the Presentation Foundation
+amendment is implemented, verified, accepted, and refrozen. No M4 or gameplay-
+domain production implementation is currently authorized.
 
 # FORGE Development Roadmap
 
@@ -517,9 +537,9 @@ deferred, unverified, and non-frozen where applicable.
 
 ---
 
-## In Progress
+## Completed — M3
 
-### 🟡 M3 – Communications
+### ✅ M3 – Communications
 
 #### ✅ M3.001 – Communications Architecture
 
@@ -599,15 +619,16 @@ adapter. Architecture approval now authorizes M3.002 definitions only. See the
 
 ---
 
-## Planned
+## Historical M1 Backlog Classification
 
-### ⏳ M1.008 – Campaign Manager
-- Campaign lifecycle
-- Save slot abstraction
-- World metadata
-- Campaign registry
+### M1.008 – Campaign Manager (Historical / Future Scope)
 
-### ⏳ M1.009 – Phone OS Foundation
+This M1 backlog item was not implemented as an M1 contract. Campaign lifecycle,
+content discovery, and registry work are now represented by the accepted M4
+Definition Foundation and M9 Campaign SDK boundaries. Save-slot and world
+metadata authority must not be inferred from this historical list.
+
+### M1.009 – Phone OS Foundation (Superseded / Future Scope)
 
 Historical scope classification:
 
@@ -619,12 +640,12 @@ Historical scope classification:
 - Rich application UI and physical Laptop interaction — retained as future
   work and not implemented by M2.
 
-### ⏳ M1.010 – Engine Bootstrap
-- Module discovery
-- Module registration
-- Dependency ordering
-- Engine startup pipeline
-- Engine shutdown pipeline
+### M1.010 – Engine Bootstrap (Superseded)
+
+The implemented M1 Engine lifecycle and M2 ForgeOS bootstrap supersede this
+historical backlog item. Future addon definition discovery and dependency
+ordering require a separately approved definition-foundation contract; they
+must not be inferred from this entry.
 
 ---
 
@@ -738,6 +759,58 @@ From this point onward, future milestones focus on building gameplay features **
 
 ## Future Milestones
 
-Future milestones will be expanded as they become active.
+The dependency order below is accepted. Completed M1-M3 numbering is preserved;
+superseded future planning remains classified above rather than erased.
 
-Only the current milestone contains detailed implementation tasks to keep this roadmap concise and easy to maintain.
+### M4 — Foundation Contracts and Runtime Seams
+
+Establish the minimum shared contracts required by later gameplay domains:
+stable subject identity and legacy compatibility, authoritative mutation
+requests, shared game-time/deadline semantics, persistence compatibility and
+migration, external identifiers and dependency rules, XML definition loading,
+cross-domain partial-success policy, and explicit version mapping.
+
+The decomposed M4 plan is Approved. Execution remains gated per batch:
+
+- M4.001 Subject Identity and Legacy Compatibility — architecture at Review;
+- M4.002 Authoritative Mutation Request Seam — not started;
+- M4.003 Shared Game Time and Deadline Semantics — not started;
+- M4.004 Persistence Migration and Compatibility — not started;
+- M4.005 External Identity, Dependencies and API Evolution — not started;
+- M4.006 XML Definition Registry Foundation — not started;
+- M4.007 Cross-Domain Mutation and Partial-Success Policy — not started; and
+- M4.008 Version Mapping, Integration Verification and Freeze — not started.
+
+M4 must not implement Character, Companies, Banking, Projects, or Campaign
+rules.
+
+### M5 — Character and Progression
+
+Own player qualifications, reputation, experience, progression, and reusable
+eligibility queries against M4 subject and authority contracts.
+
+### M6 — Companies and Organisations
+
+Own organisation identity, membership, permissions, and company state. Company
+accounts remain references to Banking-owned accounts rather than local balances.
+
+### M7 — Banking and Economy
+
+Own currencies, accounts, balances, transactions, settlement, and economic
+audit history for player and organisation subjects.
+
+### M8 — Projects
+
+Use M4 time/persistence/coordination contracts and M5-M7 eligibility,
+organisation, and settlement authorities. A Project may contain one contract,
+multiple contracts, stages, agreements, or related scopes of work. Projects
+must not duplicate the truth owned by prerequisite domains.
+
+### M9 — Campaign SDK and Content Packs
+
+Expose stable, versioned authoring contracts over the definition schemas owned
+by preceding domains. Campaign packs provide data and dependencies; domain
+managers remain runtime authorities.
+
+Public-release planning moves beyond M9 and requires a separate roadmap
+decision after these dependency milestones mature.

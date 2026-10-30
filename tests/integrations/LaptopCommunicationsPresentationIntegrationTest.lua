@@ -71,7 +71,8 @@ function FORGE.Tests.runLaptopCommunicationsPresentationIntegrationTests()
             displayName = "Communications", supportedDevices = { laptop = true } }
         end,
         resolvePresentation = function() return Result.SUCCESS,
-            { presentationId = "forge.communications.laptop" } end,
+            { presentationId = "forge.communications.laptop",
+                presentation = { defaultRoute = "inbox" } } end,
         getCurrentRoute = function() return routeId end,
         getValidatedResumeDestination = function() return Result.SUCCESS, nil end,
         openApp = function(appId)
@@ -149,6 +150,16 @@ function FORGE.Tests.runLaptopCommunicationsPresentationIntegrationTests()
         end
 
         labels = {}; host:draw()
+        for _, hit in ipairs(host.hitRegions) do
+            if hit.id ~= "laptopHome" then
+                local viewport = host.applicationViewport
+                if hit.x < viewport.x or hit.y < viewport.y
+                    or hit.x + hit.width > viewport.x + viewport.width
+                    or hit.y + hit.height > viewport.y + viewport.height then
+                    error("Legacy v1 region escaped trusted application viewport")
+                end
+            end
+        end
         local clipped, newestIndex, olderIndex = 0, nil, nil
         local sixthSeen, seventhSeen = false, false
         for index, label in ipairs(labels) do
@@ -187,18 +198,18 @@ function FORGE.Tests.runLaptopCommunicationsPresentationIntegrationTests()
 
         host:draw(); host:onPointer(0.30, 0.45, true, false, 4)
         if host.detailScrollOffset ~= 1 then error("Laptop detail scroll failed") end
-        host:onPointer(0.36, 0.11, true, false, 1)
-        host:onPointer(0.36, 0.11, false, true, 1)
+        host:onPointer(0.36, 0.13, true, false, 1)
+        host:onPointer(0.36, 0.13, false, true, 1)
         if actions[#actions] ~= "communications.markRead" or badge ~= 7 then
             error("Laptop mark-read action failed")
         end
         host:draw(); failAction = true
-        host:onPointer(0.46, 0.11, true, false, 1)
-        host:onPointer(0.46, 0.11, false, true, 1)
+        host:onPointer(0.46, 0.13, true, false, 1)
+        host:onPointer(0.46, 0.13, false, true, 1)
         if routeId ~= "messageDetail" then error("Laptop inferred navigation") end
         failAction = false
-        host:onPointer(0.46, 0.11, true, false, 1)
-        host:onPointer(0.46, 0.11, false, true, 1)
+        host:onPointer(0.46, 0.13, true, false, 1)
+        host:onPointer(0.46, 0.13, false, true, 1)
         if actions[#actions] ~= "communications.archive" or routeId ~= "inbox" then
             error("Laptop archive action failed")
         end

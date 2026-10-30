@@ -6,6 +6,8 @@ This directory contains FORGE architecture, standards, subsystem contracts,
 milestone plans, technical decisions, and implementation guidance.
 
 Approved FORGE documentation is the authoritative source of truth.
+Material under `prototype/` is retained for historical traceability and is not
+authoritative over repository source or current documentation.
 
 Implementation MUST follow approved documentation and MUST NOT silently define
 or override architectural contracts.
@@ -30,6 +32,7 @@ docs/
 ├── style/
 ├── architecture/
 ├── persistence/
+├── foundation/
 ├── forgeos/
 ├── roadmap/
 ├── adr/
@@ -83,6 +86,10 @@ architecture/
 
 These documents describe systems that span multiple FORGE subsystems.
 
+`architecture/003_PersistenceFormat.md` is retained as a superseded historical
+record. The documents under `persistence/` are authoritative for the current
+persistence subsystem.
+
 Subsystem-specific architecture should remain inside the subsystem directory.
 
 ---
@@ -107,16 +114,38 @@ These documents define:
 
 ---
 
+## Foundation Contracts
+
+The Approved M4 plan decomposes post-M3 foundation work into separately gated
+seams. M4.001 is currently at architecture Review:
+
+```text
+foundation/
+├── SubjectIdentityArchitecture.md
+├── SubjectIdentityDefinitions.md
+└── LegacyPlayerIdentityCompatibility.md
+```
+
+These Review documents are not production implementation authorization.
+
+---
+
 ## ForgeOS
 
-ForgeOS Definitions is Verified as the authoritative v0.1 definitions
-implementation contract. The other four ForgeOS documents remain Approved as
-authoritative v0.1 implementation contracts, with their implementation and
-verification outstanding.
+The bounded M2 ForgeOS foundation is implemented, runtime verified, accepted,
+and frozen. Its five subsystem documents remain the authoritative contracts;
+their older per-document maturity wording is historical and does not reopen M2.
 
 ```text
 forgeos/
 ├── ForgeOSArchitecture.md
+├── ForgeOSPresentationArchitecture.md
+├── ForgeOSLaptopShellArchitecture.md
+├── ForgeOSPhoneShellArchitecture.md
+├── ForgeOSDesignSystem.md
+├── ForgeOSApplicationUXContract.md
+├── LaptopUXSpecification.md
+├── PhoneUXSpecification.md
 ├── ForgeOSDefinitions.md
 ├── ForgeOSAppContract.md
 ├── ForgeOSStateModel.md
@@ -131,8 +160,53 @@ These documents define:
 - authoritative definitions
 - implementation boundaries
 
+### Presentation Foundation status
+
+- PF.001 declarative presentation definitions are accepted and frozen.
+- PF.002 declarative validation/shared rendering is implemented, verified,
+  accepted, and frozen at operational fingerprint
+  `8472BF9B8A3ED573DA57BA7BB99E71B98E69AE7147D31961A98D37C1A654D10F`.
+- PF.003 Laptop Shell is implemented, verified, visually reviewed, accepted,
+  and frozen at operational package SHA-256
+  `AE46B6233E40B9D0D272DBF2213589C9F3A2D512D383D6F0BF7E6D6E6B4558D1`.
+- PF.004 Phone Shell is implemented, verified, visually reviewed, accepted and
+  frozen at operational/deployed SHA-256
+  `CF4F38FD2E7B7A02B13A30C59CA9F55CA607591F4F7162BE58BA28300848C5E7`;
+  PF.005-PF.009 remain unauthorized. M4.001 is paused.
+
+[FORGE OS Laptop Shell Architecture](forgeos/ForgeOSLaptopShellArchitecture.md)
+is the PF.003 ownership, geometry, migration, implementation-plan,
+verification, acceptance, and 30-item traceability package. Its approved concept
+reference is visual-direction authority only, not an application/domain
+functionality contract.
+
+PF.003 implementation/runtime evidence is recorded in
+[PF.003 Runtime Verification](reviews/PF.003RuntimeVerification.md).
+
+[FORGE OS Phone Shell Architecture](forgeos/ForgeOSPhoneShellArchitecture.md)
+is the approved PF.004 ownership, compact Home, trusted geometry, coexistence,
+transition, implementation-plan, verification, acceptance, and 30-item
+traceability package.
+
+PF.004 implementation/runtime evidence is recorded in
+[PF.004 Runtime Verification](reviews/PF.004RuntimeVerification.md).
+
 Before implementing a ForgeOS component, review the relevant ForgeOS
 documentation.
+
+The Presentation Architecture, Design System, Application UX, Laptop UX, and
+Phone UX documents are Approved under the bounded M2/M3 reopening. The original
+PF.001 package is implemented, verified, accepted, and frozen. Its approved
+bounded node/action/text clarification is implemented, verified, accepted and
+refrozen as the current baseline. The authoritative contract is recorded
+in [ForgeOS Declarative Presentation Protocol](forgeos/ForgeOSDeclarativePresentationProtocol.md).
+The approved PF.002 architecture/component design is recorded in
+[Shared Host Renderer Architecture](forgeos/ForgeOSSharedHostRendererArchitecture.md)
+and [ForgeOS Component Design](forgeos/ForgeOSComponentDesign.md). PF.002 is
+implemented, verified, accepted, and frozen. PF.003 is implemented, verified,
+visually reviewed, accepted, and frozen. PF.004 is implemented, verified,
+visually reviewed, accepted, and frozen; PF.005-PF.009 implementation remains
+unauthorized.
 
 ---
 
@@ -142,7 +216,9 @@ Milestone planning and project progression.
 
 ```text
 roadmap/
-└── Roadmap.md
+├── Roadmap.md
+├── M4FoundationArchitecturePlan.md
+└── M2M3PresentationFoundationImplementationPlan.md
 ```
 
 Each milestone should contain:
@@ -153,6 +229,22 @@ Each milestone should contain:
 - Milestone Exit Criteria
 - Implementation Notes (optional)
 - Changelog
+
+The [Foundation Assumption Review](reviews/FoundationAssumptionReview.md) is
+Approved and establishes the post-M3 M4-M9 dependency order. The
+[M4 Foundation Architecture Plan](roadmap/M4FoundationArchitecturePlan.md) is
+Approved. It authorizes M4.001 architecture work only and does not authorize
+production implementation.
+
+M4.001 implementation is temporarily paused at the
+[M2/M3 Presentation Foundation Review](reviews/M2M3PresentationFoundationReview.md).
+The Presentation Foundation plan is Approved. Original PF.001 acceptance
+remains historical evidence; its bounded clarification is verified, accepted,
+and refrozen. Every later PF batch remains separately gated. PF.002 is
+implemented, verified, accepted, and frozen. PF.003 is implemented, verified,
+visually reviewed, accepted, and frozen. PF.004 is implemented, verified,
+visually reviewed, accepted, and frozen; PF.005-PF.009 implementation remains
+unauthorized.
 
 ---
 
@@ -239,6 +331,20 @@ Current records:
 - [M3.006 Runtime Verification](reviews/M3.006RuntimeVerification.md)
 - [M3.007 Runtime Verification](reviews/M3.007RuntimeVerification.md)
 - [M3.008 Runtime Verification](reviews/M3.008RuntimeVerification.md)
+- [Foundation Assumption Review](reviews/FoundationAssumptionReview.md)
+- [M4.001 Architecture Review](reviews/M4.001ArchitectureReview.md)
+- [M2/M3 Presentation Foundation Review](reviews/M2M3PresentationFoundationReview.md)
+- [PF.001 Runtime Verification](reviews/PF.001RuntimeVerification.md)
+- [PF.002 Runtime Verification](reviews/PF.002RuntimeVerification.md)
+- [Presentation Foundation Implementation Plan](roadmap/M2M3PresentationFoundationImplementationPlan.md)
+- [FORGE OS Presentation Architecture](forgeos/ForgeOSPresentationArchitecture.md)
+- [FORGE OS Design System](forgeos/ForgeOSDesignSystem.md)
+- [ForgeOS Application UX Contract](forgeos/ForgeOSApplicationUXContract.md)
+- [ForgeOS Shared Host Renderer Architecture](forgeos/ForgeOSSharedHostRendererArchitecture.md)
+- [ForgeOS Component Design](forgeos/ForgeOSComponentDesign.md)
+- [Laptop UX Specification](forgeos/LaptopUXSpecification.md)
+- [Phone UX Specification](forgeos/PhoneUXSpecification.md)
+- [Communications UX Architecture](communications/CommunicationsUXArchitecture.md)
 - [Communications Architecture](communications/CommunicationsArchitecture.md)
 - [Communications Component Design](communications/CommunicationsComponentDesign.md)
 - [Communications Definitions](communications/CommunicationsDefinitions.md)

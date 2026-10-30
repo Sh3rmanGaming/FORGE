@@ -1,7 +1,14 @@
 # 003 - Persistence Format
 
-**Status:** Draft  
+**Status:** Superseded
 **Version:** 1.0
+
+> Historical architecture record. The authoritative persistence contracts are
+> `docs/persistence/XMLSchema.md`, `docs/persistence/PersistenceLifecycle.md`,
+> and `docs/persistence/SaveManager.md`. This document does not authorize
+> gameplay-domain migration ownership. The common future-domain compatibility
+> policy is proposed by `docs/reviews/FoundationAssumptionReview.md` and remains
+> subject to acceptance.
 
 ---
 

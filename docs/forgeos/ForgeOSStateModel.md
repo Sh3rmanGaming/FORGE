@@ -1427,3 +1427,102 @@ The state model is ready for implementation when:
   state-model decisions, deferred assumptions, and remaining state gaps.
 - [Engineering Process](../style/EngineeringProcess.md) defines review,
   approval, implementation, and verification governance.
+
+## PF.001 Presentation State Classification
+
+PF.001 adds no persistent state and changes no `forge.os` schema or version.
+Declarative view envelopes, component trees, resolved token values, layout
+geometry, hit regions, attention query results, notification presentation cues,
+activation-stage detail, and future validation diagnostics are detached or
+runtime-only data.
+
+Canonical node IDs and action descriptors introduced by the PF.001
+clarification are likewise detached runtime presentation data. They are not
+persisted, cannot become domain identity, and do not change `forge.os` schema.
+
+Existing lifecycle, route, history, resume, notification, and device state
+remain authoritative under their accepted persistence rules. Route-schema
+definitions are rebuilt during registration and are not persisted. Persisted
+route parameters remain controlled plain data and receive schema validation
+only when the approved Navigation extension is implemented in PF.006.
+
+## PF.002 Runtime View Session Proposal
+
+**Status:** Approved
+**Implementation:** Implemented, Verified, Accepted and Frozen
+**Persistence impact:** None
+
+Each Host owns one runtime-only view session for its active presentation
+context. The context key contains device, app, presentation, route, and a
+deterministic fingerprint of detached route parameters. It is not a persisted
+identity or domain key.
+
+A session may contain only:
+
+- the last fully validated safe model for that exact context;
+- the current render generation;
+- scroll offsets keyed by unique node ID or deterministic structural path;
+- pressed and hover region identity; and
+- throttled diagnostic signatures.
+
+On same-context refresh, scroll offsets may survive and are clamped to current
+finite extents. A route-parameter change creates a different context. App,
+presentation or route-context change, app close, Host restart/shutdown, or
+ForgeOS restart clears the session. Hide/show may preserve the same context;
+none of this state is written to `forge.os` or an application/domain namespace.
+
+PhoneHost and LaptopHost store separate sessions even when both display the
+same app, route and parameter values. Their generations, last-safe models,
+scroll, hover, press, viewport, clips, density/profile, render plans and hit
+regions cannot be merged, reused, invalidated or overwritten across devices.
+Showing the right-side Phone overlay preserves Laptop state; hiding it changes
+input eligibility without erasing that preserved session.
+
+Last-safe reuse is allowed only within the same Host and exact context key.
+Provider, validation, token/profile, layout or render-plan failure on one Host
+cannot cause fallback to the other Host's safe model. Without a local safe
+model, that Host renders its bounded unavailable state.
+
+Future tutorial or mission progression remains domain/event state owned by its
+future approved system. It is not represented by PF.002 view-session data, and
+Phone runtime state cannot become authority over Laptop or gameplay actions.
+
+## PF.003 Laptop Shell Runtime State
+
+PF.003 changes no `forge.os` schema, version, save ownership, resume meaning, or
+public state API. Laptop wallpaper selection is fixed and not persisted. These
+Laptop shell values are runtime-only:
+
+- trusted geometry/profile selection and derived shell regions;
+- projected shortcut arrangement and visible overflow page/offset;
+- resolved wallpaper/icon/fallback render data;
+- shortcut hover, press, and transient unavailable presentation;
+- shell clipping, draw plan, and Host-owned hit regions; and
+- future PF.005 badge-anchor and PF.006 toast-safe geometry.
+
+OS Home/Desktop and device Close continue to mutate only state owned by their
+existing lifecycle/navigation and visibility services. PF.003 creates no
+notification, attention, tutorial, mission, or application-domain state.
+
+Laptop's PF.002 application session remains independent of Phone. Showing Phone
+above Laptop changes only occlusion/input eligibility: it does not reset Laptop
+navigation, active app, app scroll, provider generation, safe view, hover/press,
+geometry, or hit regions. Laptop activity has the equivalent prohibition over
+Phone runtime state.
+
+See [FORGE OS Laptop Shell Architecture](ForgeOSLaptopShellArchitecture.md).
+
+## PF.004 Phone Shell Runtime State
+
+PF.004 changes no `forge.os` schema, version, save ownership, resume meaning, or
+public state API. Runtime-only Phone values include selected launcher page,
+projected shortcut arrangement, resolved icon/fallback, hover/focus/press,
+trusted profile/viewport, clipping, shell hit regions, transient unavailable
+status, and empty PF.005/PF.006 integration geometry.
+
+OS Home and Close continue to use accepted lifecycle/navigation and visibility
+owners. Generic shell input creates no notification mutation. Phone's PF.002
+session—including scroll, last-safe view, generation and hit regions—remains
+independent of Laptop in both directions. The grandfathered Communications v1
+renderer introduces no persisted state. See
+[FORGE OS Phone Shell Architecture](ForgeOSPhoneShellArchitecture.md).

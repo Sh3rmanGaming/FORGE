@@ -279,6 +279,17 @@ local function createHostContext(deviceId)
         getApplicationBadge = function(appId)
             return FORGE.ForgeOS:getApplicationBadge(deviceId, appId)
         end,
+        getViewportMetrics = function()
+            return {
+                width = type(g_screenWidth) == "number" and g_screenWidth
+                    or 1920,
+                height = type(g_screenHeight) == "number" and g_screenHeight
+                    or 1080,
+                -- FS25 normalized overlay geometry remains authoritative.
+                -- A future approved scale adapter may supply a different value.
+                uiScale = 1
+            }
+        end,
         getNotifications = function()
             return FORGE.ForgeOS:getNotifications(
                 deviceId,
