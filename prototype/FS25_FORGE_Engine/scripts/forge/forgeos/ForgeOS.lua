@@ -279,6 +279,14 @@ local function createHostContext(deviceId)
         getApplicationBadge = function(appId)
             return FORGE.ForgeOS:getApplicationBadge(deviceId, appId)
         end,
+        -- Private Host-only attention route (PF.005). Deliberately not a
+        -- FORGE.ForgeOS method: public exposure needs an API versioning review.
+        getApplicationAttention = function(appId)
+            return FORGE.ApplicationPresentationService:getAttention(
+                deviceId,
+                appId
+            )
+        end,
         getViewportMetrics = function()
             return {
                 width = type(g_screenWidth) == "number" and g_screenWidth

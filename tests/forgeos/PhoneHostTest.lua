@@ -13,6 +13,8 @@ function FORGE.Tests.runPhoneHostTests()
     local calls, notificationMutations = {}, 0
     local metrics = { width = 1920, height = 1080, uiScale = 1 }
     local rectangles, labels, overlayDeletes = 0, {}, 0
+    local badgeRenders, attentionQueries, attentionFails = 0, 0, false
+    local attentionByApp = {}
 
     local function definition(appId)
         return { id = appId, displayName = "App " .. appId,
@@ -58,6 +60,11 @@ function FORGE.Tests.runPhoneHostTests()
         getApplicationPresentationModel = function() return nil end,
         performApplicationAction = function() return Result.NOT_AVAILABLE end,
         getApplicationBadge = function() return 0 end,
+        getApplicationAttention = function(appId)
+            attentionQueries = attentionQueries + 1
+            if attentionFails then error("attention provider failure") end
+            return attentionByApp[appId] or { state = "none", count = 0 }
+        end,
         getViewportMetrics = function() return metrics end,
         getNotifications = function() error("PF.004 queried notifications") end,
         markNotificationRead = function()
@@ -76,8 +83,12 @@ function FORGE.Tests.runPhoneHostTests()
     drawFilledRect = function() rectangles = rectangles + 1 end
     renderText = function(_, _, _, value) labels[#labels + 1] = tostring(value) end
     setTextColor = function() end
-    createImageOverlay = function() return 100 end
-    renderOverlay = function() end
+    createImageOverlay = function(path)
+        return string.find(path, "badge_", 1, true) and 300 or 100
+    end
+    renderOverlay = function(overlay)
+        if overlay == 300 then badgeRenders = badgeRenders + 1 end
+    end
     setOverlayColor = function() end
     delete = function() overlayDeletes = overlayDeletes + 1 end
 
@@ -138,6 +149,52 @@ function FORGE.Tests.runPhoneHostTests()
         apps = { "app.generic" }
         host.shortcutPage = 1
         host:draw()
+
+        -- PF.005: Phone shortcuts show attention, sampled on update only.
+        attentionByApp["app.generic"] = { state = "unread", count = 150 }
+        local queriesBefore = attentionQueries
+        host:draw()
+        if attentionQueries ~= queriesBefore then
+            error("Phone queried attention while drawing")
+        end
+        host:update(600)
+        if attentionQueries ~= queriesBefore + 1 then
+            error("Phone did not sample attention once per application")
+        end
+        host:update(100)
+        if attentionQueries ~= queriesBefore + 1 then
+            error("Phone sampled attention before the refresh interval")
+        end
+        local rendersBefore = badgeRenders
+        labels = {}; host:draw()
+        local cappedSeen = false
+        for _, label in ipairs(labels) do
+            if label == "99+" then cappedSeen = true end
+        end
+        if not cappedSeen or badgeRenders <= rendersBefore then
+            error("Phone did not draw a 99+ unread badge")
+        end
+        if attentionByApp["app.generic"].count ~= 150 then
+            error("Phone display compression altered the attention value")
+        end
+        attentionByApp["app.generic"] = { state = "error" }
+        host:update(600)
+        rendersBefore = badgeRenders
+        labels = {}; host:draw()
+        if badgeRenders <= rendersBefore then
+            error("Phone error badge was not drawn")
+        end
+        attentionFails = true
+        host:update(600)
+        rendersBefore = badgeRenders
+        host:draw()
+        if badgeRenders ~= rendersBefore then
+            error("Phone drew a badge after attention failed")
+        end
+        attentionFails = false
+        attentionByApp["app.generic"] = nil
+        host:update(600)
+
         local launcher = host.hitRegions[1]
         host:onPointer(launcher.x + 0.001, launcher.y + 0.001,
             false, false, 1)
@@ -191,7 +248,8 @@ function FORGE.Tests.runPhoneHostTests()
             error("Phone claimed outside pointer")
         end
 
-        if host:shutdown() ~= Result.SUCCESS or overlayDeletes ~= 1 then
+        -- The frame plus five badge images are deleted on shutdown.
+        if host:shutdown() ~= Result.SUCCESS or overlayDeletes ~= 6 then
             error("Phone shutdown failed")
         end
 

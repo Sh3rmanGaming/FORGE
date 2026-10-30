@@ -95,6 +95,17 @@ function FORGE.Tests.runCommunicationsApplicationIntegrationTests()
             error("Inbox model, sender, preview, or shared badge failed")
         end
 
+        -- PF.005: the private attention query tracks the same unread truth.
+        local attention = FORGE.ApplicationPresentationService
+            :getAttention("laptop", AppId)
+        local phoneAttention = FORGE.ApplicationPresentationService
+            :getAttention("phone", AppId)
+        if attention.state ~= "unread" or attention.count ~= 2
+            or phoneAttention.state ~= "unread"
+            or phoneAttention.count ~= 2 then
+            error("Communications attention did not match unread truth")
+        end
+
         inbox.content.rows[1].subject = "mutated"
         if FORGE.Communications:getMessage(firstId).subject ~= "First" then
             error("Presentation model exposed authoritative state")
@@ -142,6 +153,11 @@ function FORGE.Tests.runCommunicationsApplicationIntegrationTests()
                 ~= "messageDetail"
             or FORGE.ForgeOS:getApplicationBadge("laptop", AppId) ~= 1 then
             error("Mark-read action or shared badge failed")
+        end
+        local afterRead = FORGE.ApplicationPresentationService
+            :getAttention("laptop", AppId)
+        if afterRead.state ~= "unread" or afterRead.count ~= 1 then
+            error("Communications attention was stale after mark-read")
         end
 
         local archiveResult, archiveOutcome =
@@ -195,7 +211,9 @@ function FORGE.Tests.runCommunicationsApplicationIntegrationTests()
         if FORGE.ForgeOS:hideDevice("phone") ~= ForgeResult.SUCCESS
             or FORGE.ForgeOS:getApplicationPresentationModel("phone", AppId)
                 ~= nil
-            or FORGE.ForgeOS:getApplicationBadge("phone", AppId) ~= 0 then
+            or FORGE.ForgeOS:getApplicationBadge("phone", AppId) ~= 0
+            or FORGE.ApplicationPresentationService
+                :getAttention("phone", AppId).state ~= "none" then
             error("Hidden Host presentation gate failed")
         end
 

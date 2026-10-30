@@ -11,6 +11,8 @@ function FORGE.Tests.runLaptopHostTests()
     local population, unavailable = {}, {}
     local sequence, labels = {}, {}
     local overlays, overlayDeletes, notificationQueries = 0, 0, 0
+    local attentionQueries, attentionFails, badgeRenders = 0, false, 0
+    local attentionByApp = { ["forge.one"] = { state = "unread", count = 3 } }
 
     local function definition(appId)
         return { id = appId, displayName = "Application " .. appId,
@@ -50,6 +52,11 @@ function FORGE.Tests.runLaptopHostTests()
         getApplicationBadge = function(appId)
             return appId == "forge.one" and 3 or 0
         end,
+        getApplicationAttention = function(appId)
+            attentionQueries = attentionQueries + 1
+            if attentionFails then error("attention provider failure") end
+            return attentionByApp[appId] or { state = "none", count = 0 }
+        end,
         getApplicationPresentationModel = function() return nil end,
         performApplicationAction = function() return Result.NOT_AVAILABLE end,
         getNotifications = function()
@@ -69,8 +76,13 @@ function FORGE.Tests.runLaptopHostTests()
     drawFilledRect = function() end
     renderText = function(_, _, _, text) labels[#labels + 1] = text end
     setTextColor = function() end
-    createImageOverlay = function() return 200 end
-    renderOverlay = function() overlays = overlays + 1 end
+    createImageOverlay = function(path)
+        return string.find(path, "badge_", 1, true) and 300 or 200
+    end
+    renderOverlay = function(overlay)
+        overlays = overlays + 1
+        if overlay == 300 then badgeRenders = badgeRenders + 1 end
+    end
     setOverlayColor = function() end
     delete = function() overlayDeletes = overlayDeletes + 1 end
 
@@ -99,6 +111,50 @@ function FORGE.Tests.runLaptopHostTests()
             or #host.hitRegions ~= 2 then
             error("Laptop registry projection failed")
         end
+
+        -- PF.005: attention is sampled on update and never while drawing.
+        local queriesBefore = attentionQueries
+        labels = {}; host:draw()
+        if attentionQueries ~= queriesBefore then
+            error("Laptop queried attention while drawing")
+        end
+        host:update(600)
+        if attentionQueries ~= queriesBefore + 3 then
+            error("Laptop did not sample attention once per application")
+        end
+        host:update(100)
+        if attentionQueries ~= queriesBefore + 3 then
+            error("Laptop sampled attention before the refresh interval")
+        end
+        local overlaysBefore = badgeRenders
+        labels = {}; host:draw()
+        local countSeen = false
+        for _, label in ipairs(labels) do
+            if label == "3" then countSeen = true end
+        end
+        if not countSeen or badgeRenders <= overlaysBefore then
+            error("Laptop unread badge did not draw the count over its image")
+        end
+        attentionByApp["forge.one"] = { state = "warning" }
+        host:update(600)
+        overlaysBefore = badgeRenders
+        labels = {}; host:draw()
+        for _, label in ipairs(labels) do
+            if label == "3" then error("Laptop kept a stale attention count") end
+        end
+        if badgeRenders <= overlaysBefore then
+            error("Laptop warning badge was not drawn")
+        end
+        attentionFails = true
+        host:update(600)
+        overlaysBefore = badgeRenders
+        labels = {}; host:draw()
+        if badgeRenders ~= overlaysBefore then
+            error("Laptop drew a badge after attention failed")
+        end
+        attentionFails = false
+        attentionByApp["forge.one"] = { state = "unread", count = 3 }
+
         local one = host.hitRegions[1]
         host:onPointer(one.x + 0.01, one.y + 0.01, false, false, 1)
         if host.hoveredControl ~= one.id then error("Laptop hover failed") end
@@ -161,7 +217,9 @@ function FORGE.Tests.runLaptopHostTests()
             or not host:containsPoint(0.20, 0.20)
             or host:containsPoint(0.99, 0.99)
             or host:shutdown() ~= Result.SUCCESS
-            or overlayDeletes ~= 2 or host:isOperational() then
+            -- Each Host deletes its wallpaper plus five badge images; two
+            -- Hosts shut down in this test.
+            or overlayDeletes ~= 12 or host:isOperational() then
             error("Laptop shell/fallback/shutdown contract failed")
         end
     end)

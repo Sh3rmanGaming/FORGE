@@ -39,8 +39,13 @@ local Theme = {
     [Token.BORDER_SUBTLE] = { 0.20, 0.23, 0.27, 0.72 },
     [Token.BORDER_ACTIVE] = { 0.95, 0.48, 0.12, 1 },
     [Token.BORDER_FOCUS] = { 0.92, 0.72, 0.42, 1 },
-    [Token.SEMANTIC_UNREAD] = { 0.95, 0.62, 0.20, 1 }
+    [Token.SEMANTIC_UNREAD] = { 0.95, 0.62, 0.20, 1 },
+    [Token.SEMANTIC_ATTENTION] = { 0.35, 0.65, 0.95, 1 },
+    [Token.SEMANTIC_WARNING] = { 0.98, 0.80, 0.20, 1 },
+    [Token.SEMANTIC_ERROR] = { 0.90, 0.25, 0.22, 1 }
 }
+local BadgeHeight = 0.028
+local AttentionRefreshInterval = 500
 
 local function color(token)
     return Theme[token] or Theme[Token.TEXT_PRIMARY]
@@ -97,6 +102,10 @@ function LaptopHost.create(context)
         shortcutViewport = nil,
         toastSafeRegion = nil,
         wallpaperOverlay = nil,
+        badgeOverlays = {},
+        -- Session-local attention snapshot; never persisted.
+        attention = {},
+        attentionElapsed = AttentionRefreshInterval,
         hitRegions = {},
         pressedControl = nil,
         hoveredControl = nil,
@@ -145,6 +154,16 @@ function LaptopHost.create(context)
         local value = color(token)
         setColor(value[1], value[2], value[3], value[4])
     end
+
+    local badgePainter = {
+        aspect = 16 / 9,
+        tint = color,
+        rect = drawTokenPanel,
+        text = function(text, x, y, size, red, green, blue)
+            setColor(red, green, blue, 1)
+            drawLabel(text, x, y, size)
+        end
+    }
 
     local function region(self, identifier, x, y, width, height, action)
         self.hitRegions[#self.hitRegions + 1] = {
@@ -335,6 +354,9 @@ function LaptopHost.create(context)
                     .. "scripts/forge/forgeos/assets/laptop_wallpaper.png")
             self.wallpaperOverlay = created and overlay or nil
         end
+        self.badgeOverlays = FORGE.AttentionBadge.loadOverlays()
+        self.attention = {}
+        self.attentionElapsed = AttentionRefreshInterval
         resetPresentation(self)
         rebuildGeometry(self)
         self.declarative = FORGE.PresentationHostAdapter.create(
@@ -358,6 +380,17 @@ function LaptopHost.create(context)
     function instance:update(dt)
         if not self.initialized or type(dt) ~= "number" then return end
         synchronizeRoute(self)
+        -- Attention is sampled here, on the refresh path, never while drawing.
+        if self.activeAppId == nil
+            and self.context.getVisibility() == Visibility.VISIBLE then
+            self.attentionElapsed = self.attentionElapsed + math.max(dt, 0)
+            if self.attentionElapsed >= AttentionRefreshInterval then
+                self.attentionElapsed = 0
+                self.attention = FORGE.AttentionBadge.collect(self.context)
+            end
+        else
+            self.attentionElapsed = AttentionRefreshInterval
+        end
         if self.activeAppId == CommunicationsAppId then
             self.refreshElapsed = self.refreshElapsed + math.max(dt, 0)
             if self.refreshElapsed >= 500 then
@@ -605,13 +638,22 @@ function LaptopHost.create(context)
                 or Token.TEXT_PRIMARY)
             drawLabel(ellipsis(shortcut.displayName, 22), x + 0.010,
                 y + 0.018, 0.010)
-            local badgeCall = { pcall(self.context.getApplicationBadge,
-                shortcut.appId) }
-            local badge = badgeCall[1] and badgeCall[2] or 0
-            if type(badge) == "number" and badge > 0 then
-                setTokenColor(Token.SEMANTIC_UNREAD)
-                drawLabel(tostring(math.floor(badge)),
-                    x + cellWidth - 0.025, y + cellHeight - 0.035, 0.009)
+            local badge = FORGE.AttentionBadge.describe(
+                self.attention[shortcut.appId])
+            if badge ~= nil then
+                local metrics = type(self.context.getViewportMetrics)
+                    == "function" and self.context.getViewportMetrics() or nil
+                if type(metrics) == "table" and type(metrics.width) == "number"
+                    and type(metrics.height) == "number"
+                    and metrics.height > 0 then
+                    badgePainter.aspect = metrics.width / metrics.height
+                end
+                local badgeWidth = FORGE.AttentionBadge.measure(
+                    badge, BadgeHeight, badgePainter.aspect)
+                FORGE.AttentionBadge.draw(self.badgeOverlays, badge,
+                    x + cellWidth - badgeWidth - 0.008,
+                    y + cellHeight - 0.014 - BadgeHeight,
+                    BadgeHeight, badgePainter)
             end
             region(self, id, x, y, cellWidth, cellHeight - 0.010,
                 { launcher = true, appId = shortcut.appId })
@@ -804,6 +846,9 @@ function LaptopHost.create(context)
             pcall(delete, self.wallpaperOverlay)
         end
         self.wallpaperOverlay = nil
+        FORGE.AttentionBadge.deleteOverlays(self.badgeOverlays)
+        self.badgeOverlays = {}
+        self.attention = {}
         resetPresentation(self)
         self.declarative = nil
         self.activeAppId, self.routeId = nil, nil

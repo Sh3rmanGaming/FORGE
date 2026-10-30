@@ -177,6 +177,16 @@ function provider:getBadge(_)
     return FORGE.Communications:getUnreadCount()
 end
 
+-- Optional private semantic attention query. Same unread truth as getBadge;
+-- Communications reports only `unread` or `none`.
+function provider:getAttention(_)
+    local count = FORGE.Communications:getUnreadCount()
+    if count > 0 then
+        return { state = "unread", count = count }
+    end
+    return { state = "none", count = 0 }
+end
+
 local function completed(domainResult, navigation)
     local outcome = {
         completed = domainResult == CommunicationsResult.SUCCESS,

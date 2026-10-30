@@ -140,6 +140,7 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         <sourceFile filename="scripts/forge/forgeos/services/NavigationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/presentation/PresentationRenderer.lua"/>
         <sourceFile filename="scripts/forge/forgeos/presentation/PresentationHostAdapter.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/presentation/AttentionBadge.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/ApplicationPresentationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/NotificationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/DeviceStateService.lua"/>
@@ -149,6 +150,7 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         <sourceFile filename="scripts/forge/forgeos/integration/ForgeOSExportBridge.lua"/>
 
         <!-- Manual test harnesses -->
+        <sourceFile filename="scripts/forge/tests/DevelopmentAttentionPreview.lua"/>
         <sourceFile filename="scripts/forge/tests/services/LoggerTest.lua"/>
         <sourceFile filename="scripts/forge/tests/services/EventBusTest.lua"/>
         <sourceFile filename="scripts/forge/tests/services/StateStoreTest.lua"/>
@@ -169,6 +171,7 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         <sourceFile filename="scripts/forge/tests/forgeos/NavigationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/ApplicationPresentationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/PresentationRendererTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/AttentionBadgeTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/NotificationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceHostRegistryTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceStateServiceTest.lua"/>

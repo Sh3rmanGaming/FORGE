@@ -164,6 +164,10 @@ function FORGE.Tests.runPhoneCommunicationsPresentationIntegrationTests()
             }
         end,
         getApplicationBadge = function() return badge end,
+        getApplicationAttention = function()
+            return badge > 0 and { state = "unread", count = badge }
+                or { state = "none", count = 0 }
+        end,
         getNotifications = function()
             notificationsQueried = notificationsQueried + 1
             return {}

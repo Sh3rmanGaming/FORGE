@@ -250,6 +250,8 @@ local function runDevelopmentTests()
                     FORGE.Tests.runCommunicationsServiceTests),
                 harness("Communications Persistence",
                     FORGE.Tests.runCommunicationsPersistenceTests),
+                harness("PF.005 Attention Badge",
+                    FORGE.Tests.runAttentionBadgeTests),
                 harness("Logger", FORGE.Tests.runLoggerTests),
                 harness("Event Bus", FORGE.Tests.runEventBusTests),
                 harness("State Store", FORGE.Tests.runStateStoreTests),
@@ -898,6 +900,13 @@ function FORGE.Engine:loadMap(mapName)
                     "<unknown>"
                 )
             )
+        end
+
+        -- Development verification builds only: inert apps that show each
+        -- PF.005 attention state on the launchers.
+        if FORGE.Logger:isDevelopmentMode()
+            and FORGE.DevelopmentAttentionPreview ~= nil then
+            FORGE.DevelopmentAttentionPreview:register()
         end
     end
 

@@ -231,7 +231,9 @@ Decided by the project owner for PF.005:
 
 - A count above 99 displays as `99+`. The displayed text is a visual
   compression only; the authoritative value is never altered.
-- `warning`, `error`, and `attention` may display without a count.
+- `warning`, `error`, and `attention` may display without a count. When one
+  carries a count, a small count badge in the same colour sits immediately left
+  of the state shape; the count never replaces the shape.
 - Badge shapes are generated image assets with anti-aliased rounded corners
   (white shape, any glyph baked in dark), tinted at draw time by the semantic
   token for the state. The count text is rendered by the Host. If an overlay

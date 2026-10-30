@@ -93,6 +93,10 @@ function FORGE.Tests.runLaptopCommunicationsPresentationIntegrationTests()
             activeAppId, routeId = nil, nil; return Result.SUCCESS
         end,
         getApplicationBadge = function() return badge end,
+        getApplicationAttention = function()
+            return badge > 0 and { state = "unread", count = badge }
+                or { state = "none", count = 0 }
+        end,
         getApplicationPresentationModel = function()
             if failModel then return nil end
             if routeId == "inbox" then return inboxModel() end
@@ -137,6 +141,7 @@ function FORGE.Tests.runLaptopCommunicationsPresentationIntegrationTests()
     local succeeded, failure = pcall(function()
         local host = FORGE.LaptopHost.create(context)
         if host:initialize() ~= Result.SUCCESS then error("Laptop init failed") end
+        host:update(600)
         host:draw()
         local homeQueries, badgeSeen = notificationQueries, false
         for _, label in ipairs(labels) do if label == "8" then badgeSeen = true end end
