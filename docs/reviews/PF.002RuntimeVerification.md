@@ -35,7 +35,7 @@ included.
 ## FS25 Accepted Cycle
 
 - savegame: 3;
-- log: `PF.002-cycle5-accepted-log.txt`;
+- log: `evidence/PF.002-cycle5-accepted-log.txt`;
 - log SHA-256:
   `D04899503358CBBF09B4CA55C910DFDF54428E5B513AD0E8C79590E4C83EDF73`;
 - PF.002 Presentation Renderer tests: passed;
@@ -54,12 +54,12 @@ is unchanged. Application action activation remains on the originating Host.
 
 ## Rejected Verification Cycles
 
-- Cycle 1 (`PF.002-cycle1-log.txt`) rejected because the PF.002 unit assertion
+- Cycle 1 (`evidence/PF.002-cycle1-log.txt`) rejected because the PF.002 unit assertion
   incorrectly treated the Laptop's own zero Scroll entry as Phone mutation and
   retained Host tests exposed a missing shell Home region on the generic path.
-- Cycle 2 (`PF.002-cycle2-log.txt`) rejected despite a passing suite because the
+- Cycle 2 (`evidence/PF.002-cycle2-log.txt`) rejected despite a passing suite because the
   neutral harness called the real GIANTS overlay backend outside draw.
-- Cycle 3 (`PF.002-cycle3-log.txt`) rejected because an overlay test double used
+- Cycle 3 (`evidence/PF.002-cycle3-log.txt`) rejected because an overlay test double used
   an invalid table handle and produced GIANTS argument call stacks.
 
 All rejected evidence remains separate from the accepted cycle.

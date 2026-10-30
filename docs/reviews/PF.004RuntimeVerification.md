@@ -92,16 +92,16 @@ made during verification completion.
 
 ## Visual evidence
 
-- `PF.004-restore-check.png`: compact one-app Phone Home with generic icon
+- `evidence/PF.004-restore-check.png`: compact one-app Phone Home with generic icon
   fallback over the Laptop Desktop;
-- `PF.004-phone-active-over-laptop-desktop.png`: grandfathered Communications
+- `evidence/PF.004-phone-active-over-laptop-desktop.png`: grandfathered Communications
   active within the trusted Phone viewport over the Laptop Desktop;
-- `PF.004-menu-check.png`: Phone active application and restrained shell chrome
+- `evidence/PF.004-menu-check.png`: Phone active application and restrained shell chrome
   coexisting with the Laptop Desktop.
-- `PF.004-verification-phone-home-over-gameplay.jpg`: required truthful Phone
+- `evidence/PF.004-verification-phone-home-over-gameplay.jpg`: required truthful Phone
   Home composition over normal exterior gameplay with Laptop hidden; SHA-256
   `1F9417B2DC2FA2F30B70DDD51DF8FA10A96317B38D6B8EFF3B2F74428CCB4DF4`;
-- `PF.004-verification-phone-active-over-gameplay.jpg`: truthful grandfathered
+- `evidence/PF.004-verification-phone-active-over-gameplay.jpg`: truthful grandfathered
   Communications active application over the same gameplay context with Laptop
   hidden; SHA-256
   `B854C40ADD8A899D555455D1B60889124FC987DFB6DAECA68D0E9ACD41A68348`.

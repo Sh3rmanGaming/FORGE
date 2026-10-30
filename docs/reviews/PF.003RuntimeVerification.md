@@ -53,7 +53,7 @@ outside that viewport.
 
 ### Rejected cycle 1
 
-- log: `PF.003-cycle1-rejected-log.txt`;
+- log: `evidence/PF.003-cycle1-rejected-log.txt`;
 - SHA-256:
   `CF8DDC917B45E3BB8DAD1D2CAE8929A1A7FC689C1AABD473BF350F3EDF0075B1`;
 - rejected because the legacy integration harness clicked its old pre-PF.003
@@ -62,7 +62,7 @@ outside that viewport.
 
 ### Accepted technical cycle 2
 
-- log: `PF.003-cycle2-accepted-runtime-log.txt`;
+- log: `evidence/PF.003-cycle2-accepted-runtime-log.txt`;
 - SHA-256:
   `AF648C17E3ABF8D95678AB6A611E4EDD87072F41299DBB6CC68638323C272847`;
 - complete retained development suite passed;
@@ -74,7 +74,7 @@ outside that viewport.
 
 ### Visual cycle 3
 
-- log: `PF.003-cycle3-visual-log.txt`;
+- log: `evidence/PF.003-cycle3-visual-log.txt`;
 - SHA-256:
   `9A2820FD5625972A0590C44A25A6376404087F2404A089F526A981AFA921F8DF`;
 - complete retained development suite passed again;
@@ -83,12 +83,12 @@ outside that viewport.
 
 ## Visual evidence
 
-- `PF.003-cycle3-laptop-desktop-alone.png`: one-app Desktop, generic icon
+- `evidence/PF.003-cycle3-laptop-desktop-alone.png`: one-app Desktop, generic icon
   fallback, dark wallpaper, compact shortcut, restrained chrome, negative space;
-- `PF.003-cycle3-laptop-desktop-manual.png`: Desktop with right-side Phone;
-- `PF.003-cycle3-laptop-desktop-daylight.png`: active legacy Communications
+- `evidence/PF.003-cycle3-laptop-desktop-manual.png`: Desktop with right-side Phone;
+- `evidence/PF.003-cycle3-laptop-desktop-daylight.png`: active legacy Communications
   workspace with Phone, trusted shell chrome, and daylight/busy world edges;
-- `PF.003-cycle3-gameplay-daylight.png`: comparable gameplay context.
+- `evidence/PF.003-cycle3-gameplay-daylight.png`: comparable gameplay context.
 
 The actual runtime registry contains one Laptop application, so a fabricated app
 catalog was not introduced to manufacture an overflow screenshot. Large/overflow

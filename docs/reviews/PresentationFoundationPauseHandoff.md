@@ -70,8 +70,8 @@ Authoritative record:
 
 - `docs/reviews/PF.004RuntimeVerification.md`
 - `docs/reviews/evidence/PF.004-cycle2-verification-completion-log.txt`
-- `PF.004-verification-phone-home-over-gameplay.jpg`
-- `PF.004-verification-phone-active-over-gameplay.jpg`
+- `docs/reviews/evidence/PF.004-verification-phone-home-over-gameplay.jpg`
+- `docs/reviews/evidence/PF.004-verification-phone-active-over-gameplay.jpg`
 - `FS25_FORGE_Engine_PF.004-operational.zip`
 
 The accepted runtime cycle proved Engine startup, PhoneHost and LaptopHost
