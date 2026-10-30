@@ -22,33 +22,65 @@
 
 ---
 
-## Current Architecture Gate — PF.005 Application Attention
+## Working Rules
+
+Decided by the project owner on 2026-10-30.
+
+1. **The user's testing time is the scarcest resource.** Work is planned in
+   *test rounds*: one build, one numbered test script, one set of named
+   screenshots, covering several related batches at once. Small visual changes
+   are folded into the next round's build, not given a round of their own.
+2. **Test outside the game first.** Everything that can run in the Lua test
+   environment, the tool tests and the package checks runs before the user is
+   asked to test. The user's session covers only what needs the game.
+3. **Mockups before builds.** Position, size and colour decisions are settled on
+   rendered previews of the real assets where possible, not by building the
+   game package.
+4. **One approval per round.** A round has one plan approval, not one per batch.
+5. **No freezing.** Earlier milestones were "frozen" when accepted. That
+   forced explicit un-freeze approvals when later understanding changed the
+   design. From here, a batch is *accepted* when its runtime check passes and
+   the user agrees; accepted work may be changed by a later round with a short
+   recorded note, with no un-freeze approval. The "frozen" wording in the
+   historical entries below is kept as history and is no longer a gate.
+6. **Evidence is kept per batch** inside each round, so acceptance stays
+   traceable.
+
+## Current Work Plan — Test Rounds
 
 M3 Communications remains complete and historically accepted. The Project
 Director and Chief Architect approved the bounded reopening of M2/M3
-presentation contracts before M4.001 implementation. The
+presentation contracts before M4 implementation. The
 [M2/M3 Presentation Foundation Review](../reviews/M2M3PresentationFoundationReview.md)
 and [implementation plan](M2M3PresentationFoundationImplementationPlan.md) are
-Approved.
+Approved. The plan's PF.005 to PF.009 batches are regrouped into the rounds
+below; the plan document still lists them separately and is to be aligned.
 
 | Batch | State |
 |-------|-------|
-| PF.001 Definitions | Implemented, verified, accepted and frozen (clarified baseline) |
-| PF.002 Shared Host Renderer | Implemented, verified, accepted and frozen |
-| PF.003 Laptop Shell | Implemented, verified, visually reviewed, accepted and frozen |
-| PF.004 Phone Shell | Implemented, verified, visually reviewed, accepted and frozen |
-| PF.005 Application Attention | Architecture/UX documentation plan awaiting approval |
-| PF.006-PF.009 | Implementation not authorized |
+| PF.001 Definitions | Implemented, verified, accepted |
+| PF.002 Shared Host Renderer | Implemented, verified, accepted |
+| PF.003 Laptop Shell | Implemented, verified, visually reviewed, accepted |
+| PF.004 Phone Shell | Implemented, verified, visually reviewed, accepted |
+| PF.005 Application Attention | Implemented. Phone and Laptop badges verified in FS25 (PF.005b build). The count-and-shape mirror (shape at the icon's top-left corner) is built and committed but not yet deployed or checked in the game. Acceptance happens in Round 1 |
 
-PF.005 implementation is not authorized. Communications model-v1 renderers
-remain a bounded compatibility exception: PF.007 owns the Laptop migration and
-PF.008 owns the Phone migration.
+| Round | Contents | User testing |
+|-------|----------|--------------|
+| **1** | PF.005 retest plus PF.006 Notification Presentation and Deep Links (Phone banners, Laptop toasts, semantic sounds, deep links) | One session: badges, a banner and a toast, activating through to a message |
+| **2** | PF.007 Communications Laptop UX, PF.008 Communications Phone UX and PF.009 Cross-Device Verification and Acceptance | One session on both devices, including save and restart |
+| **3** | M4 Foundation Contracts and Runtime Seams, planned as one round (see M4 below) | No screenshots: the in-game test suite runs at startup; the user launches, loads, saves and quits, and the log is read |
+| **4 onward** | M5 to M9, planned the same way | To be set when each is planned |
+
+Only Round 1 is next. Nothing in Rounds 2 and 3 is authorized to implement until
+its round plan is approved. Communications model-v1 renderers remain a bounded
+compatibility exception: PF.007 owns the Laptop migration and PF.008 owns the
+Phone migration.
 
 The [M4 Foundation Architecture Plan](M4FoundationArchitecturePlan.md) remains
 Approved. M4.001 Subject Identity architecture remains unchanged and at Review.
-Its implementation does not begin until the Presentation Foundation amendment
-is implemented, verified, accepted, and refrozen. No M4 or gameplay-domain
-production implementation is currently authorized.
+M4 implementation does not begin until Presentation Foundation Rounds 1 and 2
+are accepted. No M4 or gameplay-domain production implementation is currently
+authorized.
 
 # FORGE Development Roadmap
 
@@ -777,7 +809,10 @@ requests, shared game-time/deadline semantics, persistence compatibility and
 migration, external identifiers and dependency rules, XML definition loading,
 cross-domain partial-success policy, and explicit version mapping.
 
-The decomposed M4 plan is Approved. Execution remains gated per batch:
+The decomposed M4 plan is Approved. M4 is mostly shared plumbing that can be
+tested in the Lua test environment, so it is planned as **one test round**
+(Round 3) instead of eight. The work items remain separate for design and
+evidence:
 
 - M4.001 Subject Identity and Legacy Compatibility — architecture at Review;
 - M4.002 Authoritative Mutation Request Seam — not started;
@@ -786,10 +821,12 @@ The decomposed M4 plan is Approved. Execution remains gated per batch:
 - M4.005 External Identity, Dependencies and API Evolution — not started;
 - M4.006 XML Definition Registry Foundation — not started;
 - M4.007 Cross-Domain Mutation and Partial-Success Policy — not started; and
-- M4.008 Version Mapping, Integration Verification and Freeze — not started.
+- M4.008 Version Mapping and Integration Verification — not started.
 
-M4 must not implement Character, Companies, Banking, Projects, or Campaign
-rules.
+The exact scope of the single round is confirmed when the M4 round plan is
+drafted; any item that needs real in-game checking beyond the startup test suite
+is called out then. M4 must not implement Character, Companies, Banking,
+Projects, or Campaign rules.
 
 ### M5 — Character and Progression
 
@@ -818,6 +855,10 @@ must not duplicate the truth owned by prerequisite domains.
 Expose stable, versioned authoring contracts over the definition schemas owned
 by preceding domains. Campaign packs provide data and dependencies; domain
 managers remain runtime authorities.
+
+M5 to M9 are planned under the Working Rules above: broad test rounds, tested
+outside the game first, mockups before builds, and no freezing. None has a round
+plan yet.
 
 Public-release planning moves beyond M9 and requires a separate roadmap
 decision after these dependency milestones mature.
