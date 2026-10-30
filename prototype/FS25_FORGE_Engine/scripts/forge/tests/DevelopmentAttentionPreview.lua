@@ -17,17 +17,17 @@ local DeviceId = FORGE.Definitions.DeviceId
 
 local ROUTE = "home"
 local Entries = {
-    { key = "unread7", name = "Preview Unread 7",
+    { key = "unread7", name = "Unread 7",
         attention = { state = "unread", count = 7 } },
-    { key = "unread42", name = "Preview Unread 42",
+    { key = "unread42", name = "Unread 42",
         attention = { state = "unread", count = 42 } },
-    { key = "unread150", name = "Preview Unread 150",
+    { key = "unread150", name = "Unread 150",
         attention = { state = "unread", count = 150 } },
-    { key = "attention", name = "Preview Attention",
+    { key = "attention", name = "Attention",
         attention = { state = "attention" } },
-    { key = "warning3", name = "Preview Warning 3",
+    { key = "warning3", name = "Warning 3",
         attention = { state = "warning", count = 3 } },
-    { key = "error", name = "Preview Error",
+    { key = "error", name = "Error",
         attention = { state = "error" } }
 }
 
@@ -89,6 +89,41 @@ local function presentation(identifier, provider)
     }
 end
 
+local testMessageCount = 0
+local consoleRegistered = false
+
+--- Console command target: creates one unread Communications message so the
+--- unread badge can be exercised in the game. Development builds only. The
+--- message is saved with the savegame, so use a throwaway save.
+function Preview:consoleCreateTestMessage()
+    testMessageCount = testMessageCount + 1
+    local result = FORGE.Communications:createMessage({
+        source = "forge.verification.preview",
+        subject = "Test message " .. tostring(testMessageCount),
+        body = "Created by the forgeTestMessage development command.",
+        channel = "system",
+        recipient = "player.local"
+    })
+    if result ~= FORGE.Definitions.CommunicationsResult.SUCCESS then
+        return "forgeTestMessage failed: "
+            .. FORGE.Logger:safeToString(result, "<unknown>")
+    end
+    return "FORGE test message " .. tostring(testMessageCount)
+        .. " created; unread count is "
+        .. tostring(FORGE.Communications:getUnreadCount())
+end
+
+local function registerConsoleCommand()
+    if consoleRegistered or type(addConsoleCommand) ~= "function" then
+        return
+    end
+    consoleRegistered = true
+    addConsoleCommand("forgeTestMessage",
+        "Creates one unread FORGE Communications test message "
+            .. "(development builds only)",
+        "consoleCreateTestMessage", Preview)
+end
+
 --- Registers every preview application. Returns the number registered.
 function Preview:register()
     local registered = 0
@@ -121,5 +156,6 @@ function Preview:register()
             )
         end
     end
+    registerConsoleCommand()
     return registered
 end

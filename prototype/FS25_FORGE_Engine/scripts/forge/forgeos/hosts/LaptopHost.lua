@@ -45,6 +45,7 @@ local Theme = {
     [Token.SEMANTIC_ERROR] = { 0.90, 0.25, 0.22, 1 }
 }
 local BadgeHeight = 0.028
+local BadgeOverlap = 0.010
 local AttentionRefreshInterval = 500
 
 local function color(token)
@@ -648,12 +649,15 @@ function LaptopHost.create(context)
                     and metrics.height > 0 then
                     badgePainter.aspect = metrics.width / metrics.height
                 end
-                local badgeWidth = FORGE.AttentionBadge.measure(
-                    badge, BadgeHeight, badgePainter.aspect)
+                -- Anchored to the icon square's top-right corner (the icon
+                -- spans x + 0.010 .. x + 0.040, top at y + cellHeight - 0.022).
+                -- A count stays there; its state shape mirrors to the
+                -- top-left corner.
                 FORGE.AttentionBadge.draw(self.badgeOverlays, badge,
-                    x + cellWidth - badgeWidth - 0.008,
-                    y + cellHeight - 0.014 - BadgeHeight,
-                    BadgeHeight, badgePainter)
+                    x + 0.040 - BadgeOverlap,
+                    y + cellHeight - 0.022 - BadgeHeight * 0.55,
+                    BadgeHeight, badgePainter,
+                    x + 0.010 + BadgeOverlap)
             end
             region(self, id, x, y, cellWidth, cellHeight - 0.010,
                 { launcher = true, appId = shortcut.appId })

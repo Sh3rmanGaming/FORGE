@@ -171,6 +171,9 @@ def main() -> int:
     if arguments.deploy and arguments.deploy not in modes:
         raise SystemExit("STOP: --deploy names a package that is not built")
 
+    if arguments.deploy and game_is_running():
+        raise SystemExit(f"STOP: {GAME_PROCESS} is running; close it before "
+                         "building a package to deploy")
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     python = sys.executable
     sync_line = run_gate(

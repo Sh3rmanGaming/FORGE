@@ -46,6 +46,7 @@ local Theme = {
 }
 -- Phone badges start slightly larger than Laptop badges (Design System).
 local BadgeHeight = 0.032
+local BadgeOverlap = 0.008
 local AttentionRefreshInterval = 500
 
 local function color(token)
@@ -710,12 +711,15 @@ function PhoneHost.create(context)
                     and metrics.height > 0 then
                     badgePainter.aspect = metrics.width / metrics.height
                 end
-                local badgeWidth = FORGE.AttentionBadge.measure(
-                    badge, BadgeHeight, badgePainter.aspect)
+                -- Anchored to the icon square's top-right corner (the icon
+                -- spans x + 0.008 .. x + 0.034, top at y + cellHeight - 0.018).
+                -- A count stays there; its state shape mirrors to the
+                -- top-left corner.
                 FORGE.AttentionBadge.draw(self.badgeOverlays, badge,
-                    x + cellWidth - badgeWidth - 0.006,
-                    y + cellHeight - 0.012 - BadgeHeight,
-                    BadgeHeight, badgePainter)
+                    x + 0.034 - BadgeOverlap,
+                    y + cellHeight - 0.018 - BadgeHeight * 0.55,
+                    BadgeHeight, badgePainter,
+                    x + 0.008 + BadgeOverlap)
             end
             region(self, id, x, y, cellWidth, cellHeight - 0.008,
                 { launcher = true, appId = shortcut.appId })

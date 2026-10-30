@@ -107,6 +107,17 @@ function FORGE.Tests.runAttentionBadgeTests()
             and texts[2].text == "!",
             "warning with a count should draw the count then the shape")
         check(rects[2].x > rects[1].x, "count should sit left of the shape")
+        -- A mirrored shape right edge puts the shape left of the count.
+        painter = newPainter()
+        Badge.draw({}, warning, 0.1, 0.2, 0.03, painter, 0.05)
+        check(#rects == 2 and rects[1].x == 0.1
+            and math.abs(rects[2].x + rects[2].width - 0.05) < 1e-9
+            and rects[2].x < rects[1].x,
+            "mirrored shape should end at shapeRight, left of the count")
+        painter = newPainter()
+        Badge.draw({}, failureBadge, 0.1, 0.2, 0.03, painter, 0.05)
+        check(#rects == 1 and rects[1].x == 0.1,
+            "a shape without a count must ignore shapeRight")
         painter = newPainter()
         Badge.draw({}, nil, 0.1, 0.2, 0.03, painter)
         check(#rects == 0 and #texts == 0, "nil badge must draw nothing")

@@ -200,16 +200,27 @@ end
 --- supplies `aspect` (screen width / height), `tint(token)`, `rect(token, x,
 --- y, w, h)`, and `text(text, x, y, size, r, g, b)` in the calling Host's own
 --- palette.
-function AttentionBadge.draw(overlays, spec, x, y, height, painter)
+---
+--- A state shape that carries a count normally sits immediately right of the
+--- count. When `shapeRight` is given, that shape is instead drawn with its
+--- right edge at `shapeRight`, so a Host can place it at the opposite icon
+--- corner. A shape without a count always stays at (x, y).
+function AttentionBadge.draw(overlays, spec, x, y, height, painter, shapeRight)
     if spec == nil then
         return
     end
+    local shapeX = x
     if spec.countText ~= nil then
         local pill = countShape(spec.countText)
         drawShape(overlays, pill, spec.token, spec.countText, x, y, height,
             painter)
-        x = x + shapeWidth(pill, height, painter.aspect) + CountGap
+        if shapeRight ~= nil then
+            shapeX = shapeRight
+                - shapeWidth(spec.shape, height, painter.aspect)
+        else
+            shapeX = x + shapeWidth(pill, height, painter.aspect) + CountGap
+        end
     end
-    drawShape(overlays, spec.shape, spec.token, spec.text, x, y, height,
+    drawShape(overlays, spec.shape, spec.token, spec.text, shapeX, y, height,
         painter)
 end
