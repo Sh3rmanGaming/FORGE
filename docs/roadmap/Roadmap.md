@@ -66,7 +66,7 @@ below; the plan document still lists them separately and is to be aligned.
 
 | Round | Contents | User testing |
 |-------|----------|--------------|
-| **1** | PF.005 retest plus PF.006 Notification Presentation and Deep Links (Phone banners, Laptop toasts, semantic sounds, deep links) | One session: badges, a banner and a toast, activating through to a message |
+| **1** | PF.005 retest plus PF.006 Notification Presentation and Deep Links (Phone banners, Laptop toasts, semantic sounds, deep links). Built and deployed as the `PF.006` verification package; awaiting the test session | One session: badges, a banner and a toast, activating through to a message |
 | **2** | PF.007 Communications Laptop UX, PF.008 Communications Phone UX and PF.009 Cross-Device Verification and Acceptance | One session on both devices, including save and restart |
 | **3** | M4 Foundation Contracts and Runtime Seams, planned as one round (see M4 below) | No screenshots: the in-game test suite runs at startup; the user launches, loads, saves and quits, and the log is read |
 | **4 onward** | M5 to M9, planned the same way | To be set when each is planned |

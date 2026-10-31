@@ -298,6 +298,26 @@ notification record.
 Notification sound uses an approved semantic cue identifier. Asset production,
 mixing, and final sound family remain deferred to Design Lead approval.
 
+### As implemented in PF.006
+
+- `NotificationPresentationCoordinator` (internal) subscribes to the completed
+  `NOTIFICATION_CREATED` event once ForgeOS is runtime-active and unsubscribes on
+  shutdown. It holds a bounded pending list per device (16) and requests one
+  sound cue per notification. Hosts take their cues through the private Host
+  context function `takeNotificationCues`; there is no new public ForgeOS API.
+- `NotificationCueView` (shared) owns each Host's session-only queue, timing,
+  drawing and tap handling. Phone: one banner at a time, up to three waiting
+  with a `+n` pill, five seconds each, shown even while the Phone is closed.
+  Laptop: up to three stacked toasts, six seconds each, shown only while the
+  Laptop is open; when full, the oldest leaves first.
+- While a banner or toast shows, pointer mode (F6) can be entered even if no
+  device is open, so a cue can be tapped.
+- A tap calls the private Host context function `activateNotification`, which
+  reaches `NotificationActivationService`. The Phone shows itself after a
+  successful navigation.
+- The base-game interface sound used for cues is a provisional placeholder; the
+  first cue's sound outcome is written to the log.
+
 ## Notification Deep Linking
 
 Existing notification destinations already contain:

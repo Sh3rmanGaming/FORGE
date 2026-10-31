@@ -1595,6 +1595,23 @@ provider protocol. Do not rely on it from outside FORGE until a public API
 versioning review approves exposure. Providers without it keep the integer
 badge mapping.
 
+### PF.006 optional route parameter schema
+
+A route declaration may carry an optional `parameters` table naming the
+parameters the route accepts, for example
+`{ messageId = { type = "string", required = true } }`. Allowed types are
+`string`, `number` and `boolean`. Registration rejects a malformed schema.
+
+- A route with **no** `parameters` field keeps the legacy behaviour: any
+  controlled plain data is accepted.
+- A route with a schema, including the empty schema `{}`, is strict: unknown,
+  missing-required and wrongly typed parameters are rejected.
+- The same schema is enforced on direct navigation, resume restoration and
+  notification deep links. Hosts and notification components do no
+  application-specific parameter checking.
+
+Communications declares schemas for both of its routes.
+
 ## PF.003 Laptop Desktop Projection
 
 PF.003 adds no App Registry field, public callback, API version, or asset

@@ -1,6 +1,8 @@
 # Round 1 Plan — PF.005 Retest and PF.006 Notification Presentation
 
-**Status:** Decisions D1–D4 approved (2026-10-30); work starts with the mockup step
+**Status:** Implemented and deployed as the `PF.006` verification package
+(2026-10-30). Awaiting your test session. Decisions D1–D4 and the mockups
+(sizes and timings) approved.
 **Date:** 2026-10-30
 **Governing rules:** [Roadmap working rules](Roadmap.md#working-rules)
 **Replaces, for planning:** the separate PF.005 retest and PF.006 sections of the
