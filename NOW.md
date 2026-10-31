@@ -2,15 +2,19 @@
 
 _Overwritten at the end of every session by `journal-session`. History lives in `journal/`._
 
-## State (30 Oct 2026)
-- Paused since 30 Aug 2026, now being restarted. Full resume brief: `docs/reviews/PresentationFoundationPauseHandoff.md`.
-- M1–M3 complete. Presentation Foundation: PF.001–PF.004 implemented, verified, accepted and frozen. PF.005–PF.009 not authorized. M4.001 paused.
-- Repo tidied 30 Oct: accepted PF work committed, runtime evidence filed in `docs/reviews/evidence/`, builds reduced to the PF.003 and PF.004 operational packages in `_builds/`. `AGENTS.md` rewritten 30 Oct: user decides, plan-first beyond small fixes, roles dropped. Local commits not yet pushed (push from the user's PC).
+## State (31 Oct 2026)
+- Roadmap runs in broad test rounds with no freezing. Round 1 = PF.005 retest + PF.006 (notification banners, toasts, sounds, tap-to-open). Round 2 = PF.007-PF.009 (not authorised). Round 3 = M4.
+- PF.005 badge mirror and PF.006 core behaviour seen working in the game. Fixes from that test are built and deployed as verification package `PF.006b` (Back after a tap, app-name label, 10 s banners, toast position, sound fallbacks, Ctrl+N guided test run, Ctrl+M test message).
+- `PF.006b` has not been run by the user yet. The PF.006 work (about 41 files, 16 new) is uncommitted; last commit is `a9999b7`. Nothing pushed since.
 
 ## Next step
-Decide whether to approve the PF.005 architecture/UX documentation plan (the exact resume point recorded in the handoff).
+User runs `PF.006b` (Ctrl+N once, listen to the five sounds, save/quit/reload, screenshot Phone home). Then read log and screenshots, write `docs/reviews/PF.006RuntimeVerification.md`, ask for acceptance.
 
 ## Open questions
-- Push the local commits to `origin/development`? (Repo may be public.)
-- Review the older process docs (`docs/EngineeringCharter.md`, `docs/style/EngineeringProcess.md`, role references in `docs/README.md` and the roadmap) against the new `AGENTS.md`: rewrite, keep or archive each.
-- The empty `assets/`, `campaigns/`, `sdk/`, `themes/` folders: keep as reserved, or remove until needed?
+- Does the game have a usable screenshot call for the guided run (falls back to prompting)?
+- Which base-game sounds per severity (the log lists what exists).
+- Keep the dev-only input actions out of the operational `modDesc.xml`?
+- Commit the PF.006 work: one commit proposed, ask first; no push until told.
+- Older process docs still say "frozen"; `M2M3PresentationFoundationImplementationPlan.md` needs aligning to the rounds; empty `assets/`, `campaigns/`, `sdk/`, `themes/` folders: keep or remove.
+
+Latest journal: `journal/2026-10-31-1305-forge-onboarding-and-pf006-test-round.md`
