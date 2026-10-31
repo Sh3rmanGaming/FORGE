@@ -269,8 +269,12 @@ local function presentation(identifier)
         controller = provider,
         defaultRoute = INBOX_ROUTE,
         routes = {
-            [INBOX_ROUTE] = {},
-            [DETAIL_ROUTE] = {}
+            [INBOX_ROUTE] = { parameters = {} },
+            [DETAIL_ROUTE] = {
+                parameters = {
+                    messageId = { type = "string", required = true }
+                }
+            }
         },
         actions = declaredActions
     }

@@ -42,11 +42,18 @@ local Theme = {
     [Token.SEMANTIC_UNREAD] = { 0.95, 0.62, 0.20, 1 },
     [Token.SEMANTIC_ATTENTION] = { 0.35, 0.65, 0.95, 1 },
     [Token.SEMANTIC_WARNING] = { 0.98, 0.80, 0.20, 1 },
-    [Token.SEMANTIC_ERROR] = { 0.90, 0.25, 0.22, 1 }
+    [Token.SEMANTIC_ERROR] = { 0.90, 0.25, 0.22, 1 },
+    [Token.SEMANTIC_INFORMATION] = { 0.35, 0.65, 0.95, 1 },
+    [Token.SEMANTIC_SUCCESS] = { 0.35, 0.80, 0.45, 1 }
 }
 local BadgeHeight = 0.028
 local BadgeOverlap = 0.010
 local AttentionRefreshInterval = 500
+-- PF.006 toast: up to three stacked, six seconds each, in the lower right.
+local ToastDurationMs = 10000
+local ToastMaxVisible = 3
+local ToastWidth = 0.235
+local ToastHeight = 0.080
 
 local function color(token)
     return Theme[token] or Theme[Token.TEXT_PRIMARY]
@@ -107,6 +114,8 @@ function LaptopHost.create(context)
         -- Session-local attention snapshot; never persisted.
         attention = {},
         attentionElapsed = AttentionRefreshInterval,
+        -- Session-only toast queue (PF.006); created on initialize.
+        cues = nil,
         hitRegions = {},
         pressedControl = nil,
         hoveredControl = nil,
@@ -346,6 +355,67 @@ function LaptopHost.create(context)
         end
     end
 
+    local function updateCues(self, dt)
+        if self.cues == nil then return end
+        -- Cues are always drained; a closed Laptop shows no toast.
+        local visible = self.context.getVisibility() == Visibility.VISIBLE
+        if type(self.context.takeNotificationCues) == "function" then
+            local call = { pcall(self.context.takeNotificationCues) }
+            if visible and call[1] and type(call[2]) == "table" then
+                for _, cue in ipairs(call[2]) do self.cues:push(cue) end
+            end
+        end
+        if visible then
+            self.cues:update(dt)
+        else
+            self.cues:clear()
+        end
+    end
+
+    local function drawCues(self)
+        if self.cues == nil or not self.cues:hasCues()
+            or (type(self.context.isUiBlocked) == "function"
+                and self.context.isUiBlocked()) then
+            return
+        end
+        if type(self.context.getViewportMetrics) == "function" then
+            local metrics = self.context.getViewportMetrics()
+            if type(metrics) == "table" and type(metrics.width) == "number"
+                and type(metrics.height) == "number"
+                and metrics.height > 0 then
+                badgePainter.aspect = metrics.width / metrics.height
+            end
+        end
+        self.cues:draw(badgePainter)
+        setColor(1, 1, 1, 1)
+    end
+
+    local function activateCue(self, notificationId)
+        self.cues:remove(notificationId)
+        if type(self.context.activateNotification) ~= "function" then
+            return
+        end
+        local call = { pcall(self.context.activateNotification,
+            notificationId) }
+        local outcome = call[1] and call[2] or nil
+        if type(outcome) ~= "table"
+            or outcome.result
+                ~= FORGE.Definitions.NotificationActivationResult.SUCCESS then
+            FORGE.Logger:warning(FORGE.Definitions.LogSource.LAPTOP_HOST,
+                "Laptop notification activation incomplete: %s after stage %s",
+                FORGE.Logger:safeToString(
+                    type(outcome) == "table" and outcome.result or call[2],
+                    "<unknown>"),
+                FORGE.Logger:safeToString(
+                    type(outcome) == "table" and outcome.stage or nil,
+                    "<unknown>"))
+        end
+    end
+
+    function instance:hasTransientCue()
+        return self.initialized and self.cues ~= nil and self.cues:hasCues()
+    end
+
     function instance:initialize()
         if self.initialized then return Result.SUCCESS end
         if type(createImageOverlay) == "function"
@@ -364,6 +434,20 @@ function LaptopHost.create(context)
             self.context, self.applicationViewport,
             self.density,
             FORGE.Definitions.LogSource.LAPTOP_HOST)
+        local bounds = self.bounds
+        self.cues = FORGE.NotificationCueView.create({
+            maxVisible = ToastMaxVisible,
+            maxWaiting = 0,
+            durationMs = ToastDurationMs,
+            showWaiting = false,
+            anchorX = bounds.x + bounds.width - 0.020 - ToastWidth,
+            anchorY = bounds.y + 0.080,
+            width = ToastWidth,
+            height = ToastHeight,
+            gap = 0.012,
+            padding = 0.010,
+            sizes = { app = 0.0085, title = 0.0130, body = 0.0105 }
+        })
         self.activeAppId, self.routeId = nil, nil
         self.initialized = true
         FORGE.Logger:info(FORGE.Definitions.LogSource.LAPTOP_HOST,
@@ -381,6 +465,7 @@ function LaptopHost.create(context)
     function instance:update(dt)
         if not self.initialized or type(dt) ~= "number" then return end
         synchronizeRoute(self)
+        updateCues(self, dt)
         -- Attention is sampled here, on the refresh path, never while drawing.
         if self.activeAppId == nil
             and self.context.getVisibility() == Visibility.VISIBLE then
@@ -709,6 +794,7 @@ function LaptopHost.create(context)
             drawHome(self)
         end
         setColor(1, 1, 1, 1)
+        drawCues(self)
     end
 
     function instance:resume()
@@ -753,6 +839,15 @@ function LaptopHost.create(context)
         if not self.initialized or self.context.isUiBlocked()
             or self.context.getVisibility() ~= Visibility.VISIBLE then
             self.pressedControl = nil; return false
+        end
+        if self.cues ~= nil then
+            -- A toast takes the pointer first.
+            local handled, activated = self.cues:pointer(
+                posX, posY, isDown, isUp, button, PrimaryButton)
+            if activated ~= nil then
+                activateCue(self, activated)
+            end
+            if handled then return true end
         end
         local inside = self:containsPoint(posX, posY)
         if self.activeAppId ~= nil and self.activeAppId ~= CommunicationsAppId
@@ -851,6 +946,7 @@ function LaptopHost.create(context)
         end
         self.wallpaperOverlay = nil
         FORGE.AttentionBadge.deleteOverlays(self.badgeOverlays)
+        self.cues = nil
         self.badgeOverlays = {}
         self.attention = {}
         resetPresentation(self)

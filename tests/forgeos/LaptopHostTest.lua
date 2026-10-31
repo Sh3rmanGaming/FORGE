@@ -213,6 +213,60 @@ function FORGE.Tests.runLaptopHostTests()
         end
         compact:shutdown()
 
+        -- PF.006: toasts stack to three, a tap activates through the private
+        -- context, a closed Laptop shows none, and expiry only hides them.
+        local cueQueue, activated = {}, {}
+        context.takeNotificationCues = function()
+            local taken = cueQueue
+            cueQueue = {}
+            return taken
+        end
+        context.activateNotification = function(notificationId)
+            activated[#activated + 1] = notificationId
+            return { result = "success", stage = "complete" }
+        end
+        local function toast(number)
+            return { notificationId = "notification." .. number,
+                source = "forge.test", title = "Toast " .. number,
+                body = "Body", severity = "info", actionable = true }
+        end
+        visibility = Visibility.VISIBLE
+        cueQueue = { toast(1), toast(2), toast(3), toast(4) }
+        host:update(16)
+        labels = {}
+        host:draw()
+        local shown = 0
+        for _, label in ipairs(labels) do
+            if string.sub(label, 1, 5) == "Toast" then shown = shown + 1 end
+        end
+        if shown ~= 3 or not host:hasTransientCue() then
+            error("Laptop toast stack should show exactly three")
+        end
+        local toastRegion = host.cues.regions[1]
+        host:onPointer(toastRegion.x + 0.01, toastRegion.y + 0.01,
+            true, false, 1)
+        host:onPointer(toastRegion.x + 0.01, toastRegion.y + 0.01,
+            false, true, 1)
+        if activated[1] ~= toastRegion.notificationId then
+            error("Laptop toast tap did not activate its destination")
+        end
+        host:update(10000)
+        if host:hasTransientCue() or notificationQueries ~= 0 then
+            error("Laptop toast expiry or notification query misbehaved")
+        end
+        visibility = Visibility.HIDDEN
+        cueQueue = { toast(5) }
+        host:update(16)
+        labels = {}
+        host:draw()
+        for _, label in ipairs(labels) do
+            if label == "Toast 5" then error("closed Laptop drew a toast") end
+        end
+        if host:hasTransientCue() or #cueQueue ~= 0 then
+            error("closed Laptop kept or failed to drain a cue")
+        end
+        visibility = Visibility.VISIBLE
+
         if overlays < 1 or notificationQueries ~= 0
             or not host:containsPoint(0.20, 0.20)
             or host:containsPoint(0.99, 0.99)

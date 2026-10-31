@@ -287,10 +287,15 @@ local function copyRoutes(routes, defaultRoute)
             copyOptionalPlainTable(
                 route.metadata
             )
+        -- Optional route parameter schema (ADR-008); absent keeps the legacy
+        -- behaviour of accepting any controlled plain data.
+        local schemaValid, schemaCopy =
+            FORGE.RouteParameterSchema:copySchema(route.parameters)
 
         if not requirementsValid
             or not providersValid
-            or not metadataValid then
+            or not metadataValid
+            or not schemaValid then
             return false, nil, nil
         end
 
@@ -301,6 +306,9 @@ local function copyRoutes(routes, defaultRoute)
         end
         if metadataCopy ~= nil then
             declaration.metadata = metadataCopy
+        end
+        if schemaCopy ~= nil then
+            declaration.parameters = schemaCopy
         end
         declarations[routeId] = declaration
         assets[routeId] = {

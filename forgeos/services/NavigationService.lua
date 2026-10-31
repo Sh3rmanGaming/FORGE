@@ -214,8 +214,13 @@ local function navigate(deviceId, appId, routeId, routeParameters)
     if resolutionResult ~= Result.SUCCESS then
         return resolutionResult
     end
-    if resolution.presentation.routes[routeId] == nil then
+    local routeDeclaration = resolution.presentation.routes[routeId]
+    if routeDeclaration == nil then
         return Result.ROUTE_NOT_FOUND
+    end
+    if not FORGE.RouteParameterSchema:validate(
+        routeDeclaration.parameters, parameters) then
+        return Result.INVALID_ARGUMENT
     end
 
     local record = getRecord(deviceId, appId)
@@ -432,6 +437,9 @@ function Service:getValidatedResumeDestination(deviceId)
             and resolutionResult == Result.SUCCESS
             and resolution.presentationId == stored.presentationId
             and resolution.presentation.routes[stored.routeId] ~= nil
+            and FORGE.RouteParameterSchema:validate(
+                resolution.presentation.routes[stored.routeId].parameters,
+                parameters)
 
         if valid then
             return Result.SUCCESS, {

@@ -248,6 +248,70 @@ function FORGE.Tests.runPhoneHostTests()
             error("Phone claimed outside pointer")
         end
 
+        -- PF.006: a banner floats over a closed Phone, a tap activates the
+        -- destination through the private context, and expiry only hides it.
+        local savedLabels = labels
+        local cueQueue, activated = {}, {}
+        context.takeNotificationCues = function()
+            local taken = cueQueue
+            cueQueue = {}
+            return taken
+        end
+        context.activateNotification = function(notificationId)
+            activated[#activated + 1] = notificationId
+            return { result = "success", stage = "complete" }
+        end
+        apps = {}
+        visibility = Visibility.HIDDEN
+        labels = {}
+        cueQueue = { { notificationId = "notification.1",
+            source = "forge.test", title = "Banner title",
+            body = "Banner body", severity = "info", actionable = true } }
+        host:update(16)
+        host:draw()
+        local sawBanner = false
+        for _, label in ipairs(labels) do
+            if label == "Banner title" then sawBanner = true end
+        end
+        if not sawBanner or not host:hasTransientCue() then
+            error("Phone banner did not float over a closed Phone")
+        end
+        local banner = host.cues.regions[1]
+        if banner == nil then error("Phone banner has no hit region") end
+        host:onPointer(banner.x + 0.01, banner.y + 0.01, true, false, 1)
+        host:onPointer(banner.x + 0.01, banner.y + 0.01, false, true, 1)
+        if activated[1] ~= "notification.1" or host:hasTransientCue()
+            or visibility ~= Visibility.VISIBLE then
+            error("Phone banner tap did not activate and show the Phone")
+        end
+        if notificationMutations ~= 0 then
+            error("Phone banner mutated notification state")
+        end
+        cueQueue = { { notificationId = "notification.2",
+            source = "forge.test", title = "Second", body = "x",
+            severity = "warning", actionable = true } }
+        host:update(16)
+        host:update(10000)
+        if host:hasTransientCue() or #activated ~= 1 then
+            error("Phone banner expiry misbehaved")
+        end
+        -- A banner never draws or taps while another UI is blocking.
+        visibility = Visibility.HIDDEN
+        cueQueue = { { notificationId = "notification.3",
+            source = "forge.test", title = "Blocked", body = "x",
+            severity = "info", actionable = true } }
+        host:update(16)
+        context.isUiBlocked = function() return true end
+        labels = {}
+        host:draw()
+        for _, label in ipairs(labels) do
+            if label == "Blocked" then error("Phone drew a banner under a menu") end
+        end
+        context.isUiBlocked = function() return false end
+        visibility = Visibility.VISIBLE
+        host.cues:clear()
+        labels = savedLabels
+
         -- The frame plus five badge images are deleted on shutdown.
         if host:shutdown() ~= Result.SUCCESS or overlayDeletes ~= 6 then
             error("Phone shutdown failed")

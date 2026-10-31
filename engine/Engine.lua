@@ -252,6 +252,12 @@ local function runDevelopmentTests()
                     FORGE.Tests.runCommunicationsPersistenceTests),
                 harness("PF.005 Attention Badge",
                     FORGE.Tests.runAttentionBadgeTests),
+                harness("PF.006 Route Parameter Schema",
+                    FORGE.Tests.runRouteParameterSchemaTests),
+                harness("PF.006 Notification Cue View",
+                    FORGE.Tests.runNotificationCueViewTests),
+                harness("PF.006 Notification Presentation Coordinator",
+                    FORGE.Tests.runNotificationPresentationCoordinatorTests),
                 harness("Logger", FORGE.Tests.runLoggerTests),
                 harness("Event Bus", FORGE.Tests.runEventBusTests),
                 harness("State Store", FORGE.Tests.runStateStoreTests),
@@ -312,7 +318,10 @@ local function runDevelopmentTests()
                 harness("Notification Service",
                     FORGE.Tests.runNotificationServiceTests),
                 harness("Notification integration",
-                    FORGE.Tests.runForgeOSNotificationIntegrationTests)
+                    FORGE.Tests.runForgeOSNotificationIntegrationTests),
+                harness("PF.006 Notification Activation integration",
+                    FORGE.Tests
+                        .runForgeOSNotificationActivationIntegrationTests)
             }
         },
         -- TEST PHASE: END_TO_END
@@ -465,6 +474,17 @@ local function registerHostActions()
         { InputAction.FORGE_TOGGLE_LAPTOP, FORGE.Engine.onToggleLaptop },
         { InputAction.FORGE_TOGGLE_CURSOR_MODE, FORGE.Engine.onToggleCursorMode }
     }
+    -- Development verification builds only: shortcuts for the guided test run.
+    if FORGE.Logger:isDevelopmentMode()
+        and FORGE.DevelopmentAttentionPreview ~= nil
+        and InputAction.FORGE_DEV_NEXT_STEP ~= nil
+        and InputAction.FORGE_DEV_TEST_MESSAGE ~= nil then
+        table.insert(definitions,
+            { InputAction.FORGE_DEV_NEXT_STEP, FORGE.Engine.onDevNextStep })
+        table.insert(definitions,
+            { InputAction.FORGE_DEV_TEST_MESSAGE,
+                FORGE.Engine.onDevTestMessage })
+    end
     for _, definition in ipairs(definitions) do
         local succeeded, registered, eventId = pcall(
             g_inputBinding.registerActionEvent, g_inputBinding,
@@ -1081,10 +1101,18 @@ function FORGE.Engine:update(dt)
     end
 
     FORGE.ForgeOS:updateRuntimeHost(dt)
+    if FORGE.DevelopmentAttentionPreview ~= nil
+        and FORGE.Logger:isDevelopmentMode() then
+        FORGE.DevelopmentAttentionPreview:update(dt)
+    end
 end
 
 function FORGE.Engine:draw()
     FORGE.ForgeOS:drawRuntimeHost()
+    if FORGE.DevelopmentAttentionPreview ~= nil
+        and FORGE.Logger:isDevelopmentMode() then
+        FORGE.DevelopmentAttentionPreview:draw()
+    end
 end
 
 function FORGE.Engine.onTogglePhone(
@@ -1103,6 +1131,20 @@ end
 function FORGE.Engine.onToggleLaptop(target, actionName, inputValue)
     return FORGE.ForgeOS:dispatchHostInput(
         "FORGE_TOGGLE_LAPTOP", inputValue)
+end
+
+function FORGE.Engine.onDevNextStep(target, actionName, inputValue)
+    if inputValue == 0 then
+        return false
+    end
+    return FORGE.DevelopmentAttentionPreview:onNextStep()
+end
+
+function FORGE.Engine.onDevTestMessage(target, actionName, inputValue)
+    if inputValue == 0 then
+        return false
+    end
+    return FORGE.DevelopmentAttentionPreview:onTestMessage()
 end
 
 function FORGE.Engine.onToggleCursorMode(target, actionName, inputValue)

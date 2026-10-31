@@ -42,12 +42,18 @@ local Theme = {
     [Token.SEMANTIC_UNREAD] = { 0.95, 0.62, 0.20, 1 },
     [Token.SEMANTIC_ATTENTION] = { 0.35, 0.65, 0.95, 1 },
     [Token.SEMANTIC_WARNING] = { 0.98, 0.80, 0.20, 1 },
-    [Token.SEMANTIC_ERROR] = { 0.90, 0.25, 0.22, 1 }
+    [Token.SEMANTIC_ERROR] = { 0.90, 0.25, 0.22, 1 },
+    [Token.SEMANTIC_INFORMATION] = { 0.35, 0.65, 0.95, 1 },
+    [Token.SEMANTIC_SUCCESS] = { 0.35, 0.80, 0.45, 1 }
 }
 -- Phone badges start slightly larger than Laptop badges (Design System).
 local BadgeHeight = 0.032
 local BadgeOverlap = 0.008
 local AttentionRefreshInterval = 500
+-- PF.006 banner: one at a time, up to three waiting, five seconds each.
+local BannerDurationMs = 10000
+local BannerMaxWaiting = 3
+local BannerHeight = 0.062
 
 local function color(token)
     return Theme[token] or Theme[Token.TEXT_PRIMARY]
@@ -121,6 +127,8 @@ function PhoneHost.create(context)
         -- Session-local attention snapshot; never persisted.
         attention = {},
         attentionElapsed = AttentionRefreshInterval,
+        -- Session-only banner queue (PF.006); created on initialize.
+        cues = nil,
         bounds = { x = 0.70, y = 0.12, width = 0.27, height = 0.76 },
         applicationViewport = nil,
         shortcutViewport = nil,
@@ -404,6 +412,79 @@ function PhoneHost.create(context)
         end
     end
 
+    local function updateCues(self, dt)
+        if self.cues == nil then
+            return
+        end
+        -- Cues are always drained; the banner yields while the Laptop is open.
+        local yielded = type(self.context.isOtherDeviceVisible) == "function"
+            and self.context.isOtherDeviceVisible() == true
+        if type(self.context.takeNotificationCues) == "function" then
+            local call = { pcall(self.context.takeNotificationCues) }
+            if not yielded and call[1] and type(call[2]) == "table" then
+                for _, cue in ipairs(call[2]) do
+                    self.cues:push(cue)
+                end
+            end
+        end
+        if yielded then
+            self.cues:clear()
+        else
+            self.cues:update(dt)
+        end
+    end
+
+    local function drawCues(self)
+        if self.cues == nil or not self.cues:hasCues()
+            or (type(self.context.isUiBlocked) == "function"
+                and self.context.isUiBlocked()) then
+            return
+        end
+        if type(self.context.getViewportMetrics) == "function" then
+            local metrics = self.context.getViewportMetrics()
+            if type(metrics) == "table" and type(metrics.width) == "number"
+                and type(metrics.height) == "number"
+                and metrics.height > 0 then
+                badgePainter.aspect = metrics.width / metrics.height
+            end
+        end
+        self.cues:draw(badgePainter)
+        setColor(1, 1, 1, 1)
+    end
+
+    local function activateCue(self, notificationId)
+        self.cues:remove(notificationId)
+        if type(self.context.activateNotification) ~= "function" then
+            return
+        end
+        local call = { pcall(self.context.activateNotification,
+            notificationId) }
+        local outcome = call[1] and call[2] or nil
+        local Stage = FORGE.Definitions.NotificationActivationStage
+        if type(outcome) ~= "table"
+            or outcome.result
+                ~= FORGE.Definitions.NotificationActivationResult.SUCCESS then
+            FORGE.Logger:warning(FORGE.Definitions.LogSource.PHONE_HOST,
+                "Phone notification activation incomplete: %s after stage %s",
+                FORGE.Logger:safeToString(
+                    type(outcome) == "table" and outcome.result or call[2],
+                    "<unknown>"),
+                FORGE.Logger:safeToString(
+                    type(outcome) == "table" and outcome.stage or nil,
+                    "<unknown>"))
+        end
+        if type(outcome) == "table"
+            and (outcome.stage == Stage.NAVIGATE
+                or outcome.stage == Stage.COMPLETE)
+            and self.context.getVisibility() ~= Visibility.VISIBLE then
+            self.context.show()
+        end
+    end
+
+    function instance:hasTransientCue()
+        return self.initialized and self.cues ~= nil and self.cues:hasCues()
+    end
+
     function instance:initialize()
         if self.initialized then
             return Result.SUCCESS
@@ -422,6 +503,20 @@ function PhoneHost.create(context)
         self.declarative = FORGE.PresentationHostAdapter.create(
             self.context, self.applicationViewport, self.density,
             FORGE.Definitions.LogSource.PHONE_HOST)
+        local bounds = self.bounds
+        self.cues = FORGE.NotificationCueView.create({
+            maxVisible = 1,
+            maxWaiting = BannerMaxWaiting,
+            durationMs = BannerDurationMs,
+            showWaiting = true,
+            anchorX = bounds.x + 0.014,
+            anchorY = bounds.y + bounds.height - 0.050 - BannerHeight,
+            width = bounds.width - 0.028,
+            height = BannerHeight,
+            gap = 0.006,
+            padding = 0.012,
+            sizes = { app = 0.0075, title = 0.0110, body = 0.0090 }
+        })
         self.activeAppId = nil
         self.routeId = nil
         self.initialized = true
@@ -444,6 +539,7 @@ function PhoneHost.create(context)
             return
         end
         synchronizeRoute(self)
+        updateCues(self, dt)
         -- Attention is sampled here, on the refresh path, never while drawing.
         if self.activeAppId == nil
             and self.context.getVisibility() == Visibility.VISIBLE then
@@ -744,8 +840,12 @@ function PhoneHost.create(context)
     end
 
     function instance:draw()
-        if not self.initialized
-            or self.context.getVisibility() ~= Visibility.VISIBLE then
+        if not self.initialized then
+            return
+        end
+        if self.context.getVisibility() ~= Visibility.VISIBLE then
+            -- A banner may float over gameplay while the Phone is closed.
+            drawCues(self)
             return
         end
         synchronizeRoute(self)
@@ -773,6 +873,7 @@ function PhoneHost.create(context)
             drawHome(self)
         end
         setColor(1, 1, 1, 1)
+        drawCues(self)
     end
 
     function instance:resume()
@@ -819,6 +920,18 @@ function PhoneHost.create(context)
     end
 
     function instance:onPointer(posX, posY, isDown, isUp, button)
+        if self.initialized and self.cues ~= nil
+            and not self.context.isUiBlocked() then
+            -- A banner takes the pointer first, even while the Phone is closed.
+            local handled, activated = self.cues:pointer(
+                posX, posY, isDown, isUp, button, PrimaryButton)
+            if activated ~= nil then
+                activateCue(self, activated)
+            end
+            if handled then
+                return true
+            end
+        end
         if not self.initialized or self.context.isUiBlocked()
             or self.context.getVisibility() ~= Visibility.VISIBLE then
             self.pressedControl = nil
@@ -926,6 +1039,7 @@ function PhoneHost.create(context)
         FORGE.AttentionBadge.deleteOverlays(self.badgeOverlays)
         self.badgeOverlays = {}
         self.attention = {}
+        self.cues = nil
         resetPresentation(self)
         self.declarative = nil
         self.activeAppId = nil

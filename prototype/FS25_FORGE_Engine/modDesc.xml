@@ -36,12 +36,20 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         <text name="input_FORGE_TOGGLE_CURSOR_MODE">
             <en>Toggle FORGE Pointer Mode</en>
         </text>
+        <text name="input_FORGE_DEV_NEXT_STEP">
+            <en>FORGE Test Run: Start / Next (Development)</en>
+        </text>
+        <text name="input_FORGE_DEV_TEST_MESSAGE">
+            <en>FORGE Test Message (Development)</en>
+        </text>
     </l10n>
 
     <actions>
         <action name="FORGE_TOGGLE_PHONE"/>
         <action name="FORGE_TOGGLE_LAPTOP"/>
         <action name="FORGE_TOGGLE_CURSOR_MODE"/>
+        <action name="FORGE_DEV_NEXT_STEP"/>
+        <action name="FORGE_DEV_TEST_MESSAGE"/>
     </actions>
 
     <inputBinding>
@@ -53,6 +61,12 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         </actionBinding>
         <actionBinding action="FORGE_TOGGLE_CURSOR_MODE">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_f6"/>
+        </actionBinding>
+        <actionBinding action="FORGE_DEV_NEXT_STEP">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_n"/>
+        </actionBinding>
+        <actionBinding action="FORGE_DEV_TEST_MESSAGE">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_m"/>
         </actionBinding>
     </inputBinding>
 
@@ -134,6 +148,7 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         <sourceFile filename="scripts/forge/forgeos/ForgeOSRegistrationCoordinator.lua"/>
         <sourceFile filename="scripts/forge/forgeos/registries/DeviceRegistry.lua"/>
         <sourceFile filename="scripts/forge/forgeos/registries/DeviceHostRegistry.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/services/RouteParameterSchema.lua"/>
         <sourceFile filename="scripts/forge/forgeos/registries/AppRegistry.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/PresentationResolver.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/AppLifecycleService.lua"/>
@@ -141,8 +156,11 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         <sourceFile filename="scripts/forge/forgeos/presentation/PresentationRenderer.lua"/>
         <sourceFile filename="scripts/forge/forgeos/presentation/PresentationHostAdapter.lua"/>
         <sourceFile filename="scripts/forge/forgeos/presentation/AttentionBadge.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/presentation/NotificationCueView.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/ApplicationPresentationService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/NotificationService.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/services/NotificationActivationService.lua"/>
+        <sourceFile filename="scripts/forge/forgeos/services/NotificationPresentationCoordinator.lua"/>
         <sourceFile filename="scripts/forge/forgeos/services/DeviceStateService.lua"/>
         <sourceFile filename="scripts/forge/forgeos/hosts/PhoneHost.lua"/>
         <sourceFile filename="scripts/forge/forgeos/hosts/LaptopHost.lua"/>
@@ -172,6 +190,9 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         <sourceFile filename="scripts/forge/tests/forgeos/ApplicationPresentationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/PresentationRendererTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/AttentionBadgeTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/RouteParameterSchemaTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/NotificationCueViewTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/forgeos/NotificationPresentationCoordinatorTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/NotificationServiceTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceHostRegistryTest.lua"/>
         <sourceFile filename="scripts/forge/tests/forgeos/DeviceStateServiceTest.lua"/>
@@ -194,6 +215,7 @@ Character, Companies, Banking, Projects and Campaign gameplay domains are not in
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSAppLifecycleIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSNavigationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSNotificationIntegrationTest.lua"/>
+        <sourceFile filename="scripts/forge/tests/integrations/ForgeOSNotificationActivationIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSPhoneHostIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSLaptopHostIntegrationTest.lua"/>
         <sourceFile filename="scripts/forge/tests/integrations/ForgeOSMultiHostIntegrationTest.lua"/>

@@ -287,6 +287,27 @@ local function createHostContext(deviceId)
                 appId
             )
         end,
+        -- Private Host-only notification routes (PF.006). Deliberately not
+        -- FORGE.ForgeOS methods: public exposure needs an API versioning review.
+        takeNotificationCues = function()
+            return FORGE.NotificationPresentationCoordinator
+                :takeCues(deviceId)
+        end,
+        -- True while another device is open, so one device's cue can yield.
+        isOtherDeviceVisible = function()
+            for otherId in pairs(runtimeHosts) do
+                if otherId ~= deviceId
+                    and FORGE.DeviceStateService:getDeviceVisibility(otherId)
+                        == FORGE.Definitions.DeviceVisibility.VISIBLE then
+                    return true
+                end
+            end
+            return false
+        end,
+        activateNotification = function(notificationId)
+            return FORGE.NotificationActivationService
+                :activate(deviceId, notificationId)
+        end,
         getViewportMetrics = function()
             return {
                 width = type(g_screenWidth) == "number" and g_screenWidth
@@ -413,6 +434,8 @@ local function completeShutdown()
             return Result.INVALID_TRANSITION
         end
     end
+
+    FORGE.NotificationPresentationCoordinator:stop()
 
     local presentationCleanupResult =
         FORGE.ApplicationPresentationService:clearRuntimeState()
@@ -633,6 +656,8 @@ local function completeStartup()
         completeShutdown()
         return hostResult
     end
+
+    FORGE.NotificationPresentationCoordinator:start()
 
     return Result.SUCCESS
 end
@@ -993,6 +1018,13 @@ function FORGE.ForgeOS:hasVisibleRuntimeHost()
     for _, deviceId in ipairs(HOST_ORDER) do
         if FORGE.DeviceStateService:getDeviceVisibility(deviceId)
             == FORGE.Definitions.DeviceVisibility.VISIBLE then
+            return true
+        end
+        -- A transient banner or toast can be tapped even while its device is
+        -- closed, so it counts as something pointer mode can act on.
+        local instance = runtimeHosts[deviceId]
+        if instance ~= nil and type(instance.hasTransientCue) == "function"
+            and instance:hasTransientCue() then
             return true
         end
     end
