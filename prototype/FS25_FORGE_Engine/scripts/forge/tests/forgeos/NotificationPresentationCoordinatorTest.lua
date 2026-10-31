@@ -144,6 +144,23 @@ function FORGE.Tests.runNotificationPresentationCoordinatorTests()
         publish("notification.8", "info", { phone = true })
         check(Coordinator:getPendingCount("phone") == 0,
             "event after stop produced a cue")
+
+        -- The default sound player keeps working after state is cleared
+        -- (it once failed when its report table was reset to a boolean).
+        Coordinator:setSoundPlayer(nil)
+        Coordinator:start()
+        local warnings = 0
+        local originalWarning = FORGE.Logger.warning
+        FORGE.Logger.warning = function(...)
+            warnings = warnings + 1
+            return originalWarning(...)
+        end
+        publish("notification.9", "info", { phone = true })
+        publish("notification.10", "error", { phone = true })
+        FORGE.Logger.warning = originalWarning
+        check(warnings == 0, "default sound player failed after a clear")
+        Coordinator:takeCues("phone")
+        Coordinator:stop()
     end)
 
     FORGE.ForgeOS.isRuntimeHostOperational = originalCheck

@@ -186,10 +186,14 @@ end
 --
 -- One key starts a scripted tour of the PF.006 behaviours and walks through it
 -- by itself, asking for a screenshot at each point that needs one. The
--- game's own screenshot call is tried first; if it does not produce a file the
--- run waits at each point and the player takes the screenshot, then presses
--- the key again to continue. Taps are simulated by calling the same activation
--- the Hosts use, so no pointer mode is needed.
+-- game has no usable screenshot call, so the run waits at each point while the
+-- player takes the screenshot, then presses the key again to continue. Taps
+-- are simulated by calling the same activation the Hosts use, so no pointer
+-- mode is needed.
+--
+-- By default only the steps flagged `retest` run, so scenarios already
+-- accepted are not repeated. The console command forgeTestRunAll runs every
+-- step.
 -----------------------------------------------------------------------------
 
 local Severity = FORGE.Definitions.NotificationSeverity
@@ -199,8 +203,10 @@ local SETTLE_MS = 1500
 local AFTER_SNAP_MS = 700
 local AUTO_CHECK_MS = 2000
 local SOUND_GAP_MS = 2000
+local AUDITION_GAP_MS = 1500
 
 local run = nil
+local runAll = false
 local autoScreenshot = nil -- nil unknown, true works, false unavailable
 
 local function log(message, ...)
@@ -240,6 +246,9 @@ local function sendPlain(severity, destination, label)
     createPlainNotification(severity, destination, label)
 end
 
+-- retest = true: part of the default (second) run. kind: "snap" asks for a
+-- screenshot; "audition" plays every base-game interface sound by name;
+-- "severities" plays the current sound for each severity.
 local Steps = {
     { snap = "01-banner-phone-closed",
       text = "Phone closed: a message banner appears over the game",
@@ -255,9 +264,13 @@ local Steps = {
       setup = function()
           FORGE.ForgeOS:goBack(DeviceId.PHONE, "forge.communications")
       end },
-    { snap = "04-banner-phone-open",
-      text = "Phone open: a message banner appears inside the Phone view",
-      setup = function() Preview:consoleCreateTestMessage() end },
+    { snap = "04-banner-phone-open", retest = true,
+      text = "Phone open: the banner sits below the Phone, clear of its header",
+      setup = function()
+          closeBoth()
+          FORGE.ForgeOS:showDevice(DeviceId.PHONE)
+          Preview:consoleCreateTestMessage()
+      end },
     { snap = "05-banner-queue-phone",
       text = "Phone closed: five at once, one banner and a +waiting count",
       setup = function()
@@ -274,24 +287,33 @@ local Steps = {
     { snap = "07-toast-stack-laptop",
       text = "Laptop open: five at once, three toasts stacked",
       setup = function() Preview:consoleCreateTestNotificationBurst() end },
-    { snap = "08-tap-toast-opens-message",
-      text = "Toast tapped: Laptop opens the message",
-      setup = function() tapNewest(DeviceId.LAPTOP) end },
+    { snap = "08-tap-toast-opens-message", retest = true,
+      text = "Message toast tapped: Laptop opens that message "
+          .. "(the toast stays until it times out)",
+      setup = function()
+          closeBoth()
+          FORGE.ForgeOS:showDevice(DeviceId.LAPTOP)
+          Preview:consoleCreateTestMessage()
+          tapNewest(DeviceId.LAPTOP)
+      end },
     { snap = "09-bad-destination",
       text = "Broken destination tapped: nothing opens, nothing breaks",
       setup = function()
           sendPlain(Severity.ERROR, "missing", "Broken")
           tapNewest(DeviceId.LAPTOP)
       end },
-    { snap = "10-both-devices",
-      text = "Phone and Laptop both open, then a message",
+    { snap = "10-both-devices", retest = true,
+      text = "Phone and Laptop both open, then a message: toast left of Phone",
       setup = function()
           FORGE.ForgeOS:showDevice(DeviceId.PHONE)
           FORGE.ForgeOS:showDevice(DeviceId.LAPTOP)
           Preview:consoleCreateTestMessage()
       end },
-    { text = "Listen: info, success, warning, error, critical, 2 s apart",
-      sounds = true,
+    { kind = "audition", retest = true,
+      text = "Listen: every base-game interface sound, named on screen",
+      setup = function() closeBoth() end },
+    { kind = "severities", retest = true,
+      text = "Listen: the sound each severity plays now, named on screen",
       setup = function() closeBoth() end }
 }
 
@@ -301,6 +323,8 @@ local SoundSeverities = {
 }
 
 local function takeScreenshot(name)
+    -- The game exposes no usable screenshot call (checked in PF.006b); the
+    -- probe stays so a future build can use one if it appears.
     if autoScreenshot == false or type(getUserProfileAppPath) ~= "function" then
         return false
     end
@@ -324,8 +348,36 @@ local function takeScreenshot(name)
     return false
 end
 
+local function currentStep()
+    return run.steps[run.index]
+end
+
+local function sampleNames()
+    local names = {}
+    local samples = type(GuiSoundPlayer) == "table"
+        and GuiSoundPlayer.SOUND_SAMPLES or nil
+    if type(samples) == "table" then
+        for name in pairs(samples) do
+            names[#names + 1] = tostring(name)
+        end
+        table.sort(names)
+    end
+    return names
+end
+
+local function playSampleByName(name)
+    local player = type(g_gui) == "table" and g_gui.guiSoundPlayer or nil
+    local samples = type(GuiSoundPlayer) == "table"
+        and GuiSoundPlayer.SOUND_SAMPLES or nil
+    if type(player) == "table" and type(player.playSample) == "function"
+        and type(samples) == "table" and samples[name] ~= nil then
+        return pcall(player.playSample, player, samples[name])
+    end
+    return false
+end
+
 local function startStep(index)
-    local step = Steps[index]
+    local step = run.steps[index]
     if step == nil then
         log("Guided run finished")
         run.phase = "done"
@@ -339,16 +391,36 @@ local function startStep(index)
             FORGE.Logger:safeToString(failure, "<unprintable>"))
     end
     run.phase = "settle"
-    run.timer = step.sounds and 0 or SETTLE_MS
+    run.timer = step.kind ~= nil and 0 or SETTLE_MS
     run.soundIndex = 0
+    run.soundName = nil
+    run.names = step.kind == "audition" and sampleNames() or nil
 end
 
---- Key target: starts the guided run, or moves on from a manual wait.
+local function startRun()
+    local steps = {}
+    local snaps = 0
+    for _, step in ipairs(Steps) do
+        if runAll or step.retest then
+            steps[#steps + 1] = step
+            if step.snap ~= nil then
+                snaps = snaps + 1
+            end
+        end
+    end
+    run = { phase = "idle", index = 0, timer = 0, steps = steps,
+        snapCount = snaps, snapsTaken = 0 }
+    log("Guided run started (%s, %d steps)",
+        runAll and "all steps" or "retest steps", #steps)
+    startStep(1)
+end
+
+--- Key target: starts the guided run, or moves on from a manual wait. Pressing
+--- it while a run is going, or finished, does nothing.
 function Preview:onNextStep()
-    if run == nil or run.phase == "done" then
-        run = { phase = "idle", index = 0, timer = 0 }
-        log("Guided run started")
-        startStep(1)
+    if run == nil then
+        runAll = false
+        startRun()
         return true
     end
     if run.phase == "manual" then
@@ -356,6 +428,13 @@ function Preview:onNextStep()
         run.timer = 0
     end
     return true
+end
+
+--- Console target: runs every step, including those already accepted.
+function Preview:consoleRunAll()
+    runAll = true
+    startRun()
+    return "FORGE test run started (all steps)"
 end
 
 --- Key target: creates one test message without the console.
@@ -377,7 +456,30 @@ local function updateSounds(dt)
         return
     end
     sendPlain(severity, "none", "Sound")
+    run.soundName = severity .. " -> "
+        .. tostring(FORGE.NotificationPresentationCoordinator
+            :getLastSampleName() or "no sound")
+    log("Severity sound: %s", run.soundName)
     run.timer = SOUND_GAP_MS
+end
+
+local function updateAudition(dt)
+    run.timer = run.timer - dt
+    if run.timer > 0 then
+        return
+    end
+    run.soundIndex = run.soundIndex + 1
+    local name = run.names[run.soundIndex]
+    if name == nil then
+        run.phase = "after"
+        run.timer = AFTER_SNAP_MS
+        return
+    end
+    run.soundName = tostring(run.soundIndex) .. "/" .. tostring(#run.names)
+        .. "  " .. name
+    log("Audition sound: %s (%s)", run.soundName,
+        playSampleByName(name) and "played" or "silent")
+    run.timer = AUDITION_GAP_MS
 end
 
 function Preview:update(dt)
@@ -392,22 +494,24 @@ function Preview:update(dt)
         elseif run.pendingMs <= 0 then
             autoScreenshot = false
             run.pendingFile = nil
-            log("Guided run: the screenshot call produced no file; "
-                .. "take screenshots yourself when prompted")
             if run.phase == "after" then
                 run.phase = "manual"
             end
         end
     end
-    local step = Steps[run.index]
+    local step = currentStep()
     if run.phase == "settle" then
-        if step.sounds then
+        if step.kind == "audition" then
+            updateAudition(dt)
+            return
+        elseif step.kind == "severities" then
             updateSounds(dt)
             return
         end
         run.timer = run.timer - dt
         if run.timer <= 0 then
-            log("SNAP %d/%d %s", run.index, #Steps - 1, step.snap)
+            run.snapsTaken = run.snapsTaken + 1
+            log("SNAP %d/%d %s", run.snapsTaken, run.snapCount, step.snap)
             if takeScreenshot(step.snap) then
                 run.phase = "after"
                 run.timer = AFTER_SNAP_MS
@@ -432,11 +536,11 @@ function Preview:draw()
     if run == nil or type(renderText) ~= "function" then
         return
     end
-    local step = Steps[run.index]
+    local step = run.phase ~= "done" and currentStep() or nil
     local line
     if run.phase == "done" then
-        line = "FORGE test run finished. Save and quit, reload, then "
-            .. "screenshot the Phone home screen."
+        line = "FORGE test run finished. Do not press the key again. "
+            .. "Save and quit, reload, then screenshot the Phone home screen."
     elseif step == nil then
         return
     elseif run.phase == "manual" then
@@ -444,7 +548,10 @@ function Preview:draw()
             .. "), then press the next-step key. " .. step.text
     else
         line = "FORGE test run " .. tostring(run.index) .. "/"
-            .. tostring(#Steps) .. ": " .. step.text
+            .. tostring(#run.steps) .. ": " .. step.text
+        if run.soundName ~= nil then
+            line = line .. "   NOW: " .. run.soundName
+        end
     end
     if type(setTextAlignment) == "function" then
         setTextAlignment(RenderText and RenderText.ALIGN_CENTER or 1)
@@ -471,6 +578,10 @@ local function registerConsoleCommand()
         "Creates a FORGE test notification: [severity] [none|inbox|missing"
             .. "|badparams] (development builds only)",
         "consoleCreateTestNotification", Preview)
+    addConsoleCommand("forgeTestRunAll",
+        "Runs every step of the FORGE guided test run, including steps "
+            .. "already accepted (development builds only)",
+        "consoleRunAll", Preview)
     addConsoleCommand("forgeTestNotificationBurst",
         "Creates five FORGE test notifications at once "
             .. "(development builds only)",

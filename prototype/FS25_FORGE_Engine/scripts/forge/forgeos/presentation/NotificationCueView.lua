@@ -144,6 +144,12 @@ function View:update(dt)
     end
 end
 
+--- Moves the card stack. Called by a Host when its surroundings change.
+function View:setAnchor(anchorX, anchorY)
+    self.config.anchorX = anchorX
+    self.config.anchorY = anchorY
+end
+
 function View:hasCues()
     return #self.visible > 0
 end

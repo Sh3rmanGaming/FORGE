@@ -416,6 +416,16 @@ function PhoneHost.create(context)
         if self.cues == nil then
             return
         end
+        -- Text draws above every panel, so an open Phone's banner sits below
+        -- the device instead of over its header; a closed Phone floats it top.
+        local bounds = self.bounds
+        if self.context.getVisibility() == Visibility.VISIBLE then
+            self.cues:setAnchor(bounds.x + 0.014,
+                bounds.y - 0.008 - BannerHeight)
+        else
+            self.cues:setAnchor(bounds.x + 0.014,
+                bounds.y + bounds.height - 0.050 - BannerHeight)
+        end
         -- Cues are always drained; the banner yields while the Laptop is open.
         local yielded = type(self.context.isOtherDeviceVisible) == "function"
             and self.context.isOtherDeviceVisible() == true

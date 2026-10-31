@@ -54,6 +54,7 @@ local ToastDurationMs = 10000
 local ToastMaxVisible = 3
 local ToastWidth = 0.235
 local ToastHeight = 0.080
+local PhoneClearX = 0.68 -- right edge of toasts while the Phone is open
 
 local function color(token)
     return Theme[token] or Theme[Token.TEXT_PRIMARY]
@@ -365,6 +366,13 @@ function LaptopHost.create(context)
                 for _, cue in ipairs(call[2]) do self.cues:push(cue) end
             end
         end
+        -- Text draws above every panel, so toasts keep clear of an open Phone.
+        local bounds = self.bounds
+        local shared = type(self.context.isOtherDeviceVisible) == "function"
+            and self.context.isOtherDeviceVisible() == true
+        self.cues:setAnchor(shared and (PhoneClearX - ToastWidth)
+            or (bounds.x + bounds.width - 0.020 - ToastWidth),
+            bounds.y + 0.080)
         if visible then
             self.cues:update(dt)
         else

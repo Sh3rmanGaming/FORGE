@@ -58,6 +58,7 @@ local soundedCount = 0
 local soundPlayer = nil
 local soundOutcomeReported = {}
 local sampleNamesReported = false
+local lastSampleName = nil
 
 local function reportSoundOutcome(soundCue, played, detail)
     if soundOutcomeReported[soundCue] then
@@ -93,6 +94,7 @@ end
 
 --- The default player: a provisional base-game interface sound, if present.
 local function defaultSoundPlayer(soundCue)
+    lastSampleName = nil
     local candidates = PlaceholderSamples[soundCue]
     local player = type(g_gui) == "table" and g_gui.guiSoundPlayer or nil
     local samples = type(GuiSoundPlayer) == "table"
@@ -107,6 +109,7 @@ local function defaultSoundPlayer(soundCue)
     for _, sampleName in ipairs(candidates) do
         if samples[sampleName] ~= nil then
             local played = pcall(player.playSample, player, samples[sampleName])
+            lastSampleName = sampleName
             reportSoundOutcome(soundCue, played, sampleName)
             return played
         end
@@ -226,6 +229,12 @@ function Coordinator:getPendingCount(deviceId)
     return queue ~= nil and #queue or 0
 end
 
+--- Returns the base-game sample the default player last used (development
+-- builds show it on screen so the sound can be chosen by name).
+function Coordinator:getLastSampleName()
+    return lastSampleName
+end
+
 --- Replaces the sound player (used by tests); nil restores the default.
 function Coordinator:setSoundPlayer(player)
     if player ~= nil and type(player) ~= "function" then
@@ -241,6 +250,7 @@ function Coordinator:clearRuntimeState()
     pending = {}
     soundedNotifications = {}
     soundedCount = 0
-    soundOutcomeReported = false
+    soundOutcomeReported = {}
+    sampleNamesReported = false
     return FORGE.Definitions.ForgeOSResult.SUCCESS
 end
